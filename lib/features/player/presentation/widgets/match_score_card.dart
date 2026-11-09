@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/widgets/app_button.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
@@ -213,30 +214,55 @@ class MatchScoreCard extends StatelessWidget {
 
           const SizedBox(height: AppSpacing.sm),
 
-          // Footer: Referee & Check-in CTA
+          // Footer: Referee / Deadline & Check-in CTA
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (match.refereeName != null)
-                Row(
-                  children: [
-                    Icon(
-                      Icons.sports_rounded,
-                      size: 13,
-                      color: theme.colorScheme.onSurfaceVariant,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (match.refereeName != null)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.sports_rounded,
+                          size: 13,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Ref: ${match.refereeName!}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Ref: ${match.refereeName!}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 11,
-                      ),
+                  if (match.canCheckIn && match.checkInDeadline != null) ...[
+                    if (match.refereeName != null) const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Deadline: ${DateFormat('hh:mm a').format(match.checkInDeadline!)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                )
-              else
-                const SizedBox.shrink(),
+                ],
+              ),
 
               // Check-in status or button
               if (match.isCheckedIn)
@@ -244,14 +270,21 @@ class MatchScoreCard extends StatelessWidget {
                   label: 'Checked In',
                   icon: const Icon(Icons.check, size: 12),
                 )
-              else if (onCheckIn != null && match.isScheduled)
+              else if (match.isCheckInExpired)
+                AppChip.error(
+                  label: 'Check-in Closed',
+                  icon: const Icon(Icons.timer_off_outlined, size: 12),
+                )
+              else if (onCheckIn != null && match.canCheckIn)
                 AppButton.primary(
                   key: Key('check_in_button_${match.id}'),
                   label: 'Check In',
                   icon: const Icon(Icons.how_to_reg_outlined, size: 16),
                   isLoading: isCheckingIn,
                   onPressed: isCheckingIn ? null : onCheckIn,
-                ),
+                )
+              else
+                const SizedBox.shrink(),
             ],
           ),
         ],

@@ -8,5 +8,7 @@ abstract class MatchDayRepository {
   Future<Result<PlayerMatchDayData>> getMatchDayData({String? playerId});
 
   /// Checks the player in for a designated match fixture.
-  Future<Result<PlayerMatch>> checkInToMatch(String matchId);
+  /// Rejects with [ValidationFailure] if the match is ineligible, already checked in,
+  /// or if the check-in deadline has expired.
+  Future<Result<PlayerMatch>> checkInToMatch(String matchId, {DateTime? currentTime});
 }

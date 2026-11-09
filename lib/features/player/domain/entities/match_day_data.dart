@@ -66,6 +66,29 @@ class PlayerMatch extends Equatable {
       status == MatchStatus.warmup ||
       status == MatchStatus.delayed;
 
+  /// Whether the match is eligible for player check-in.
+  /// Check-in is permitted only for scheduled matches prior to the check-in deadline
+  /// that have not already been checked in.
+  bool isCheckInEligible([DateTime? currentTime]) {
+    if (isCheckedIn) return false;
+    if (status != MatchStatus.scheduled) return false;
+    if (isCheckInDeadlineExpired(currentTime)) return false;
+    return true;
+  }
+
+  /// Convenience getter evaluating check-in eligibility at the current moment.
+  bool get canCheckIn => isCheckInEligible();
+
+  /// Whether the match's configured check-in deadline has expired.
+  bool isCheckInDeadlineExpired([DateTime? currentTime]) {
+    if (checkInDeadline == null) return false;
+    final now = currentTime ?? DateTime.now();
+    return now.isAfter(checkInDeadline!);
+  }
+
+  /// Convenience getter for deadline expiry at the current moment.
+  bool get isCheckInExpired => isCheckInDeadlineExpired();
+
   String get formattedTime => DateFormat('hh:mm a').format(scheduledTime);
 
   String get scoreSummary {
@@ -283,6 +306,9 @@ class PlayerMatchDayData extends Equatable {
     required this.standings,
     required this.bracket,
   });
+
+  /// Whether the player has any match fixtures today.
+  bool get hasMatches => myMatches.isNotEmpty;
 
   /// Player's currently active or next upcoming match.
   PlayerMatch? get activeOrNextMatch {

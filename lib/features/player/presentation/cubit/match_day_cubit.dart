@@ -42,13 +42,13 @@ class MatchDayCubit extends Cubit<MatchDayState> {
   }
 
   /// Checks the player in for a specific match fixture.
-  Future<bool> checkIn(String matchId) async {
+  Future<bool> checkIn(String matchId, {DateTime? currentTime}) async {
     if (state is! MatchDayLoaded) return false;
     final current = state as MatchDayLoaded;
 
     emit(current.copyWith(checkingInMatchId: matchId));
 
-    final result = await repository.checkInToMatch(matchId);
+    final result = await repository.checkInToMatch(matchId, currentTime: currentTime);
     switch (result) {
       case Success<PlayerMatch>(:final data):
         final updatedMatches = current.data.myMatches.map((m) {

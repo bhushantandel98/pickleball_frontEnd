@@ -39,6 +39,11 @@ class MockMatchDayRepository implements MatchDayRepository {
       isCheckedIn: true,
     );
 
+    final scheduledTime = now.hour >= 17
+        ? now.add(const Duration(hours: 2, minutes: 30))
+        : DateTime(now.year, now.month, now.day, 17, 30);
+    final checkInDeadline = scheduledTime.subtract(const Duration(minutes: 15));
+
     final matchScheduled = PlayerMatch(
       id: 'match_sched_002',
       tournamentId: 'tourn_001',
@@ -46,7 +51,7 @@ class MockMatchDayRepository implements MatchDayRepository {
       category: 'Mixed Doubles 3.5',
       round: 'Quarter-Final',
       courtName: 'Court 3',
-      scheduledTime: DateTime(now.year, now.month, now.day, 17, 30),
+      scheduledTime: scheduledTime,
       status: MatchStatus.scheduled,
       player1Name: 'Alex Rivera / Maya Lin',
       player1Seed: 2,
@@ -54,7 +59,7 @@ class MockMatchDayRepository implements MatchDayRepository {
       player2Seed: 4,
       refereeName: 'Sara Connor',
       isCheckedIn: false,
-      checkInDeadline: DateTime(now.year, now.month, now.day, 17, 15),
+      checkInDeadline: checkInDeadline,
     );
 
     final matchCompleted = PlayerMatch(
@@ -327,7 +332,7 @@ class MockMatchDayRepository implements MatchDayRepository {
   }
 
   @override
-  Future<Result<PlayerMatch>> checkInToMatch(String matchId) async {
+  Future<Result<PlayerMatch>> checkInToMatch(String matchId, {DateTime? currentTime}) async {
     if (shouldFail) {
       return const FailureResult(
         ServerFailure(message: 'Unable to check in for match. Please try again.'),
@@ -342,6 +347,31 @@ class MockMatchDayRepository implements MatchDayRepository {
     }
 
     final match = customData!.myMatches[index];
+
+    // 1. Prevent duplicate check-in
+    if (match.isCheckedIn) {
+      return const FailureResult(
+        ValidationFailure(message: 'Player is already checked in for this match.'),
+      );
+    }
+
+    // 2. Reject check-in for completed, live, delayed or otherwise ineligible matches
+    if (match.status != MatchStatus.scheduled) {
+      return FailureResult(
+        ValidationFailure(
+          message: 'Check-in is only available for scheduled matches. Current status: ${match.status.displayName}.',
+        ),
+      );
+    }
+
+    // 3. Reject check-in when deadline has expired
+    final now = currentTime ?? DateTime.now();
+    if (match.isCheckInDeadlineExpired(now)) {
+      return const FailureResult(
+        ValidationFailure(message: 'Check-in deadline has expired for this match.'),
+      );
+    }
+
     final updated = match.copyWith(isCheckedIn: true);
 
     final updatedMatches = List<PlayerMatch>.from(customData!.myMatches);

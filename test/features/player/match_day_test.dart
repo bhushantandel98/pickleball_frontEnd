@@ -65,7 +65,8 @@ void main() {
       expect(failure, isA<ServerFailure>());
     });
 
-    test('checkInToMatch marks match as checked in', () async {
+    // 1. Successful check-in before the deadline
+    test('checkInToMatch succeeds before the deadline for eligible scheduled match', () async {
       final repo = MockMatchDayRepository();
       final result = await repo.checkInToMatch('match_sched_002');
 
@@ -80,6 +81,45 @@ void main() {
           .myMatches
           .firstWhere((m) => m.id == 'match_sched_002');
       expect(updatedMatch.isCheckedIn, isTrue);
+    });
+
+    // 2. Rejected check-in after the deadline
+    test('checkInToMatch rejects check-in when deadline has expired', () async {
+      final repo = MockMatchDayRepository();
+      final expiredTime = DateTime.now().add(const Duration(hours: 12));
+      final result = await repo.checkInToMatch('match_sched_002', currentTime: expiredTime);
+
+      expect(result, isA<FailureResult<PlayerMatch>>());
+      final failure = (result as FailureResult<PlayerMatch>).failure;
+      expect(failure, isA<ValidationFailure>());
+      expect(failure.message, equals('Check-in deadline has expired for this match.'));
+    });
+
+    // 3. Rejected check-in for an ineligible match
+    test('checkInToMatch rejects check-in for completed or live match', () async {
+      final repo = MockMatchDayRepository();
+
+      // Test with completed match fixture
+      final compResult = await repo.checkInToMatch('match_comp_003');
+      expect(compResult, isA<FailureResult<PlayerMatch>>());
+      final failure = (compResult as FailureResult<PlayerMatch>).failure;
+      expect(failure, isA<ValidationFailure>());
+    });
+
+    // 4. Duplicate check-in prevention
+    test('checkInToMatch rejects duplicate check-in', () async {
+      final repo = MockMatchDayRepository();
+
+      // First check-in succeeds
+      final first = await repo.checkInToMatch('match_sched_002');
+      expect(first, isA<Success<PlayerMatch>>());
+
+      // Second check-in must be rejected
+      final second = await repo.checkInToMatch('match_sched_002');
+      expect(second, isA<FailureResult<PlayerMatch>>());
+      final failure = (second as FailureResult<PlayerMatch>).failure;
+      expect(failure, isA<ValidationFailure>());
+      expect(failure.message, equals('Player is already checked in for this match.'));
     });
 
     test('checkInToMatch returns NotFoundFailure when match does not exist', () async {
@@ -121,7 +161,7 @@ void main() {
       expect(loaded.activeTab, equals(MatchDayTab.liveScores));
     });
 
-    test('checkIn updates fixture state and sets feedbackMessage', () async {
+    test('checkIn updates fixture state and sets feedbackMessage on success', () async {
       final repo = MockMatchDayRepository();
       final cubit = MatchDayCubit(repository: repo);
 
@@ -135,6 +175,32 @@ void main() {
       expect(loaded.feedbackMessage, contains('Checked in successfully'));
     });
 
+    test('checkIn provides clear feedback when rejected due to expired deadline', () async {
+      final repo = MockMatchDayRepository();
+      final cubit = MatchDayCubit(repository: repo);
+
+      await cubit.loadMatchDay();
+      final expiredTime = DateTime.now().add(const Duration(hours: 12));
+      final success = await cubit.checkIn('match_sched_002', currentTime: expiredTime);
+
+      expect(success, isFalse);
+      final loaded = cubit.state as MatchDayLoaded;
+      expect(loaded.feedbackMessage, equals('Check-in deadline has expired for this match.'));
+    });
+
+    test('checkIn provides clear feedback when rejected due to duplicate check-in', () async {
+      final repo = MockMatchDayRepository();
+      final cubit = MatchDayCubit(repository: repo);
+
+      await cubit.loadMatchDay();
+      await cubit.checkIn('match_sched_002');
+      final secondTry = await cubit.checkIn('match_sched_002');
+
+      expect(secondTry, isFalse);
+      final loaded = cubit.state as MatchDayLoaded;
+      expect(loaded.feedbackMessage, equals('Player is already checked in for this match.'));
+    });
+
     test('loadMatchDay emits MatchDayFailure on repository error', () async {
       final repo = MockMatchDayRepository(shouldFail: true);
       final cubit = MatchDayCubit(repository: repo);
@@ -145,9 +211,31 @@ void main() {
       final failure = cubit.state as MatchDayFailure;
       expect(failure.message, contains('Unable to load Match Day schedule'));
     });
+
+    // 5. Empty-state logic test: personal matches empty, but court data exists
+    test('MatchDayLoaded.isEmpty evaluates to true when myMatches is empty even if court data exists', () {
+      final data = PlayerMatchDayData(
+        tournamentId: 't1',
+        tournamentName: 'Test Open',
+        tournamentVenue: 'Test Arena',
+        date: DateTime.now(),
+        myMatches: const [],
+        courtMatches: const [
+          CourtLiveMatch(courtId: 'c1', courtName: 'Court 1', tournamentName: 'Test', category: 'Open'),
+        ],
+        standings: const [
+          StandingsRow(rank: 1, playerName: 'P1', pool: 'Pool A', matchesPlayed: 1, matchesWon: 1, matchesLost: 0, pointDifferential: 5),
+        ],
+        bracket: const [],
+      );
+
+      final state = MatchDayLoaded(data: data);
+      expect(state.isEmpty, isTrue);
+    });
   });
 
   group('MatchDayPage Widget Tests', () {
+    // 6. Normal Match Day rendering remains functional
     testWidgets('renders tournament header, tabs, and my schedule fixtures', (tester) async {
       setTallViewport(tester);
       final repo = MockMatchDayRepository();
@@ -202,6 +290,70 @@ void main() {
       // Should now show Checked In chip and SnackBar
       expect(find.text('Checked in successfully for Quarter-Final!'), findsOneWidget);
       expect(checkInBtn, findsNothing);
+      expect(find.text('Checked In'), findsWidgets);
+    });
+
+    testWidgets('UI does not offer check-in button when check-in deadline has expired', (tester) async {
+      setTallViewport(tester);
+      final now = DateTime.now();
+
+      // Custom mock match with expired check-in deadline
+      final expiredMatch = PlayerMatch(
+        id: 'match_expired_001',
+        tournamentId: 'tourn_001',
+        tournamentName: 'National Pickleball Open 2026',
+        category: 'Mixed Doubles 3.5',
+        round: 'Round 1',
+        courtName: 'Court 4',
+        scheduledTime: now.add(const Duration(hours: 1)),
+        status: MatchStatus.scheduled,
+        player1Name: 'Alex Rivera',
+        player2Name: 'Mark Lee',
+        checkInDeadline: now.subtract(const Duration(minutes: 10)),
+      );
+
+      final customData = PlayerMatchDayData(
+        tournamentId: 'tourn_001',
+        tournamentName: 'National Pickleball Open 2026',
+        tournamentVenue: 'Grand Slam Pickleball Arena',
+        date: now,
+        myMatches: [expiredMatch],
+        courtMatches: const [],
+        standings: const [],
+        bracket: const [],
+      );
+
+      final repo = MockMatchDayRepository(customData: customData);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: MatchDayPage(cubit: MatchDayCubit(repository: repo)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Check In button must NOT be offered
+      expect(find.byKey(const Key('check_in_button_match_expired_001')), findsNothing);
+      // "Check-in Closed" badge must be displayed
+      expect(find.text('Check-in Closed'), findsOneWidget);
+    });
+
+    testWidgets('UI does not offer check-in button for completed or live match', (tester) async {
+      setTallViewport(tester);
+      final repo = MockMatchDayRepository();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: MatchDayPage(cubit: MatchDayCubit(repository: repo)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Completed match and live match must not show check-in buttons
+      expect(find.byKey(const Key('check_in_button_match_live_001')), findsNothing);
+      expect(find.byKey(const Key('check_in_button_match_comp_003')), findsNothing);
     });
 
     testWidgets('switching to Live Courts tab displays active court tracker', (tester) async {
@@ -255,7 +407,74 @@ void main() {
       expect(find.text('Quarter-Finals'), findsOneWidget);
     });
 
-    testWidgets('renders empty state when player has no tournament matches', (tester) async {
+    // 5. Empty state when personal matches are empty but court data exists
+    testWidgets('renders empty state when personal matches are empty but court data exists', (tester) async {
+      setTallViewport(tester);
+      final now = DateTime.now();
+
+      final dataWithCourtsOnly = PlayerMatchDayData(
+        tournamentId: 'tourn_001',
+        tournamentName: 'National Pickleball Open 2026',
+        tournamentVenue: 'Grand Slam Pickleball Arena',
+        date: now,
+        myMatches: const [], // Player has NO personal matches today
+        courtMatches: [
+          CourtLiveMatch(
+            courtId: 'court_1',
+            courtName: 'Court 1 (Championship Court)',
+            tournamentName: 'National Pickleball Open 2026',
+            category: 'Men\'s Singles Open',
+            currentMatch: PlayerMatch(
+              id: 'm1',
+              tournamentId: 't1',
+              tournamentName: 'Tourn',
+              category: 'Cat',
+              round: 'R1',
+              courtName: 'C1',
+              scheduledTime: now,
+              player1Name: 'Player A',
+              player2Name: 'Player B',
+            ),
+          ),
+        ],
+        standings: const [
+          StandingsRow(
+            rank: 1,
+            playerName: 'Player A',
+            pool: 'Pool A',
+            matchesPlayed: 2,
+            matchesWon: 2,
+            matchesLost: 0,
+            pointDifferential: 10,
+          ),
+        ],
+        bracket: const [
+          BracketNode(
+            id: 'b1',
+            roundName: 'Finals',
+            matchIndex: 1,
+            player1: 'Player A',
+            player2: 'Player B',
+          ),
+        ],
+      );
+
+      final repo = MockMatchDayRepository(customData: dataWithCourtsOnly);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: MatchDayPage(cubit: MatchDayCubit(repository: repo)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Must display personal match empty state
+      expect(find.text('No Tournament Matches Today'), findsOneWidget);
+      expect(find.byKey(const Key('match_day_empty_explore_button')), findsOneWidget);
+    });
+
+    testWidgets('renders empty state when player has no tournament matches (isEmpty harness)', (tester) async {
       setTallViewport(tester);
       final repo = MockMatchDayRepository(isEmpty: true);
 

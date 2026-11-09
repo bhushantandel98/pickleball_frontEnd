@@ -40,7 +40,9 @@ class MatchDayLoaded extends MatchDayState {
     this.feedbackMessage,
   });
 
-  bool get isEmpty => data.myMatches.isEmpty && data.courtMatches.isEmpty;
+  /// The empty state is strictly based on whether the player has personal match fixtures (myMatches),
+  /// regardless of independent court monitoring or bracket/standings data.
+  bool get isEmpty => data.myMatches.isEmpty;
 
   MatchDayLoaded copyWith({
     PlayerMatchDayData? data,
