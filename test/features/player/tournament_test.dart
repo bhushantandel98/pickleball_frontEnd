@@ -200,6 +200,222 @@ void main() {
         equals(TournamentRegistrationStatus.withdrawn),
       );
     });
+
+    test('registerForTournament rejects ineligible DUPR rating', () async {
+      final repo = MockTournamentRepository();
+      final payload = TournamentRegistrationPayload(
+        tournamentId: 'tourn_002',
+        categoryId: 'cat_002_ms', // maxRating is 3.75
+        playerName: 'Alex Rivera',
+        playerPhone: '+91 98765 43210',
+        playerEmail: 'alex@example.com',
+        playerRating: 4.5, // Exceeds 3.75
+        playerAge: 28,
+        emergencyContactName: 'Elena Rivera',
+        emergencyContactPhone: '+91 98765 00000',
+        acceptedWaiver: true,
+        acceptedRules: true,
+        entryFee: 800.0,
+      );
+
+      final result = await repo.registerForTournament(payload);
+      expect(result, isA<FailureResult<TournamentRegistration>>());
+      final failure = (result as FailureResult<TournamentRegistration>).failure;
+      expect(failure, isA<ValidationFailure>());
+      expect(failure.message, contains('Player rating'));
+    });
+
+    test('registerForTournament rejects ineligible age', () async {
+      final repo = MockTournamentRepository();
+      final payload = TournamentRegistrationPayload(
+        tournamentId: 'tourn_002',
+        categoryId: 'cat_002_sr', // minAge 50
+        playerName: 'Alex Rivera',
+        playerPhone: '+91 98765 43210',
+        playerEmail: 'alex@example.com',
+        playerRating: 3.5,
+        playerAge: 28, // Under 50
+        partnerName: 'Senior Partner',
+        emergencyContactName: 'Elena Rivera',
+        emergencyContactPhone: '+91 98765 00000',
+        acceptedWaiver: true,
+        acceptedRules: true,
+        entryFee: 1200.0,
+      );
+
+      final result = await repo.registerForTournament(payload);
+      expect(result, isA<FailureResult<TournamentRegistration>>());
+      final failure = (result as FailureResult<TournamentRegistration>).failure;
+      expect(failure, isA<ValidationFailure>());
+      expect(failure.message, contains('Player age'));
+    });
+
+    test('registerForTournament rejects closed category registration', () async {
+      final repo = MockTournamentRepository();
+      final payload = TournamentRegistrationPayload(
+        tournamentId: 'tourn_002',
+        categoryId: 'cat_002_pro', // isRegistrationOpen: false
+        playerName: 'Alex Rivera',
+        playerPhone: '+91 98765 43210',
+        playerEmail: 'alex@example.com',
+        playerRating: 4.8,
+        playerAge: 28,
+        emergencyContactName: 'Elena Rivera',
+        emergencyContactPhone: '+91 98765 00000',
+        acceptedWaiver: true,
+        acceptedRules: true,
+        entryFee: 2500.0,
+      );
+
+      final result = await repo.registerForTournament(payload);
+      expect(result, isA<FailureResult<TournamentRegistration>>());
+      final failure = (result as FailureResult<TournamentRegistration>).failure;
+      expect(failure, isA<ValidationFailure>());
+      expect(failure.message, contains('is closed'));
+    });
+
+    test('registerForTournament handles full category as waitlist without increasing confirmed count', () async {
+      const fullCategory = TournamentCategory(
+        id: 'cat_full_test',
+        name: 'Full Open Singles',
+        entryFee: 1000.0,
+        maxParticipants: 16,
+        registeredCount: 16,
+        isRegistrationOpen: true,
+      );
+      final customTourn = TournamentItem(
+        id: 'tourn_full_test',
+        name: 'Full Test Tournament',
+        organizerName: 'Test Org',
+        venueName: 'Test Venue',
+        address: 'Test Address',
+        city: 'Mumbai',
+        description: 'Full test tournament description.',
+        status: TournamentStatus.registrationOpen,
+        startDate: DateTime.now().add(const Duration(days: 10)),
+        endDate: DateTime.now().add(const Duration(days: 12)),
+        registrationDeadline: DateTime.now().add(const Duration(days: 8)),
+        prizePool: '₹10,000',
+        entryFeeFrom: 1000.0,
+        categories: const [fullCategory],
+      );
+      final customRepo = MockTournamentRepository(
+        customTournaments: [customTourn],
+        customRegistrations: [],
+      );
+
+      const payload = TournamentRegistrationPayload(
+        tournamentId: 'tourn_full_test',
+        categoryId: 'cat_full_test',
+        playerName: 'Alex Rivera',
+        playerPhone: '+91 98765 43210',
+        playerEmail: 'alex@example.com',
+        playerRating: 3.5,
+        playerAge: 28,
+        emergencyContactName: 'Elena Rivera',
+        emergencyContactPhone: '+91 98765 00000',
+        acceptedWaiver: true,
+        acceptedRules: true,
+        entryFee: 1000.0,
+      );
+
+      final result = await customRepo.registerForTournament(payload);
+      expect(result, isA<Success<TournamentRegistration>>());
+      final reg = (result as Success<TournamentRegistration>).data;
+      expect(reg.status, equals(TournamentRegistrationStatus.waitlisted));
+      expect(reg.isWaitlisted, isTrue);
+
+      // Verify category registeredCount did NOT increase beyond 16!
+      final tournResult = await customRepo.getTournamentById('tourn_full_test');
+      final fetchedCategory = (tournResult as Success<TournamentItem>).data.categories.first;
+      expect(fetchedCategory.registeredCount, equals(16));
+    });
+
+    test('withdrawFromTournament correctly updates capacity for confirmed vs waitlisted registrations', () async {
+      const confirmedCategory = TournamentCategory(
+        id: 'cat_conf',
+        name: 'Confirmed Cat',
+        entryFee: 1000.0,
+        maxParticipants: 16,
+        registeredCount: 10,
+        isRegistrationOpen: true,
+      );
+      const waitlistedCategory = TournamentCategory(
+        id: 'cat_wait',
+        name: 'Waitlisted Cat',
+        entryFee: 1000.0,
+        maxParticipants: 16,
+        registeredCount: 16,
+        isRegistrationOpen: true,
+      );
+      final testTourn = TournamentItem(
+        id: 'tourn_cap_test',
+        name: 'Capacity Test Tournament',
+        organizerName: 'Test Org',
+        venueName: 'Test Venue',
+        address: 'Test Address',
+        city: 'Mumbai',
+        description: 'Capacity test description.',
+        status: TournamentStatus.registrationOpen,
+        startDate: DateTime.now().add(const Duration(days: 10)),
+        endDate: DateTime.now().add(const Duration(days: 12)),
+        registrationDeadline: DateTime.now().add(const Duration(days: 8)),
+        prizePool: '₹10,000',
+        entryFeeFrom: 1000.0,
+        categories: const [confirmedCategory, waitlistedCategory],
+      );
+
+      final confirmedReg = TournamentRegistration(
+        id: 'reg_conf_001',
+        tournamentId: 'tourn_cap_test',
+        tournamentName: 'Capacity Test Tournament',
+        categoryId: 'cat_conf',
+        categoryName: 'Confirmed Cat',
+        venueName: 'Test Venue',
+        dates: 'Nov 2026',
+        playerName: 'Alex Rivera',
+        entryFee: 1000.0,
+        status: TournamentRegistrationStatus.confirmed,
+        registeredAt: DateTime.now(),
+      );
+
+      final waitlistedReg = TournamentRegistration(
+        id: 'reg_wait_002',
+        tournamentId: 'tourn_cap_test',
+        tournamentName: 'Capacity Test Tournament',
+        categoryId: 'cat_wait',
+        categoryName: 'Waitlisted Cat',
+        venueName: 'Test Venue',
+        dates: 'Nov 2026',
+        playerName: 'Alex Rivera',
+        entryFee: 1000.0,
+        status: TournamentRegistrationStatus.waitlisted,
+        registeredAt: DateTime.now(),
+      );
+
+      final customRepo = MockTournamentRepository(
+        customTournaments: [testTourn],
+        customRegistrations: [confirmedReg, waitlistedReg],
+      );
+
+      // Withdraw confirmed
+      final wConfResult = await customRepo.withdrawFromTournament('reg_conf_001');
+      expect(wConfResult, isA<Success<TournamentRegistration>>());
+      expect((wConfResult as Success<TournamentRegistration>).data.status, equals(TournamentRegistrationStatus.withdrawn));
+
+      // Check category count decremented from 10 to 9
+      final t1 = (await customRepo.getTournamentById('tourn_cap_test') as Success<TournamentItem>).data;
+      expect(t1.categories.firstWhere((c) => c.id == 'cat_conf').registeredCount, equals(9));
+
+      // Withdraw waitlisted
+      final wWaitResult = await customRepo.withdrawFromTournament('reg_wait_002');
+      expect(wWaitResult, isA<Success<TournamentRegistration>>());
+      expect((wWaitResult as Success<TournamentRegistration>).data.status, equals(TournamentRegistrationStatus.withdrawn));
+
+      // Check waitlisted category count stayed at 16 (did NOT decrement)
+      final t2 = (await customRepo.getTournamentById('tourn_cap_test') as Success<TournamentItem>).data;
+      expect(t2.categories.firstWhere((c) => c.id == 'cat_wait').registeredCount, equals(16));
+    });
   });
 
   group('Tournament Discovery & Details Cubits Unit Tests', () {
@@ -252,13 +468,77 @@ void main() {
         initialCategory: doublesCategory,
       );
 
-      // Submit without partner and waiver
+      // Submit without partner, emergency contacts, and waiver
       final success = await cubit.submit();
       expect(success, isFalse);
 
       final ready = cubit.state as TournamentRegistrationReady;
       expect(ready.errors.containsKey('partnerName'), isTrue);
+      expect(ready.errors.containsKey('emergencyContactName'), isTrue);
+      expect(ready.errors.containsKey('emergencyContactPhone'), isTrue);
       expect(ready.errors.containsKey('waiver'), isTrue);
+      expect(ready.errors.containsKey('rules'), isTrue);
+    });
+
+    test('TournamentRegistrationCubit.selectCategory rejects closed or ineligible category', () async {
+      final repo = MockTournamentRepository();
+      final cubit = TournamentRegistrationCubit(repository: repo);
+
+      final tournaments = MockTournamentRepository.createDefaultTournaments();
+      final tournament = tournaments.firstWhere((t) => t.id == 'tourn_002');
+      final openCategory = tournament.categories.firstWhere((c) => c.id == 'cat_002_md');
+      final seniorCategory = tournament.categories.firstWhere((c) => c.id == 'cat_002_sr'); // minAge 50
+      final proClosed = tournament.categories.firstWhere((c) => c.id == 'cat_002_pro'); // closed
+
+      cubit.init(
+        tournament: tournament,
+        initialCategory: openCategory,
+        playerRating: 3.5,
+        playerAge: 28,
+      );
+
+      // Try selecting senior category (ineligible age 28 < 50)
+      cubit.selectCategory(seniorCategory);
+      expect((cubit.state as TournamentRegistrationReady).selectedCategory.id, equals(openCategory.id));
+
+      // Try selecting pro closed category
+      cubit.selectCategory(proClosed);
+      expect((cubit.state as TournamentRegistrationReady).selectedCategory.id, equals(openCategory.id));
+    });
+
+    test('TournamentRegistrationCubit validates emergency contact and passes actual payload values', () async {
+      final repo = MockTournamentRepository();
+      final cubit = TournamentRegistrationCubit(repository: repo);
+
+      final tournaments = MockTournamentRepository.createDefaultTournaments();
+      final tournament = tournaments.firstWhere((t) => t.id == 'tourn_002');
+      final singlesCategory = tournament.categories.firstWhere((c) => !c.isDoubles && c.isRatingEligible(3.5));
+
+      cubit.init(
+        tournament: tournament,
+        initialCategory: singlesCategory,
+        playerRating: 3.5,
+        playerAge: 28,
+      );
+
+      // Fill waivers
+      cubit.toggleWaiver(true);
+      cubit.toggleRules(true);
+
+      // Submit without emergency contact
+      final submitFail = await cubit.submit();
+      expect(submitFail, isFalse);
+      final readyState = cubit.state as TournamentRegistrationReady;
+      expect(readyState.errors.containsKey('emergencyContactName'), isTrue);
+      expect(readyState.errors.containsKey('emergencyContactPhone'), isTrue);
+
+      // Update emergency contact with actual values
+      cubit.updateEmergencyContactName('Maria Rivera');
+      cubit.updateEmergencyContactPhone('+91 91234 56789');
+
+      final submitSuccess = await cubit.submit();
+      expect(submitSuccess, isTrue);
+      expect(cubit.state, isA<TournamentRegistrationSuccess>());
     });
   });
 
@@ -527,6 +807,8 @@ void main() {
       expect(find.text('Tournament Registration'), findsOneWidget);
       expect(find.text('Monsoon Community Cup 2026'), findsOneWidget);
       expect(find.byKey(const Key('registration_partner_name_input')), findsOneWidget);
+      expect(find.byKey(const Key('registration_emergency_name_input')), findsOneWidget);
+      expect(find.byKey(const Key('registration_emergency_phone_input')), findsOneWidget);
       expect(find.byKey(const Key('registration_waiver_checkbox')), findsOneWidget);
 
       // Attempt to submit without filling required fields
@@ -534,7 +816,51 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Partner full name is required for doubles.'), findsOneWidget);
+      expect(find.text('Emergency contact full name is required.'), findsOneWidget);
+      expect(find.text('Emergency contact phone number is required.'), findsOneWidget);
       expect(find.text('You must accept the liability waiver.'), findsOneWidget);
+    });
+
+    testWidgets('disabled category selection in the registration UI prevents selection and shows feedback', (tester) async {
+      setTallViewport(tester);
+      final repo = MockTournamentRepository();
+      final cubit = TournamentRegistrationCubit(repository: repo);
+
+      final tournaments = MockTournamentRepository.createDefaultTournaments();
+      final tournament = tournaments.firstWhere((t) => t.id == 'tourn_002');
+      final openCat = tournament.categories.firstWhere((c) => c.id == 'cat_002_md');
+
+      cubit.init(
+        tournament: tournament,
+        initialCategory: openCat,
+        playerRating: 3.5,
+        playerAge: 28,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: TournamentRegistrationPage(
+            tournamentId: 'tourn_002',
+            initialCategoryId: openCat.id,
+            cubit: cubit,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify category cards render with their keys
+      expect(find.byKey(const Key('select_category_cat_002_sr')), findsOneWidget);
+      expect(find.byKey(const Key('select_category_cat_002_pro')), findsOneWidget);
+
+      // Tap ineligible Senior category (age 28 < 50)
+      await tester.tap(find.byKey(const Key('select_category_cat_002_sr')));
+      await tester.pumpAndSettle();
+
+      // Feedback SnackBar appears
+      expect(find.text('You do not meet the age requirements for Senior Doubles 50+.'), findsOneWidget);
+      // Selected category has NOT changed
+      expect((cubit.state as TournamentRegistrationReady).selectedCategory.id, equals('cat_002_md'));
     });
 
     testWidgets('completing required inputs and submitting navigates to confirmation', (tester) async {
@@ -550,6 +876,7 @@ void main() {
         tournament: tournament,
         initialCategory: singlesCat,
         playerRating: 3.5,
+        playerAge: 28,
       );
 
       final router = GoRouter(
@@ -577,6 +904,21 @@ void main() {
       );
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      // Fill required emergency contact inputs
+      await tester.ensureVisible(find.byKey(const Key('registration_emergency_name_input')));
+      await tester.enterText(
+        find.byKey(const Key('registration_emergency_name_input')),
+        'Elena Rivera',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(const Key('registration_emergency_phone_input')));
+      await tester.enterText(
+        find.byKey(const Key('registration_emergency_phone_input')),
+        '+91 98765 00000',
+      );
       await tester.pumpAndSettle();
 
       // Check waivers

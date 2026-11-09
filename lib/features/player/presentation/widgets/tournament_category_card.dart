@@ -12,6 +12,7 @@ class TournamentCategoryCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onSelect;
   final bool isSelectable;
+  final bool isEnabled;
 
   const TournamentCategoryCard({
     super.key,
@@ -21,6 +22,7 @@ class TournamentCategoryCard extends StatelessWidget {
     this.isSelected = false,
     this.onSelect,
     this.isSelectable = false,
+    this.isEnabled = true,
   });
 
   Widget _buildEligibilityChip(BuildContext context) {
@@ -48,32 +50,36 @@ class TournamentCategoryCard extends StatelessWidget {
     final fillRatio =
         (category.registeredCount / category.maxParticipants).clamp(0.0, 1.0);
 
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      border: isSelected
-          ? BorderSide(color: theme.colorScheme.primary, width: 2)
-          : null,
-      onTap: isSelectable ? onSelect : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: Category Name & Eligibility Chip
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isSelectable)
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm, top: 2),
-                  child: Icon(
-                    isSelected
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurfaceVariant,
-                    size: 20,
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.65,
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        border: isSelected
+            ? BorderSide(color: theme.colorScheme.primary, width: 2)
+            : null,
+        onTap: isSelectable ? onSelect : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Category Name & Eligibility Chip
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isSelectable)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.sm, top: 2),
+                    child: Icon(
+                      isSelected
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: !isEnabled
+                          ? theme.colorScheme.outlineVariant
+                          : isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
                   ),
-                ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,6 +168,7 @@ class TournamentCategoryCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

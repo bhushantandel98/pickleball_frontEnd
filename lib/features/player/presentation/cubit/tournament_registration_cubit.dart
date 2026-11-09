@@ -17,6 +17,7 @@ class TournamentRegistrationCubit extends Cubit<TournamentRegistrationState> {
     String playerPhone = '+91 98765 43210',
     String playerEmail = 'alex.rivera@example.com',
     double playerRating = 3.85,
+    int playerAge = 28,
   }) {
     emit(TournamentRegistrationReady(
       tournament: tournament,
@@ -25,12 +26,21 @@ class TournamentRegistrationCubit extends Cubit<TournamentRegistrationState> {
       playerPhone: playerPhone,
       playerEmail: playerEmail,
       playerRating: playerRating,
+      playerAge: playerAge,
     ));
   }
 
   void selectCategory(TournamentCategory category) {
     if (state is! TournamentRegistrationReady) return;
     final current = state as TournamentRegistrationReady;
+
+    if (!category.isRegistrationOpen) {
+      return;
+    }
+    if (!category.isRatingEligible(current.playerRating) ||
+        !category.isAgeEligible(current.playerAge)) {
+      return;
+    }
 
     emit(current.copyWith(
       selectedCategory: category,
@@ -70,6 +80,28 @@ class TournamentRegistrationCubit extends Cubit<TournamentRegistrationState> {
     ));
   }
 
+  void updateEmergencyContactName(String name) {
+    if (state is! TournamentRegistrationReady) return;
+    final current = state as TournamentRegistrationReady;
+    final errors = Map<String, String>.from(current.errors)
+      ..remove('emergencyContactName');
+    emit(current.copyWith(
+      emergencyContactName: name,
+      errors: errors,
+    ));
+  }
+
+  void updateEmergencyContactPhone(String phone) {
+    if (state is! TournamentRegistrationReady) return;
+    final current = state as TournamentRegistrationReady;
+    final errors = Map<String, String>.from(current.errors)
+      ..remove('emergencyContactPhone');
+    emit(current.copyWith(
+      emergencyContactPhone: phone,
+      errors: errors,
+    ));
+  }
+
   void toggleWaiver(bool accepted) {
     if (state is! TournamentRegistrationReady) return;
     final current = state as TournamentRegistrationReady;
@@ -94,6 +126,12 @@ class TournamentRegistrationCubit extends Cubit<TournamentRegistrationState> {
         (current.partnerName == null || current.partnerName!.trim().isEmpty)) {
       errors['partnerName'] = 'Partner full name is required for doubles.';
     }
+    if (current.emergencyContactName.trim().isEmpty) {
+      errors['emergencyContactName'] = 'Emergency contact full name is required.';
+    }
+    if (current.emergencyContactPhone.trim().isEmpty) {
+      errors['emergencyContactPhone'] = 'Emergency contact phone number is required.';
+    }
     if (!current.acceptedWaiver) {
       errors['waiver'] = 'You must accept the liability waiver.';
     }
@@ -115,15 +153,12 @@ class TournamentRegistrationCubit extends Cubit<TournamentRegistrationState> {
       playerPhone: current.playerPhone,
       playerEmail: current.playerEmail,
       playerRating: current.playerRating,
+      playerAge: current.playerAge,
       partnerName: current.partnerName,
       partnerPhone: current.partnerPhone,
       tshirtSize: current.tshirtSize,
-      emergencyContactName: current.emergencyContactName.isEmpty
-          ? 'Emergency Contact'
-          : current.emergencyContactName,
-      emergencyContactPhone: current.emergencyContactPhone.isEmpty
-          ? '+91 99999 88888'
-          : current.emergencyContactPhone,
+      emergencyContactName: current.emergencyContactName.trim(),
+      emergencyContactPhone: current.emergencyContactPhone.trim(),
       acceptedWaiver: current.acceptedWaiver,
       acceptedRules: current.acceptedRules,
       entryFee: current.entryFee,

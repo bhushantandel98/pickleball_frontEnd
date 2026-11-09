@@ -137,6 +137,15 @@ class MockTournamentRepository implements TournamentRepository {
           maxParticipants: 16,
           registeredCount: 8,
         ),
+        TournamentCategory(
+          id: 'cat_002_pro',
+          name: 'Pro Invitational Open',
+          minRating: 4.5,
+          entryFee: 2500.0,
+          maxParticipants: 16,
+          registeredCount: 16,
+          isRegistrationOpen: false,
+        ),
       ],
       isRegistered: false,
     );
@@ -438,6 +447,15 @@ class MockTournamentRepository implements TournamentRepository {
     }
     final category = tournament.categories[catIndex];
 
+    // Validate category-level registration availability
+    if (!category.isRegistrationOpen) {
+      return FailureResult(
+        ValidationFailure(
+          message: 'Registration for category "${category.name}" is closed.',
+        ),
+      );
+    }
+
     // Validate waiver acceptance
     if (!payload.acceptedWaiver || !payload.acceptedRules) {
       return const FailureResult(
@@ -463,6 +481,16 @@ class MockTournamentRepository implements TournamentRepository {
         ValidationFailure(
           message:
               'Player rating (DUPR ${payload.playerRating}) does not satisfy category requirements (${category.eligibilitySummary}).',
+        ),
+      );
+    }
+
+    // Validate age eligibility
+    if (!category.isAgeEligible(payload.playerAge)) {
+      return FailureResult(
+        ValidationFailure(
+          message:
+              'Player age (${payload.playerAge}) does not satisfy category age requirements (${category.eligibilitySummary}).',
         ),
       );
     }
@@ -507,8 +535,11 @@ class MockTournamentRepository implements TournamentRepository {
     );
 
     // Update in-memory tournament category count & registered flag
+    // A waitlisted registration must NOT increase the confirmed registered count beyond category capacity!
     final updatedCategory = category.copyWith(
-      registeredCount: category.registeredCount + 1,
+      registeredCount: isWaitlist
+          ? category.registeredCount
+          : category.registeredCount + 1,
     );
     final updatedCategories =
         List<TournamentCategory>.from(tournament.categories);
@@ -572,8 +603,11 @@ class MockTournamentRepository implements TournamentRepository {
           .indexWhere((c) => c.id == currentReg.categoryId);
       if (catIndex != -1) {
         final cat = tournament.categories[catIndex];
+        final updatedCount = currentReg.isConfirmed
+            ? (cat.registeredCount - 1).clamp(0, 9999)
+            : cat.registeredCount;
         final updatedCat = cat.copyWith(
-          registeredCount: (cat.registeredCount - 1).clamp(0, 9999),
+          registeredCount: updatedCount,
         );
         final updatedCats = List<TournamentCategory>.from(tournament.categories);
         updatedCats[catIndex] = updatedCat;

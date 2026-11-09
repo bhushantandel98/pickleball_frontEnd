@@ -388,6 +388,7 @@ class TournamentRegistrationPayload extends Equatable {
   final String playerPhone;
   final String playerEmail;
   final double playerRating;
+  final int playerAge;
   final String? partnerName;
   final String? partnerPhone;
   final String? partnerEmail;
@@ -407,6 +408,7 @@ class TournamentRegistrationPayload extends Equatable {
     required this.playerPhone,
     required this.playerEmail,
     required this.playerRating,
+    this.playerAge = 28,
     this.partnerName,
     this.partnerPhone,
     this.partnerEmail,
@@ -428,6 +430,7 @@ class TournamentRegistrationPayload extends Equatable {
         playerPhone,
         playerEmail,
         playerRating,
+        playerAge,
         partnerName,
         partnerPhone,
         partnerEmail,

@@ -19,6 +19,7 @@ class TournamentRegistrationReady extends TournamentRegistrationState {
   final String playerPhone;
   final String playerEmail;
   final double playerRating;
+  final int playerAge;
   final String? partnerName;
   final String? partnerPhone;
   final double? partnerRating;
@@ -37,6 +38,7 @@ class TournamentRegistrationReady extends TournamentRegistrationState {
     required this.playerPhone,
     required this.playerEmail,
     required this.playerRating,
+    this.playerAge = 28,
     this.partnerName,
     this.partnerPhone,
     this.partnerRating,
@@ -59,6 +61,7 @@ class TournamentRegistrationReady extends TournamentRegistrationState {
     String? playerPhone,
     String? playerEmail,
     double? playerRating,
+    int? playerAge,
     String? partnerName,
     String? partnerPhone,
     double? partnerRating,
@@ -78,6 +81,7 @@ class TournamentRegistrationReady extends TournamentRegistrationState {
       playerPhone: playerPhone ?? this.playerPhone,
       playerEmail: playerEmail ?? this.playerEmail,
       playerRating: playerRating ?? this.playerRating,
+      playerAge: playerAge ?? this.playerAge,
       partnerName: clearPartner ? null : (partnerName ?? this.partnerName),
       partnerPhone: clearPartner ? null : (partnerPhone ?? this.partnerPhone),
       partnerRating: clearPartner ? null : (partnerRating ?? this.partnerRating),
@@ -99,6 +103,7 @@ class TournamentRegistrationReady extends TournamentRegistrationState {
         playerPhone,
         playerEmail,
         playerRating,
+        playerAge,
         partnerName,
         partnerPhone,
         partnerRating,

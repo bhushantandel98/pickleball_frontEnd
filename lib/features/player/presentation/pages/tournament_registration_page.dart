@@ -60,11 +60,19 @@ class _TournamentRegistrationPageState extends State<TournamentRegistrationPage>
 
     switch (result) {
       case Success<TournamentItem>(:final data):
-        // Pick initial category: either matching initialCategoryId or first open category
+        // Pick initial category: either matching initialCategoryId or first open & eligible category
         final initialCat = widget.initialCategoryId != null
-            ? data.categories
-                .firstWhere((c) => c.id == widget.initialCategoryId, orElse: () => data.categories.first)
-            : data.categories.first;
+            ? data.categories.firstWhere(
+                (c) => c.id == widget.initialCategoryId,
+                orElse: () => data.categories.first,
+              )
+            : data.categories.firstWhere(
+                (c) =>
+                    c.isRegistrationOpen &&
+                    c.isRatingEligible(3.85) &&
+                    c.isAgeEligible(28),
+                orElse: () => data.categories.first,
+              );
 
         _cubit.init(
           tournament: data,
@@ -153,10 +161,16 @@ class _TournamentRegistrationViewState
   @override
   void initState() {
     super.initState();
-    _partnerController = TextEditingController();
-    _partnerPhoneController = TextEditingController();
-    _emergencyNameController = TextEditingController();
-    _emergencyPhoneController = TextEditingController();
+    final cubitState = context.read<TournamentRegistrationCubit?>()?.state;
+    final ready = cubitState is TournamentRegistrationReady ? cubitState : null;
+    _partnerController =
+        TextEditingController(text: ready?.partnerName ?? '');
+    _partnerPhoneController =
+        TextEditingController(text: ready?.partnerPhone ?? '');
+    _emergencyNameController =
+        TextEditingController(text: ready?.emergencyContactName ?? '');
+    _emergencyPhoneController =
+        TextEditingController(text: ready?.emergencyContactPhone ?? '');
   }
 
   @override
@@ -277,6 +291,11 @@ class _TournamentRegistrationViewState
                         const SizedBox(height: AppSpacing.xs),
                         ...tournament.categories.map((cat) {
                           final isSelected = cat.id == category.id;
+                          final isEligible =
+                              cat.isRatingEligible(state.playerRating) &&
+                                  cat.isAgeEligible(state.playerAge);
+                          final isAvailable = cat.isRegistrationOpen && isEligible;
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                             child: TournamentCategoryCard(
@@ -284,7 +303,23 @@ class _TournamentRegistrationViewState
                               category: cat,
                               isSelected: isSelected,
                               isSelectable: true,
+                              isEnabled: isAvailable,
+                              isEligible: isEligible,
                               onSelect: () {
+                                if (!isAvailable) {
+                                  final reason = !cat.isRegistrationOpen
+                                      ? 'Registration for ${cat.name} is closed.'
+                                      : !cat.isRatingEligible(state.playerRating)
+                                          ? 'Your DUPR rating (${state.playerRating}) does not meet the requirements for ${cat.name}.'
+                                          : 'You do not meet the age requirements for ${cat.name}.';
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(reason),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  return;
+                                }
                                 context
                                     .read<TournamentRegistrationCubit>()
                                     .selectCategory(cat);
@@ -441,11 +476,60 @@ class _TournamentRegistrationViewState
 
                         const SizedBox(height: AppSpacing.md),
 
-                        // Section 5: Waivers & Agreements
+                        // Section 5: Emergency Contact Information
                         Text(
                           state.isDoubles
-                              ? '5. Waivers & Acknowledgment'
-                              : '4. Waivers & Acknowledgment',
+                              ? '5. Emergency Contact'
+                              : '4. Emergency Contact',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        AppCard(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppTextField(
+                                key: const Key('registration_emergency_name_input'),
+                                controller: _emergencyNameController,
+                                label: 'Emergency Contact Full Name *',
+                                hint: 'e.g. Maria Rivera',
+                                validator: (_) => state.errors['emergencyContactName'],
+                                autovalidateMode: AutovalidateMode.always,
+                                onChanged: (val) {
+                                  context
+                                      .read<TournamentRegistrationCubit>()
+                                      .updateEmergencyContactName(val);
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              AppTextField(
+                                key: const Key('registration_emergency_phone_input'),
+                                controller: _emergencyPhoneController,
+                                label: 'Emergency Contact Phone Number *',
+                                hint: '+91 98765 00000',
+                                keyboardType: TextInputType.phone,
+                                validator: (_) => state.errors['emergencyContactPhone'],
+                                autovalidateMode: AutovalidateMode.always,
+                                onChanged: (val) {
+                                  context
+                                      .read<TournamentRegistrationCubit>()
+                                      .updateEmergencyContactPhone(val);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: AppSpacing.md),
+
+                        // Section: Waivers & Agreements
+                        Text(
+                          state.isDoubles
+                              ? '6. Waivers & Acknowledgment'
+                              : '5. Waivers & Acknowledgment',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
