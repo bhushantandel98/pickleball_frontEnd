@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:pickleball_platform/features/player/domain/entities/coaching_academy_item.dart';
+import 'package:pickleball_platform/shared/entities/user_profile.dart';
 
 sealed class CoachInquiryState extends Equatable {
   const CoachInquiryState();
@@ -15,12 +16,14 @@ class CoachInquiryInitial extends CoachInquiryState {
 class CoachInquiryReady extends CoachInquiryState {
   final CoachItem coach;
   final String? selectedServiceId;
+  final UserProfile? applicantProfile;
   final bool isSubmitting;
   final String? errorMessage;
 
   const CoachInquiryReady({
     required this.coach,
     this.selectedServiceId,
+    this.applicantProfile,
     this.isSubmitting = false,
     this.errorMessage,
   });
@@ -28,19 +31,27 @@ class CoachInquiryReady extends CoachInquiryState {
   CoachInquiryReady copyWith({
     CoachItem? coach,
     String? selectedServiceId,
+    UserProfile? applicantProfile,
     bool? isSubmitting,
     String? errorMessage,
   }) {
     return CoachInquiryReady(
       coach: coach ?? this.coach,
       selectedServiceId: selectedServiceId ?? this.selectedServiceId,
+      applicantProfile: applicantProfile ?? this.applicantProfile,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [coach, selectedServiceId, isSubmitting, errorMessage];
+  List<Object?> get props => [
+        coach,
+        selectedServiceId,
+        applicantProfile,
+        isSubmitting,
+        errorMessage,
+      ];
 }
 
 class CoachInquirySuccess extends CoachInquiryState {

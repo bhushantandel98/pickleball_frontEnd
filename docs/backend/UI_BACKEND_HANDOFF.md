@@ -2308,10 +2308,11 @@ Feature 2.6 implements the complete Player Marketplace Shopping Experience accor
 Implements public academy branch discovery, program and batch exploration, enrollment request submission, waitlist handling, registered coach directory browsing, coach service inspection, and coaching inquiry submission.
 
 Strict PRD access and privacy boundaries:
-1. **Public Academy Branch Privacy Constraint:** Public listings must display ONLY permitted branch information (academy name, branch name, address, operating timings, court count, head coach). Fees and player roster data MUST NOT be exposed on public branch listings.
+1. **Public Academy Branch Privacy Constraint:** Per Player PRD v1.6, public listings and public branch cards must display ONLY approved public branch information: academy name, branch location (branch campus name, city, address), and operating timings. Internal court counts, coach assignments, program count tags, internal tuition fees, and player roster data MUST NOT be exposed on public branch listings or unapproved public details.
 2. **Academy Approval Requirement:** Academy enrollment requests are never auto-approved. Every request transitions initially to `pendingApproval` (or `waitlisted` if the batch is full and waitlist is enabled). Players cannot approve their own enrollments.
 3. **Waitlist Policy:** Waitlist submission is offered exclusively when `isWaitlistEnabled == true` on a full batch. If a batch is full and the waitlist is closed, enrollment submission is rejected.
 4. **Coaching Dashboard Access Policy:** Submitting a coaching inquiry connects the player with the coach for scheduling. It does NOT automatically grant access to any coaching dashboard. Personal coaching access is granted exclusively after the coach approves.
+5. **Applicant Form Defaults & Privacy Policy:** Academy enrollment and coach inquiry forms pre-fill applicant details exclusively from the authenticated player profile (`name`, `phone`, `email`, `rating`). When unauthenticated or if profile fields are empty, inputs remain empty for the player to enter. Emergency contact details and inquiry-specific goals are NEVER pre-populated with placeholder/dummy values and require explicit applicant entry. Empty submissions for required fields are rejected by client-side and repository-level validation.
 
 #### 2. Data Models & Enums
 

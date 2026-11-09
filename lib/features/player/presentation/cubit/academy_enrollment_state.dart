@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:pickleball_platform/features/player/domain/entities/coaching_academy_item.dart';
+import 'package:pickleball_platform/shared/entities/user_profile.dart';
 
 sealed class AcademyEnrollmentState extends Equatable {
   const AcademyEnrollmentState();
@@ -16,6 +17,7 @@ class AcademyEnrollmentReady extends AcademyEnrollmentState {
   final AcademyBranch branch;
   final AcademyProgram program;
   final AcademyBatch batch;
+  final UserProfile? applicantProfile;
   final bool isSubmitting;
   final String? errorMessage;
 
@@ -23,6 +25,7 @@ class AcademyEnrollmentReady extends AcademyEnrollmentState {
     required this.branch,
     required this.program,
     required this.batch,
+    this.applicantProfile,
     this.isSubmitting = false,
     this.errorMessage,
   });
@@ -31,6 +34,7 @@ class AcademyEnrollmentReady extends AcademyEnrollmentState {
     AcademyBranch? branch,
     AcademyProgram? program,
     AcademyBatch? batch,
+    UserProfile? applicantProfile,
     bool? isSubmitting,
     String? errorMessage,
   }) {
@@ -38,13 +42,21 @@ class AcademyEnrollmentReady extends AcademyEnrollmentState {
       branch: branch ?? this.branch,
       program: program ?? this.program,
       batch: batch ?? this.batch,
+      applicantProfile: applicantProfile ?? this.applicantProfile,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [branch, program, batch, isSubmitting, errorMessage];
+  List<Object?> get props => [
+        branch,
+        program,
+        batch,
+        applicantProfile,
+        isSubmitting,
+        errorMessage,
+      ];
 }
 
 class AcademyEnrollmentSuccess extends AcademyEnrollmentState {

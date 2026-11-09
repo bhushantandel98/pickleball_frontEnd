@@ -7,8 +7,9 @@ import 'package:pickleball_platform/features/player/domain/entities/coaching_aca
 
 /// Card presenting public academy branch information.
 ///
-/// Complies with strict PRD privacy constraints: public listings show only
-/// permitted branch details (name, location, timings, courts). Fees and roster data are hidden.
+/// Complies with strict Player PRD v1.6 privacy constraints: public listings show
+/// only approved branch details (academy name, branch location, and operating timings).
+/// Internal court counts, coach assignments, fees, and roster data are excluded.
 class AcademyBranchCard extends StatelessWidget {
   final AcademyBranch branch;
   final VoidCallback onTap;
@@ -100,22 +101,6 @@ class AcademyBranchCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // Meta info (Courts, Head Coach, Programs count)
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: 4,
-            children: [
-              if (branch.courtCount > 0)
-                AppChip(label: '${branch.courtCount} Courts'),
-              if (branch.headCoachName.isNotEmpty)
-                AppChip(label: 'Lead: ${branch.headCoachName}'),
-              AppChip.info(
-                label: '${branch.programs.length} Program${branch.programs.length == 1 ? '' : 's'}',
               ),
             ],
           ),

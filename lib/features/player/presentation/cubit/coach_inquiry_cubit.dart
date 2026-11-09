@@ -1,24 +1,49 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pickleball_platform/core/access/session_cubit.dart';
 import 'package:pickleball_platform/core/network/result.dart';
+import 'package:pickleball_platform/features/identity/domain/repositories/user_profile_repository.dart';
 import 'package:pickleball_platform/features/player/domain/entities/coaching_academy_item.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/coaching_academy_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/coach_inquiry_state.dart';
+import 'package:pickleball_platform/shared/entities/user_profile.dart';
 
 class CoachInquiryCubit extends Cubit<CoachInquiryState> {
   final CoachingAcademyRepository _repository;
+  final UserProfileRepository? userProfileRepository;
+  final SessionCubit? sessionCubit;
 
-  CoachInquiryCubit(this._repository) : super(const CoachInquiryInitial());
+  CoachInquiryCubit(
+    this._repository, {
+    this.userProfileRepository,
+    this.sessionCubit,
+  }) : super(const CoachInquiryInitial());
 
   Future<void> init({
     required String coachId,
     String? preSelectedServiceId,
+    String? userId,
   }) async {
     final result = await _repository.getCoachById(coachId);
     if (result is Success<CoachItem>) {
+      UserProfile? profile;
+      final targetUserId = userId ??
+          (sessionCubit?.state.isAuthenticated == true
+              ? sessionCubit?.state.userId
+              : null);
+
+      final profileRepo = userProfileRepository;
+      if (targetUserId != null && profileRepo != null) {
+        final profileResult = await profileRepo.getUserProfile(targetUserId);
+        if (profileResult is Success<UserProfile>) {
+          profile = profileResult.data;
+        }
+      }
+
       emit(CoachInquiryReady(
         coach: result.data,
         selectedServiceId: preSelectedServiceId ??
             (result.data.services.isNotEmpty ? result.data.services.first.id : null),
+        applicantProfile: profile,
       ));
     } else {
       emit(const CoachInquiryFailure('Unable to load coach details.'));

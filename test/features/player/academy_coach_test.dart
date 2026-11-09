@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
+import 'package:pickleball_platform/core/access/session_cubit.dart';
+import 'package:pickleball_platform/core/access/user_role.dart';
 import 'package:pickleball_platform/core/design_system/app_theme.dart';
 import 'package:pickleball_platform/core/errors/failures.dart';
+import 'package:pickleball_platform/core/mock/data/mock_data.dart';
 import 'package:pickleball_platform/core/network/result.dart';
+import 'package:pickleball_platform/features/identity/domain/repositories/user_profile_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_coaching_academy_repository.dart';
 import 'package:pickleball_platform/features/player/domain/entities/coaching_academy_item.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/academy_details_cubit.dart';
@@ -344,7 +348,7 @@ void main() {
   });
 
   group('Feature 2.7 Widget Tests', () {
-    testWidgets('AcademyBranchCard renders permitted public details without fees', (tester) async {
+    testWidgets('AcademyBranchCard renders permitted public details only and excludes internal info', (tester) async {
       const branch = AcademyBranch(
         id: 'test_branch',
         academyId: 'test_acad',
@@ -369,13 +373,19 @@ void main() {
         ),
       );
 
+      // Approved public info
       expect(find.text('Apex Pickleball Academy'), findsOneWidget);
       expect(find.text('Main Campus'), findsOneWidget);
+      expect(find.text('Mumbai'), findsOneWidget);
+      expect(find.text('100 Court Road, Worli'), findsOneWidget);
       expect(find.text('Mon-Sat: 6:00 AM - 9:00 PM'), findsOneWidget);
-      expect(find.text('4 Courts'), findsOneWidget);
-      expect(find.text('Lead: Coach John'), findsOneWidget);
       expect(find.text('View Programs & Batches'), findsOneWidget);
-      // Ensure fees are not rendered on public branch card
+
+      // Excluded internal / unapproved public info
+      expect(find.text('4 Courts'), findsNothing);
+      expect(find.text('Lead: Coach John'), findsNothing);
+      expect(find.text('0 Programs'), findsNothing);
+      expect(find.text('1 Program'), findsNothing);
       expect(find.textContaining('₹'), findsNothing);
     });
 
@@ -489,7 +499,7 @@ void main() {
       expect(find.textContaining('Coach Inquiries'), findsOneWidget);
     });
 
-    testWidgets('AcademyDetailsPage renders branch overview, programs and batches', (tester) async {
+    testWidgets('AcademyDetailsPage renders branch overview, programs and batches without unapproved internal details', (tester) async {
       setTallViewport(tester);
 
       final repo = MockCoachingAcademyRepository();
@@ -512,9 +522,14 @@ void main() {
       expect(find.text('Worli Sea Face Campus'), findsOneWidget);
       expect(find.text('Training Programs & Batches'), findsOneWidget);
       expect(find.byType(AcademyBatchCard), findsWidgets);
+
+      // Verify unapproved internal information is excluded
+      expect(find.textContaining('Courts'), findsNothing);
+      expect(find.textContaining('Lead:'), findsNothing);
+      expect(find.textContaining('+91 98200 12345'), findsNothing);
     });
 
-    testWidgets('AcademyEnrollmentPage renders applicant inputs and submits request', (tester) async {
+    testWidgets('AcademyEnrollmentPage leaves fields empty when unauthenticated and enforces emergency contact validation', (tester) async {
       setTallViewport(tester);
 
       final repo = MockCoachingAcademyRepository();
@@ -539,11 +554,87 @@ void main() {
       expect(find.text('Emergency Contact'), findsOneWidget);
       expect(find.text('Submit Enrollment Request'), findsOneWidget);
 
+      // Verify all text fields are initially empty (no hardcoded defaults)
+      expect(find.text('Alex Rivera'), findsNothing);
+      expect(find.text('+91 98765 43210'), findsNothing);
+      expect(find.text('Carlos Rivera'), findsNothing);
+      expect(find.text('+91 98765 43211'), findsNothing);
+
+      // Submitting empty form fails on player name
+      await tester.tap(find.text('Submit Enrollment Request'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter your full name.'), findsOneWidget);
+
+      // Enter player name and phone
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.at(0), 'Taylor Vance');
+      await tester.enterText(textFields.at(1), '+91 98765 43210');
+
+      // Submitting without emergency contacts fails
+      await tester.tap(find.text('Submit Enrollment Request'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter an emergency contact name.'), findsOneWidget);
+
+      // Enter emergency contacts
+      await tester.enterText(textFields.at(4), 'Jordan Vance');
+      await tester.enterText(textFields.at(5), '+91 98765 43211');
+
+      // Now submission succeeds
       await tester.tap(find.text('Submit Enrollment Request'));
       await tester.pumpAndSettle();
 
       expect(find.text('Enrollment Request Submitted!'), findsOneWidget);
       expect(find.text('Back to Academies & Coaches'), findsOneWidget);
+    });
+
+    testWidgets('AcademyEnrollmentPage pre-fills player profile data when logged in but leaves emergency contacts empty', (tester) async {
+      setTallViewport(tester);
+
+      final repo = MockCoachingAcademyRepository();
+      final userProfileRepo = sl<UserProfileRepository>();
+      final sessionCubit = sl<SessionCubit>();
+
+      // Authenticate as playerUser
+      await sessionCubit.signIn(
+        userId: MockData.playerUser.id,
+        email: MockData.playerUser.email,
+        roles: const [UserRole.player],
+        activeRole: UserRole.player,
+      );
+
+      final cubit = AcademyEnrollmentCubit(
+        repo,
+        userProfileRepository: userProfileRepo,
+        sessionCubit: sessionCubit,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: AcademyEnrollmentPage(
+            branchId: 'acad_branch_001',
+            programId: 'prog_001',
+            batchId: 'batch_001',
+            cubit: cubit,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Logged-in profile fields are pre-filled
+      expect(find.text(MockData.playerUser.name), findsOneWidget);
+      expect(find.text(MockData.playerUser.phone), findsOneWidget);
+      expect(find.text(MockData.playerUser.email), findsOneWidget);
+
+      // Emergency contact details are NEVER prefilled with placeholders
+      expect(find.text('Carlos Rivera'), findsNothing);
+      expect(find.text('+91 98765 43211'), findsNothing);
+
+      // Submitting without entering emergency contact is rejected
+      await tester.tap(find.text('Submit Enrollment Request'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter an emergency contact name.'), findsOneWidget);
     });
 
     testWidgets('CoachDetailsPage renders coach profile, rates, and triggers inquiry navigation', (tester) async {
@@ -571,7 +662,7 @@ void main() {
       expect(find.text('Send General Coaching Inquiry'), findsOneWidget);
     });
 
-    testWidgets('CoachInquiryPage renders form, policy advisory, and submits inquiry', (tester) async {
+    testWidgets('CoachInquiryPage leaves fields empty when unauthenticated and enforces validation', (tester) async {
       setTallViewport(tester);
 
       final repo = MockCoachingAcademyRepository();
@@ -594,11 +685,77 @@ void main() {
       expect(find.textContaining('Platform Policy'), findsOneWidget);
       expect(find.text('Send Coaching Inquiry'), findsOneWidget);
 
+      // Verify fields are empty initially
+      expect(find.text('Alex Rivera'), findsNothing);
+      expect(find.text('+91 98765 43210'), findsNothing);
+      expect(find.text('Weekday mornings (Tue/Thu 7:00 AM)'), findsNothing);
+
+      // Submitting empty form fails on player name
+      await tester.tap(find.text('Send Coaching Inquiry'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter your name.'), findsOneWidget);
+
+      // Enter required fields
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.at(0), 'Morgan Reed');
+      await tester.enterText(textFields.at(1), '+91 98765 43210');
+      await tester.enterText(textFields.at(3), 'Mon & Wed evenings');
+      await tester.enterText(textFields.at(5), 'Improve third shot drops');
+      await tester.enterText(textFields.at(6), 'Looking for private lessons.');
+
       await tester.tap(find.text('Send Coaching Inquiry'));
       await tester.pumpAndSettle();
 
       expect(find.text('Inquiry Sent to Coach!'), findsOneWidget);
       expect(find.text('Back to Academies & Coaches'), findsOneWidget);
+    });
+
+    testWidgets('CoachInquiryPage pre-fills applicant details from session profile but leaves inquiry details empty', (tester) async {
+      setTallViewport(tester);
+
+      final repo = MockCoachingAcademyRepository();
+      final userProfileRepo = sl<UserProfileRepository>();
+      final sessionCubit = sl<SessionCubit>();
+
+      // Authenticate as playerUser
+      await sessionCubit.signIn(
+        userId: MockData.playerUser.id,
+        email: MockData.playerUser.email,
+        roles: const [UserRole.player],
+        activeRole: UserRole.player,
+      );
+
+      final cubit = CoachInquiryCubit(
+        repo,
+        userProfileRepository: userProfileRepo,
+        sessionCubit: sessionCubit,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: CoachInquiryPage(
+            coachId: 'coach_001',
+            cubit: cubit,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Profile details are pre-filled
+      expect(find.text(MockData.playerUser.name), findsOneWidget);
+      expect(find.text(MockData.playerUser.phone), findsOneWidget);
+      expect(find.text(MockData.playerUser.email), findsOneWidget);
+
+      // Inquiry-specific fields are empty (no placeholder strings)
+      expect(find.text('Weekday mornings (Tue/Thu 7:00 AM)'), findsNothing);
+      expect(find.textContaining('Improve third-shot drop consistency'), findsNothing);
+
+      // Submitting without entering inquiry details fails
+      await tester.tap(find.text('Send Coaching Inquiry'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please indicate your preferred days or times.'), findsOneWidget);
     });
   });
 }

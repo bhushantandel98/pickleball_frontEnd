@@ -36,9 +36,11 @@ import 'package:pickleball_platform/features/player/domain/repositories/player_d
 import 'package:pickleball_platform/features/player/domain/repositories/tournament_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/venue_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/academy_discovery_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/academy_enrollment_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_checkout_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_details_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/coach_discovery_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/coach_inquiry_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_cart_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_catalogue_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_orders_cubit.dart';
@@ -190,9 +192,31 @@ Future<void> initServiceLocator() async {
     () => AcademyDiscoveryCubit(sl<CoachingAcademyRepository>()),
   );
 
+  // --- Academy Enrollment Cubit ---
+  sl.registerFactory<AcademyEnrollmentCubit>(
+    () => AcademyEnrollmentCubit(
+      sl<CoachingAcademyRepository>(),
+      userProfileRepository:
+          sl.isRegistered<UserProfileRepository>() ? sl<UserProfileRepository>() : null,
+      sessionCubit:
+          sl.isRegistered<SessionCubit>() ? sl<SessionCubit>() : null,
+    ),
+  );
+
   // --- Coach Discovery Cubit ---
   sl.registerFactory<CoachDiscoveryCubit>(
     () => CoachDiscoveryCubit(sl<CoachingAcademyRepository>()),
+  );
+
+  // --- Coach Inquiry Cubit ---
+  sl.registerFactory<CoachInquiryCubit>(
+    () => CoachInquiryCubit(
+      sl<CoachingAcademyRepository>(),
+      userProfileRepository:
+          sl.isRegistered<UserProfileRepository>() ? sl<UserProfileRepository>() : null,
+      sessionCubit:
+          sl.isRegistered<SessionCubit>() ? sl<SessionCubit>() : null,
+    ),
   );
 
   // --- My Coaching Requests Cubit ---

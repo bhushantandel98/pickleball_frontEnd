@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
+import 'package:pickleball_platform/core/access/session_cubit.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_button.dart';
@@ -10,9 +11,11 @@ import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/core/widgets/app_text_field.dart';
 import 'package:pickleball_platform/core/widgets/common_app_bar.dart';
 import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
+import 'package:pickleball_platform/features/identity/domain/repositories/user_profile_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/coaching_academy_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/coach_inquiry_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/coach_inquiry_state.dart';
+import 'package:pickleball_platform/shared/entities/user_profile.dart';
 
 /// Form page for submitting a coaching inquiry or connection request to a registered coach.
 class CoachInquiryPage extends StatefulWidget {
@@ -34,31 +37,52 @@ class CoachInquiryPage extends StatefulWidget {
 class _CoachInquiryPageState extends State<CoachInquiryPage> {
   late final CoachInquiryCubit _cubit;
 
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Alex Rivera');
-  final TextEditingController _phoneController =
-      TextEditingController(text: '+91 98765 43210');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'alex.rivera@example.com');
-  final TextEditingController _daysController =
-      TextEditingController(text: 'Weekday mornings (Tue/Thu 7:00 AM)');
-  final TextEditingController _ratingController =
-      TextEditingController(text: '3.8');
-  final TextEditingController _goalController =
-      TextEditingController(text: 'Improve third-shot drop consistency and transition reset drops');
-  final TextEditingController _messageController = TextEditingController(
-    text: 'Looking to schedule private lessons to prepare for an upcoming tournament.',
-  );
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _daysController = TextEditingController();
+  final TextEditingController _ratingController = TextEditingController();
+  final TextEditingController _goalController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
+  bool _formPopulated = false;
 
   @override
   void initState() {
     super.initState();
     _cubit = widget.cubit ??
-        CoachInquiryCubit(sl<CoachingAcademyRepository>());
+        CoachInquiryCubit(
+          sl<CoachingAcademyRepository>(),
+          userProfileRepository: sl.isRegistered<UserProfileRepository>()
+              ? sl<UserProfileRepository>()
+              : null,
+          sessionCubit: sl.isRegistered<SessionCubit>()
+              ? sl<SessionCubit>()
+              : null,
+        );
+    _checkInitialState();
     _cubit.init(
       coachId: widget.coachId,
       preSelectedServiceId: widget.serviceId,
     );
+  }
+
+  void _checkInitialState() {
+    final state = _cubit.state;
+    if (state is CoachInquiryReady && state.applicantProfile != null) {
+      _populateFromProfile(state.applicantProfile);
+    }
+  }
+
+  void _populateFromProfile(UserProfile? profile) {
+    if (profile == null || _formPopulated) return;
+    _formPopulated = true;
+    if (_nameController.text.isEmpty) _nameController.text = profile.name;
+    if (_phoneController.text.isEmpty) _phoneController.text = profile.phone;
+    if (_emailController.text.isEmpty) _emailController.text = profile.email;
+    if (_ratingController.text.isEmpty && profile.rating != null) {
+      _ratingController.text = profile.rating!.toString();
+    }
+    // Inquiry specific details are left empty for the player to enter.
   }
 
   @override
@@ -84,13 +108,20 @@ class _CoachInquiryPageState extends State<CoachInquiryPage> {
         appBar: const CommonAppBar(title: 'Coaching Inquiry'),
         body: BlocConsumer<CoachInquiryCubit, CoachInquiryState>(
           listener: (context, state) {
-            if (state is CoachInquiryReady && state.errorMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage!),
-                  backgroundColor: theme.colorScheme.error,
-                ),
-              );
+            if (state is CoachInquiryReady) {
+              if (!_formPopulated && state.applicantProfile != null) {
+                _populateFromProfile(state.applicantProfile);
+              }
+              if (state.errorMessage != null) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(state.errorMessage!),
+                      backgroundColor: theme.colorScheme.error,
+                    ),
+                  );
+              }
             }
           },
           builder: (context, state) {
@@ -378,7 +409,7 @@ class _CoachInquiryPageState extends State<CoachInquiryPage> {
                     AppTextField(
                       controller: _nameController,
                       label: 'Full Name *',
-                      hint: 'Alex Rivera',
+                      hint: 'Enter your full name',
                       prefixIcon: const Icon(Icons.person_outline),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -386,7 +417,7 @@ class _CoachInquiryPageState extends State<CoachInquiryPage> {
                     AppTextField(
                       controller: _phoneController,
                       label: 'Phone Number *',
-                      hint: '+91 98765 43210',
+                      hint: '10-digit mobile number',
                       prefixIcon: const Icon(Icons.phone_outlined),
                       keyboardType: TextInputType.phone,
                     ),

@@ -152,21 +152,6 @@ class _AcademyDetailsPageState extends State<AcademyDetailsPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Facilities / Meta
-                          Wrap(
-                            spacing: AppSpacing.xs,
-                            runSpacing: 4,
-                            children: [
-                              if (branch.courtCount > 0)
-                                AppChip(label: '${branch.courtCount} Courts'),
-                              if (branch.headCoachName.isNotEmpty)
-                                AppChip(label: 'Lead: ${branch.headCoachName}'),
-                              if (branch.contactPhone.isNotEmpty)
-                                AppChip(label: branch.contactPhone),
-                            ],
-                          ),
 
                           if (branch.overview.isNotEmpty) ...[
                             const SizedBox(height: AppSpacing.md),

@@ -1,18 +1,28 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pickleball_platform/core/access/session_cubit.dart';
 import 'package:pickleball_platform/core/network/result.dart';
+import 'package:pickleball_platform/features/identity/domain/repositories/user_profile_repository.dart';
 import 'package:pickleball_platform/features/player/domain/entities/coaching_academy_item.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/coaching_academy_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/academy_enrollment_state.dart';
+import 'package:pickleball_platform/shared/entities/user_profile.dart';
 
 class AcademyEnrollmentCubit extends Cubit<AcademyEnrollmentState> {
   final CoachingAcademyRepository _repository;
+  final UserProfileRepository? userProfileRepository;
+  final SessionCubit? sessionCubit;
 
-  AcademyEnrollmentCubit(this._repository) : super(const AcademyEnrollmentInitial());
+  AcademyEnrollmentCubit(
+    this._repository, {
+    this.userProfileRepository,
+    this.sessionCubit,
+  }) : super(const AcademyEnrollmentInitial());
 
   Future<void> init({
     required String branchId,
     required String programId,
     required String batchId,
+    String? userId,
   }) async {
     final branchResult = await _repository.getAcademyBranchById(branchId);
     if (branchResult is! Success<AcademyBranch>) {
@@ -33,10 +43,26 @@ class AcademyEnrollmentCubit extends Cubit<AcademyEnrollmentState> {
       return;
     }
 
+    // Resolve logged-in player profile if available in the architecture
+    UserProfile? profile;
+    final targetUserId = userId ??
+        (sessionCubit?.state.isAuthenticated == true
+            ? sessionCubit?.state.userId
+            : null);
+
+    final profileRepo = userProfileRepository;
+    if (targetUserId != null && profileRepo != null) {
+      final profileResult = await profileRepo.getUserProfile(targetUserId);
+      if (profileResult is Success<UserProfile>) {
+        profile = profileResult.data;
+      }
+    }
+
     emit(AcademyEnrollmentReady(
       branch: branch,
       program: program,
       batch: batch,
+      applicantProfile: profile,
     ));
   }
 

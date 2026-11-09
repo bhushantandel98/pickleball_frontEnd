@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
+import 'package:pickleball_platform/core/access/session_cubit.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_button.dart';
@@ -10,9 +11,11 @@ import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/core/widgets/app_text_field.dart';
 import 'package:pickleball_platform/core/widgets/common_app_bar.dart';
 import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
+import 'package:pickleball_platform/features/identity/domain/repositories/user_profile_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/coaching_academy_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/academy_enrollment_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/academy_enrollment_state.dart';
+import 'package:pickleball_platform/shared/entities/user_profile.dart';
 
 /// Form page for submitting an academy enrollment request or joining a batch waitlist.
 class AcademyEnrollmentPage extends StatefulWidget {
@@ -36,30 +39,53 @@ class AcademyEnrollmentPage extends StatefulWidget {
 class _AcademyEnrollmentPageState extends State<AcademyEnrollmentPage> {
   late final AcademyEnrollmentCubit _cubit;
 
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Alex Rivera');
-  final TextEditingController _phoneController =
-      TextEditingController(text: '+91 98765 43210');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'alex.rivera@example.com');
-  final TextEditingController _ratingController =
-      TextEditingController(text: '3.8');
-  final TextEditingController _emergencyNameController =
-      TextEditingController(text: 'Carlos Rivera');
-  final TextEditingController _emergencyPhoneController =
-      TextEditingController(text: '+91 98765 43211');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _ratingController = TextEditingController();
+  final TextEditingController _emergencyNameController = TextEditingController();
+  final TextEditingController _emergencyPhoneController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  bool _formPopulated = false;
 
   @override
   void initState() {
     super.initState();
     _cubit = widget.cubit ??
-        AcademyEnrollmentCubit(sl<CoachingAcademyRepository>());
+        AcademyEnrollmentCubit(
+          sl<CoachingAcademyRepository>(),
+          userProfileRepository: sl.isRegistered<UserProfileRepository>()
+              ? sl<UserProfileRepository>()
+              : null,
+          sessionCubit: sl.isRegistered<SessionCubit>()
+              ? sl<SessionCubit>()
+              : null,
+        );
+    _checkInitialState();
     _cubit.init(
       branchId: widget.branchId,
       programId: widget.programId,
       batchId: widget.batchId,
     );
+  }
+
+  void _checkInitialState() {
+    final state = _cubit.state;
+    if (state is AcademyEnrollmentReady && state.applicantProfile != null) {
+      _populateFromProfile(state.applicantProfile);
+    }
+  }
+
+  void _populateFromProfile(UserProfile? profile) {
+    if (profile == null || _formPopulated) return;
+    _formPopulated = true;
+    if (_nameController.text.isEmpty) _nameController.text = profile.name;
+    if (_phoneController.text.isEmpty) _phoneController.text = profile.phone;
+    if (_emailController.text.isEmpty) _emailController.text = profile.email;
+    if (_ratingController.text.isEmpty && profile.rating != null) {
+      _ratingController.text = profile.rating!.toString();
+    }
+    // Emergency contact details are never auto-populated with placeholders.
   }
 
   @override
@@ -85,13 +111,20 @@ class _AcademyEnrollmentPageState extends State<AcademyEnrollmentPage> {
         appBar: const CommonAppBar(title: 'Request Academy Enrollment'),
         body: BlocConsumer<AcademyEnrollmentCubit, AcademyEnrollmentState>(
           listener: (context, state) {
-            if (state is AcademyEnrollmentReady && state.errorMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage!),
-                  backgroundColor: theme.colorScheme.error,
-                ),
-              );
+            if (state is AcademyEnrollmentReady) {
+              if (!_formPopulated && state.applicantProfile != null) {
+                _populateFromProfile(state.applicantProfile);
+              }
+              if (state.errorMessage != null) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(state.errorMessage!),
+                      backgroundColor: theme.colorScheme.error,
+                    ),
+                  );
+              }
             }
           },
           builder: (context, state) {
@@ -365,7 +398,7 @@ class _AcademyEnrollmentPageState extends State<AcademyEnrollmentPage> {
                     AppTextField(
                       controller: _phoneController,
                       label: 'Mobile Number *',
-                      hint: '+91 98765 43210',
+                      hint: '10-digit mobile number',
                       prefixIcon: const Icon(Icons.phone_outlined),
                       keyboardType: TextInputType.phone,
                     ),
@@ -408,7 +441,7 @@ class _AcademyEnrollmentPageState extends State<AcademyEnrollmentPage> {
                     AppTextField(
                       controller: _emergencyPhoneController,
                       label: 'Emergency Contact Phone *',
-                      hint: '+91 98765 43211',
+                      hint: 'Emergency phone number',
                       prefixIcon: const Icon(Icons.phone_outlined),
                       keyboardType: TextInputType.phone,
                     ),
