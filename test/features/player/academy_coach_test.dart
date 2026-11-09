@@ -523,10 +523,11 @@ void main() {
       expect(find.text('Training Programs & Batches'), findsOneWidget);
       expect(find.byType(AcademyBatchCard), findsWidgets);
 
-      // Verify unapproved internal information is excluded
+      // Verify unapproved internal information is excluded (fees, courts, coach lead tag, phone contacts)
       expect(find.textContaining('Courts'), findsNothing);
       expect(find.textContaining('Lead:'), findsNothing);
       expect(find.textContaining('+91 98200 12345'), findsNothing);
+      expect(find.textContaining('₹'), findsNothing);
     });
 
     testWidgets('AcademyEnrollmentPage leaves fields empty when unauthenticated and enforces emergency contact validation', (tester) async {
