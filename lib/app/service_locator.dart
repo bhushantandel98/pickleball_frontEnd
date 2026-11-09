@@ -24,16 +24,19 @@ import 'package:pickleball_platform/features/notifications/presentation/cubit/no
 import 'package:pickleball_platform/features/player/data/repositories/mock_booking_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_match_day_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_player_dashboard_repository.dart';
+import 'package:pickleball_platform/features/player/data/repositories/mock_tournament_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_venue_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/booking_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/match_day_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
+import 'package:pickleball_platform/features/player/domain/repositories/tournament_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/venue_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_checkout_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_details_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/match_day_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/my_bookings_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/player_dashboard_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/tournament_discovery_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/venue_discovery_cubit.dart';
 import 'package:pickleball_platform/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:pickleball_platform/features/role_selection/data/repositories/mock_role_context_repository.dart';
@@ -143,6 +146,13 @@ Future<void> initServiceLocator() async {
       repository: sl<MatchDayRepository>(),
     ),
   );
+
+  // --- Tournament Discovery Cubit ---
+  sl.registerFactory<TournamentDiscoveryCubit>(
+    () => TournamentDiscoveryCubit(
+      repository: sl<TournamentRepository>(),
+    ),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -215,6 +225,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<MatchDayRepository>(
     () => MockMatchDayRepository(),
   );
+
+  // Tournament Repository
+  sl.registerLazySingleton<TournamentRepository>(
+    () => MockTournamentRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -265,5 +280,10 @@ void initRemoteServiceLocator() {
   // Match Day Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<MatchDayRepository>(
     () => MockMatchDayRepository(),
+  );
+
+  // Tournament Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<TournamentRepository>(
+    () => MockTournamentRepository(),
   );
 }

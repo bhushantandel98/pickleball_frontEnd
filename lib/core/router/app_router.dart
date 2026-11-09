@@ -18,6 +18,7 @@ import 'package:pickleball_platform/features/notifications/presentation/pages/no
 import 'package:pickleball_platform/features/notifications/presentation/pages/notification_preferences_page.dart';
 import 'package:pickleball_platform/features/player/domain/entities/court_booking.dart';
 import 'package:pickleball_platform/features/player/domain/entities/court_item.dart';
+import 'package:pickleball_platform/features/player/domain/entities/tournament_item.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_checkout_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_details_page.dart';
@@ -25,6 +26,10 @@ import 'package:pickleball_platform/features/player/presentation/pages/court_ava
 import 'package:pickleball_platform/features/player/presentation/pages/match_day_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/my_bookings_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/player_dashboard_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/tournament_details_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/tournament_discovery_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/tournament_registration_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_discovery_page.dart';
 import 'package:pickleball_platform/features/profile/presentation/pages/account_settings_page.dart';
@@ -215,11 +220,36 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.playerTournaments,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Tournaments',
-              path: AppRoutes.playerTournaments,
-              role: UserRole.player,
-            ),
+            builder: (context, state) => const TournamentDiscoveryPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerTournamentDetails,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return TournamentDetailsPage(tournamentId: id);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerTournamentRegistration,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              final initialCategoryId = state.uri.queryParameters['categoryId'];
+              return TournamentRegistrationPage(
+                tournamentId: id,
+                initialCategoryId: initialCategoryId,
+              );
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerTournamentConfirmation,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              final reg = state.extra as TournamentRegistration?;
+              return TournamentConfirmationPage(
+                tournamentId: id,
+                registration: reg,
+              );
+            },
           ),
           GoRoute(
             path: AppRoutes.playerMatchDay,

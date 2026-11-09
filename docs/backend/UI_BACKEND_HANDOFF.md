@@ -1853,13 +1853,293 @@ The Player Match Day Hub is the operational destination for registered tournamen
 4. **Tab 3 — Bracket & Pools**:
    - Filterable group stage standings table with qualification status.
    - Elimination draw tree across Quarter-finals, Semi-finals, and Final.
-5. **Empty State**: Friendly card with "Explore Tournaments" CTA when the player has no fixtures today.
+5. **Empty State**: Friendly card with "Explore Tournaments" CTA when the player has no fixtures today.### 5.7 Feature 2.5 — Player Tournament Discovery & Registration
 
+#### Overview
+Feature 2.5 implements the Player Tournament Discovery & Registration module according to Player PRD v1.6. It allows players to search, filter, and discover sanctioned/community pickleball tournaments, inspect division-specific eligibility (skill tier, DUPR rating bracket, age restrictions, capacity), review tournament rules and format, register for singles or doubles events, provide partner and emergency details, accept waivers, and view registration confirmation receipts with unique reference IDs.
 
+#### Proposed API Contracts (Awaiting Backend Confirmation)
 
+> [!IMPORTANT]
+> **API Status: PROPOSED — PENDING BACKEND CONFIRMATION**  
+> The endpoints, request payloads, and response structures below are proposed by the Flutter client. Spring Boot backend services must review and formalize these interfaces.
 
+##### 1. List Tournaments with Filters & Sorting
+- **Endpoint:** `GET /api/v1/player/tournaments`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Query Parameters:**
+  - `query` (optional `string`): Text search matching tournament name, organizer, venue, or city.
+  - `status` (optional `string`): `registrationOpen`, `upcoming`, `inProgress`, `completed`, `cancelled`.
+  - `category` (optional `string`): Division category filter (`singles`, `doubles`, `mixed`, `senior`, `junior`).
+  - `openOnly` (optional `boolean`): Only tournaments with open registration spots.
+  - `myEntriesOnly` (optional `boolean`): Only tournaments the logged-in player is registered for.
+  - `sort` (optional `string`): `dateAsc`, `dateDesc`, `feeLow`, `feeHigh`, `prizePoolHigh`.
 
+**Proposed Response (`200 OK`):**
+```json
+{
+  "tournaments": [
+    {
+      "id": "tourn_002",
+      "name": "Monsoon Community Cup 2026",
+      "organizerName": "Pinnacle Sports Academy",
+      "venueName": "Pinnacle Sports Academy (Downtown)",
+      "address": "Plot 12, Senapati Bapat Marg, Lower Parel",
+      "city": "Mumbai",
+      "imageUrl": "assets/images/venues/pinnacle_sports.jpg",
+      "status": "registrationOpen",
+      "startDate": "2026-11-20T09:00:00Z",
+      "endDate": "2026-11-22T19:00:00Z",
+      "registrationDeadline": "2026-11-18T23:59:00Z",
+      "prizePool": "₹50,000",
+      "entryFeeFrom": 800.0,
+      "description": "Community-first weekend tournament designed for intermediate and advanced recreational players.",
+      "scoringFormat": "Rounds 1-3: 1 game to 15 (win by 2). Finals: Best 2 of 3 to 11.",
+      "rules": [
+        "Paddle face must be smooth with no unapproved grit modifications.",
+        "Withdrawal deadline with 100% refund is 48 hours prior to registration close."
+      ],
+      "categories": [
+        {
+          "id": "cat_002_ms",
+          "name": "Men's Singles 3.5",
+          "isDoubles": false,
+          "minRating": 3.0,
+          "maxRating": 3.75,
+          "entryFee": 800.0,
+          "maxParticipants": 16,
+          "registeredCount": 12,
+          "isRegistrationOpen": true
+        },
+        {
+          "id": "cat_002_md",
+          "name": "Mixed Doubles Open",
+          "isDoubles": true,
+          "entryFee": 1400.0,
+          "maxParticipants": 16,
+          "registeredCount": 10,
+          "isRegistrationOpen": true
+        }
+      ],
+      "isRegistered": false,
+      "registeredCategoryIds": []
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 20
+}
+```
 
+##### 2. Get Tournament Details
+- **Endpoint:** `GET /api/v1/player/tournaments/{id}`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
 
+**Proposed Response (`200 OK`):**
+Returns the detailed `TournamentItem` matching the requested ID, including categories, eligibility rules, and registration states.
+
+##### 3. Register for Tournament Category
+- **Endpoint:** `POST /api/v1/player/tournaments/{id}/register`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Proposed Request Payload:**
+```json
+{
+  "tournamentId": "tourn_002",
+  "categoryId": "cat_002_ms",
+  "playerName": "Alex Rivera",
+  "playerPhone": "+91 98765 43210",
+  "playerEmail": "alex.rivera@example.com",
+  "playerRating": 3.5,
+  "partnerName": null,
+  "partnerPhone": null,
+  "tshirtSize": "L",
+  "emergencyContactName": "Elena Rivera",
+  "emergencyContactPhone": "+91 98765 00000",
+  "acceptedWaiver": true,
+  "acceptedRules": true,
+  "entryFee": 800.0
+}
+```
+
+**Proposed Success Response (`201 Created` or `200 OK`):**
+```json
+{
+  "id": "PKL-TRN-20261120-7214",
+  "tournamentId": "tourn_002",
+  "tournamentName": "Monsoon Community Cup 2026",
+  "categoryId": "cat_002_ms",
+  "categoryName": "Men's Singles 3.5",
+  "venueName": "Pinnacle Sports Academy (Downtown)",
+  "dates": "Nov 20 - 22, 2026",
+  "playerName": "Alex Rivera",
+  "partnerName": null,
+  "tshirtSize": "L",
+  "entryFee": 800.0,
+  "status": "confirmed",
+  "registeredAt": "2026-11-09T12:00:00Z"
+}
+```
+
+**Proposed Error Responses:**
+- **`400 Bad Request` (Validation Failed):** Partner name missing for doubles, or waivers not accepted.
+- **`403 Forbidden` (Eligibility Ineligible):** Player DUPR rating or age outside category limits.
+- **`409 Conflict` (Duplicate Entry):** Player already registered in this division.
+
+##### 4. Withdraw Registration
+- **Endpoint:** `POST /api/v1/player/tournaments/registrations/{id}/withdraw`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+
+**Proposed Success Response (`200 OK`):**
+```json
+{
+  "message": "Registration withdrawn successfully. Spot released.",
+  "registrationId": "PKL-TRN-20261120-7214",
+  "status": "withdrawn"
+}
+```
+### 5.7 Feature 2.5 — Player Tournament Discovery & Registration
+
+#### Overview
+Feature 2.5 implements the Player Tournament Discovery & Registration module according to Player PRD v1.6. It allows players to search, filter, and discover sanctioned/community pickleball tournaments, inspect division-specific eligibility (skill tier, DUPR rating bracket, age restrictions, capacity), review tournament rules and format, register for singles or doubles events, provide partner and emergency details, accept waivers, and view registration confirmation receipts with unique reference IDs.
+
+#### Proposed API Contracts (Awaiting Backend Confirmation)
+
+> [!IMPORTANT]
+> **API Status: PROPOSED — PENDING BACKEND CONFIRMATION**  
+> The endpoints, request payloads, and response structures below are proposed by the Flutter client. Spring Boot backend services must review and formalize these interfaces.
+
+##### 1. List Tournaments with Filters & Sorting
+- **Endpoint:** `GET /api/v1/player/tournaments`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Query Parameters:**
+  - `query` (optional `string`): Text search matching tournament name, organizer, venue, or city.
+  - `status` (optional `string`): `registrationOpen`, `upcoming`, `inProgress`, `completed`, `cancelled`.
+  - `category` (optional `string`): Division category filter (`singles`, `doubles`, `mixed`, `senior`, `junior`).
+  - `openOnly` (optional `boolean`): Only tournaments with open registration spots.
+  - `myEntriesOnly` (optional `boolean`): Only tournaments the logged-in player is registered for.
+  - `sort` (optional `string`): `dateAsc`, `dateDesc`, `feeLow`, `feeHigh`, `prizePoolHigh`.
+
+**Proposed Response (`200 OK`):**
+```json
+{
+  "tournaments": [
+    {
+      "id": "tourn_002",
+      "name": "Monsoon Community Cup 2026",
+      "organizerName": "Pinnacle Sports Academy",
+      "venueName": "Pinnacle Sports Academy (Downtown)",
+      "address": "Plot 12, Senapati Bapat Marg, Lower Parel",
+      "city": "Mumbai",
+      "imageUrl": "assets/images/venues/pinnacle_sports.jpg",
+      "status": "registrationOpen",
+      "startDate": "2026-11-20T09:00:00Z",
+      "endDate": "2026-11-22T19:00:00Z",
+      "registrationDeadline": "2026-11-18T23:59:00Z",
+      "prizePool": "₹50,000",
+      "entryFeeFrom": 800.0,
+      "description": "Community-first weekend tournament designed for intermediate and advanced recreational players.",
+      "scoringFormat": "Rounds 1-3: 1 game to 15 (win by 2). Finals: Best 2 of 3 to 11.",
+      "rules": [
+        "Paddle face must be smooth with no unapproved grit modifications.",
+        "Withdrawal deadline with 100% refund is 48 hours prior to registration close."
+      ],
+      "categories": [
+        {
+          "id": "cat_002_ms",
+          "name": "Men's Singles 3.5",
+          "isDoubles": false,
+          "minRating": 3.0,
+          "maxRating": 3.75,
+          "entryFee": 800.0,
+          "maxParticipants": 16,
+          "registeredCount": 12,
+          "isRegistrationOpen": true
+        },
+        {
+          "id": "cat_002_md",
+          "name": "Mixed Doubles Open",
+          "isDoubles": true,
+          "entryFee": 1400.0,
+          "maxParticipants": 16,
+          "registeredCount": 10,
+          "isRegistrationOpen": true
+        }
+      ],
+      "isRegistered": false,
+      "registeredCategoryIds": []
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+##### 2. Get Tournament Details
+- **Endpoint:** `GET /api/v1/player/tournaments/{id}`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+
+**Proposed Response (`200 OK`):**
+Returns the detailed `TournamentItem` matching the requested ID, including categories, eligibility rules, and registration states.
+
+##### 3. Register for Tournament Category
+- **Endpoint:** `POST /api/v1/player/tournaments/{id}/register`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Proposed Request Payload:**
+```json
+{
+  "tournamentId": "tourn_002",
+  "categoryId": "cat_002_ms",
+  "playerName": "Alex Rivera",
+  "playerPhone": "+91 98765 43210",
+  "playerEmail": "alex.rivera@example.com",
+  "playerRating": 3.5,
+  "partnerName": null,
+  "partnerPhone": null,
+  "tshirtSize": "L",
+  "emergencyContactName": "Elena Rivera",
+  "emergencyContactPhone": "+91 98765 00000",
+  "acceptedWaiver": true,
+  "acceptedRules": true,
+  "entryFee": 800.0
+}
+```
+
+**Proposed Success Response (`201 Created` or `200 OK`):**
+```json
+{
+  "id": "PKL-TRN-20261120-7214",
+  "tournamentId": "tourn_002",
+  "tournamentName": "Monsoon Community Cup 2026",
+  "categoryId": "cat_002_ms",
+  "categoryName": "Men's Singles 3.5",
+  "venueName": "Pinnacle Sports Academy (Downtown)",
+  "dates": "Nov 20 - 22, 2026",
+  "playerName": "Alex Rivera",
+  "partnerName": null,
+  "tshirtSize": "L",
+  "entryFee": 800.0,
+  "status": "confirmed",
+  "registeredAt": "2026-11-09T12:00:00Z"
+}
+```
+
+**Proposed Error Responses:**
+- **`400 Bad Request` (Validation Failed):** Partner name missing for doubles, or waivers not accepted.
+- **`403 Forbidden` (Eligibility Ineligible):** Player DUPR rating or age outside category limits.
+- **`409 Conflict` (Duplicate Entry):** Player already registered in this division.
+
+##### 4. Withdraw Registration
+- **Endpoint:** `POST /api/v1/player/tournaments/registrations/{id}/withdraw`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+
+**Proposed Success Response (`200 OK`):**
+```json
+{
+  "message": "Registration withdrawn successfully. Spot released.",
+  "registrationId": "PKL-TRN-20261120-7214",
+  "status": "withdrawn"
+}
+```
 
 

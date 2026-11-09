@@ -45,6 +45,12 @@ abstract final class AppRoutes {
   static const String playerBookingConfirmation = '/player/bookings/confirmation';
   static String playerBookingConfirmationPath() => '/player/bookings/confirmation';
   static const String playerTournaments = '/player/tournaments';
+  static const String playerTournamentDetails = '/player/tournaments/:id';
+  static String playerTournamentDetailsPath(String id) => '/player/tournaments/$id';
+  static const String playerTournamentRegistration = '/player/tournaments/:id/register';
+  static String playerTournamentRegistrationPath(String id) => '/player/tournaments/$id/register';
+  static const String playerTournamentConfirmation = '/player/tournaments/:id/confirmation';
+  static String playerTournamentConfirmationPath(String id) => '/player/tournaments/$id/confirmation';
   static const String playerMatchDay = '/player/match-day';
   static const String playerMarketplace = '/player/marketplace';
 
