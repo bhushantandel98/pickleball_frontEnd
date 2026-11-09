@@ -9,8 +9,10 @@ import 'package:pickleball_platform/core/widgets/app_button.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
 import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
+import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/product_details_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/product_details_state.dart';
+import 'package:pickleball_platform/features/player/presentation/widgets/category_icon_helper.dart';
 
 /// Product Details Page displaying high-res gallery, specs, seller info, return policy, and purchase options.
 class ProductDetailsPage extends StatelessWidget {
@@ -139,10 +141,11 @@ class _ProductDetailsViewState extends State<_ProductDetailsView> {
                               return Image.asset(
                                 imgUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => _buildFallbackImage(theme),
+                                errorBuilder: (_, _, _) =>
+                                    _buildFallbackImage(theme, product.category),
                               );
                             }
-                            return _buildFallbackImage(theme);
+                            return _buildFallbackImage(theme, product.category);
                           },
                         ),
                         if (images.length > 1)
@@ -537,14 +540,27 @@ class _ProductDetailsViewState extends State<_ProductDetailsView> {
     );
   }
 
-  Widget _buildFallbackImage(ThemeData theme) {
+  Widget _buildFallbackImage(ThemeData theme, ProductCategory category) {
     return Container(
       color: theme.colorScheme.surfaceContainerHighest,
       alignment: Alignment.center,
-      child: Icon(
-        Icons.sports_tennis,
-        size: 64,
-        color: theme.colorScheme.primary.withValues(alpha: 0.6),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            getCategoryIcon(category),
+            size: 64,
+            color: theme.colorScheme.primary.withValues(alpha: 0.6),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            category.displayName,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

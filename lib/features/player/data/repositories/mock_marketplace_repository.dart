@@ -37,11 +37,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.8,
         reviewCount: 124,
         category: ProductCategory.paddles,
-        imageUrl: 'assets/images/venues/grand_slam_arena.jpg',
-        galleryImages: [
-          'assets/images/venues/grand_slam_arena.jpg',
-          'assets/images/venues/pinnacle_sports.jpg',
-        ],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 42,
         returnPolicyDays: 14,
@@ -69,8 +66,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.9,
         reviewCount: 342,
         category: ProductCategory.balls,
-        imageUrl: 'assets/images/venues/pinnacle_sports.jpg',
-        galleryImages: ['assets/images/venues/pinnacle_sports.jpg'],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 150,
         returnPolicyDays: 7,
@@ -95,8 +92,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.7,
         reviewCount: 56,
         category: ProductCategory.equipment,
-        imageUrl: 'assets/images/venues/metro_pickleball.jpg',
-        galleryImages: ['assets/images/venues/metro_pickleball.jpg'],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 18,
         returnPolicyDays: 10,
@@ -121,8 +118,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.5,
         reviewCount: 88,
         category: ProductCategory.footwear,
-        imageUrl: 'assets/images/venues/pacific_pickleball.jpg',
-        galleryImages: ['assets/images/venues/pacific_pickleball.jpg'],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 25,
         returnPolicyDays: 14,
@@ -148,8 +145,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.6,
         reviewCount: 210,
         category: ProductCategory.accessories,
-        imageUrl: 'assets/images/venues/dink_smash_zone.jpg',
-        galleryImages: ['assets/images/venues/dink_smash_zone.jpg'],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 80,
         returnPolicyDays: 7,
@@ -173,8 +170,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.8,
         reviewCount: 95,
         category: ProductCategory.equipment,
-        imageUrl: 'assets/images/venues/sunrise_pickleball.jpg',
-        galleryImages: ['assets/images/venues/sunrise_pickleball.jpg'],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 30,
         returnPolicyDays: 14,
@@ -198,8 +195,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.9,
         reviewCount: 180,
         category: ProductCategory.paddles,
-        imageUrl: 'assets/images/venues/ace_point_arena.jpg',
-        galleryImages: ['assets/images/venues/ace_point_arena.jpg'],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 12,
         returnPolicyDays: 14,
@@ -223,8 +220,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
         rating: 4.4,
         reviewCount: 64,
         category: ProductCategory.apparel,
-        imageUrl: 'assets/images/venues/grand_slam_arena.jpg',
-        galleryImages: ['assets/images/venues/grand_slam_arena.jpg'],
+        imageUrl: '',
+        galleryImages: [],
         inStock: true,
         stockCount: 50,
         returnPolicyDays: 7,
@@ -586,7 +583,24 @@ class MockMarketplaceRepository implements MarketplaceRepository {
       );
     }
 
+    if (quantity <= 0) {
+      return const FailureResult(
+        ValidationFailure(message: 'Quantity must be at least 1.'),
+      );
+    }
+
     _initCustomData();
+
+    final currentProduct = customProducts?.firstWhere(
+      (p) => p.id == product.id,
+      orElse: () => product,
+    ) ?? product;
+
+    if (!currentProduct.inStock || currentProduct.stockCount <= 0) {
+      return const FailureResult(
+        ValidationFailure(message: 'This product is currently out of stock.'),
+      );
+    }
 
     final existingIndex = customCart!.indexWhere(
       (item) =>
@@ -595,15 +609,28 @@ class MockMarketplaceRepository implements MarketplaceRepository {
           item.selectedColor == color,
     );
 
+    final currentQuantity =
+        existingIndex != -1 ? customCart![existingIndex].quantity : 0;
+    final targetQuantity = currentQuantity + quantity;
+
+    if (targetQuantity > currentProduct.stockCount) {
+      return FailureResult(
+        ValidationFailure(
+          message:
+              'Cannot add $quantity item(s). Exceeds available stock of ${currentProduct.stockCount}.',
+        ),
+      );
+    }
+
     if (existingIndex != -1) {
       final existing = customCart![existingIndex];
       customCart![existingIndex] = existing.copyWith(
-        quantity: existing.quantity + quantity,
+        quantity: targetQuantity,
       );
     } else {
       final newItem = MarketplaceCartItem(
         id: 'cart_item_${DateTime.now().millisecondsSinceEpoch}',
-        product: product,
+        product: currentProduct,
         quantity: quantity,
         selectedSize: size,
         selectedColor: color,
@@ -631,6 +658,21 @@ class MockMarketplaceRepository implements MarketplaceRepository {
     if (index == -1) {
       return const FailureResult(
         NotFoundFailure(message: 'Cart item not found.'),
+      );
+    }
+
+    final item = customCart![index];
+    final currentProduct = customProducts?.firstWhere(
+      (p) => p.id == item.product.id,
+      orElse: () => item.product,
+    ) ?? item.product;
+
+    if (quantity > currentProduct.stockCount) {
+      return FailureResult(
+        ValidationFailure(
+          message:
+              'Cannot update quantity to $quantity. Only ${currentProduct.stockCount} item(s) available in stock.',
+        ),
       );
     }
 

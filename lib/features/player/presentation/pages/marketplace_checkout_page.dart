@@ -12,6 +12,7 @@ import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
 import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_checkout_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_checkout_state.dart';
+import 'package:pickleball_platform/features/player/presentation/widgets/category_icon_helper.dart';
 
 /// Player Marketplace Checkout Page with Delivery Address inputs and Pay on Delivery confirmation.
 class MarketplaceCheckoutPage extends StatelessWidget {
@@ -317,9 +318,15 @@ class _MarketplaceCheckoutViewState extends State<_MarketplaceCheckoutView> {
                                 ? Image.asset(
                                     item.product.imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => const Icon(Icons.sports_tennis, size: 22),
+                                    errorBuilder: (_, _, _) => Icon(
+                                      getCategoryIcon(item.product.category),
+                                      size: 22,
+                                    ),
                                   )
-                                : const Icon(Icons.sports_tennis, size: 22),
+                                : Icon(
+                                    getCategoryIcon(item.product.category),
+                                    size: 22,
+                                  ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(

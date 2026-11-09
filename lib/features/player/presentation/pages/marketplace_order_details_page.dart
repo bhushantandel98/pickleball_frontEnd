@@ -10,6 +10,7 @@ import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
 import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_orders_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_orders_state.dart';
+import 'package:pickleball_platform/features/player/presentation/widgets/category_icon_helper.dart';
 import 'package:pickleball_platform/features/player/presentation/widgets/order_status_timeline.dart';
 
 /// Player Marketplace Order Details and Tracking Page.
@@ -319,10 +320,15 @@ class _MarketplaceOrderDetailsView extends StatelessWidget {
                                         ? Image.asset(
                                             item.product.imageUrl,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, _, _) =>
-                                                const Icon(Icons.sports_tennis, size: 24),
+                                            errorBuilder: (_, _, _) => Icon(
+                                              getCategoryIcon(item.product.category),
+                                              size: 24,
+                                            ),
                                           )
-                                        : const Icon(Icons.sports_tennis, size: 24),
+                                        : Icon(
+                                            getCategoryIcon(item.product.category),
+                                            size: 24,
+                                          ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(

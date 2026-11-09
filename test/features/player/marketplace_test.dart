@@ -156,6 +156,72 @@ void main() {
       expect(emptyCart.isEmpty, isTrue);
     });
 
+    test('addToCart rejects non-positive quantities with ValidationFailure', () async {
+      final repo = MockMarketplaceRepository();
+      final product = (await repo.getProductById('prod_001') as Success<MarketplaceProduct>).data;
+
+      final zeroResult = await repo.addToCart(product, quantity: 0);
+      expect(zeroResult, isA<FailureResult<List<MarketplaceCartItem>>>());
+      final zeroFailure = (zeroResult as FailureResult).failure;
+      expect(zeroFailure, isA<ValidationFailure>());
+      expect(zeroFailure.message, contains('Quantity must be at least 1'));
+
+      final negativeResult = await repo.addToCart(product, quantity: -2);
+      expect(negativeResult, isA<FailureResult<List<MarketplaceCartItem>>>());
+      expect((negativeResult as FailureResult).failure, isA<ValidationFailure>());
+    });
+
+    test('addToCart rejects additions exceeding available stock with ValidationFailure', () async {
+      final repo = MockMarketplaceRepository();
+      final product = (await repo.getProductById('prod_007') as Success<MarketplaceProduct>).data;
+      expect(product.stockCount, equals(12));
+
+      // Attempt adding more than stock count
+      final result = await repo.addToCart(product, quantity: 15);
+      expect(result, isA<FailureResult<List<MarketplaceCartItem>>>());
+      final failure = (result as FailureResult).failure;
+      expect(failure, isA<ValidationFailure>());
+      expect(failure.message, contains('Exceeds available stock of 12'));
+
+      // Add valid quantity (10)
+      final validAdd = await repo.addToCart(product, quantity: 10);
+      expect(validAdd, isA<Success<List<MarketplaceCartItem>>>());
+
+      // Subsequent add that pushes total over available stock (10 + 5 = 15 > 12)
+      final secondAdd = await repo.addToCart(product, quantity: 5);
+      expect(secondAdd, isA<FailureResult<List<MarketplaceCartItem>>>());
+      final secondFailure = (secondAdd as FailureResult).failure;
+      expect(secondFailure, isA<ValidationFailure>());
+      expect(secondFailure.message, contains('Exceeds available stock of 12'));
+
+      // Ensure existing quantity in cart remains 10
+      final cart = (await repo.getCart() as Success<List<MarketplaceCartItem>>).data;
+      final item = cart.firstWhere((i) => i.product.id == 'prod_007');
+      expect(item.quantity, equals(10));
+    });
+
+    test('updateCartQuantity rejects quantities exceeding available stock and preserves cart', () async {
+      final repo = MockMarketplaceRepository();
+      final product = (await repo.getProductById('prod_007') as Success<MarketplaceProduct>).data;
+
+      final addResult = await repo.addToCart(product, quantity: 5);
+      final cart = (addResult as Success<List<MarketplaceCartItem>>).data;
+      final cartItem = cart.firstWhere((i) => i.product.id == 'prod_007');
+      expect(cartItem.quantity, equals(5));
+
+      // Attempt to update quantity to 25 (exceeds 12)
+      final updateResult = await repo.updateCartQuantity(cartItem.id, 25);
+      expect(updateResult, isA<FailureResult<List<MarketplaceCartItem>>>());
+      final failure = (updateResult as FailureResult).failure;
+      expect(failure, isA<ValidationFailure>());
+      expect(failure.message, contains('Only 12 item(s) available in stock'));
+
+      // Verify that existing cart quantity remains unchanged at 5
+      final cartAfter = (await repo.getCart() as Success<List<MarketplaceCartItem>>).data;
+      final itemAfter = cartAfter.firstWhere((i) => i.id == cartItem.id);
+      expect(itemAfter.quantity, equals(5));
+    });
+
     test('order operations: place order, get orders, and cancel eligible order', () async {
       final repo = MockMarketplaceRepository();
       const address = MarketplaceDeliveryAddress(
@@ -250,6 +316,27 @@ void main() {
         expect(loaded.qualifiesForFreeDelivery, isFalse);
         expect(loaded.deliveryFee, equals(99.0));
       }
+    });
+
+    test('MarketplaceCartCubit updateQuantity retains items and sets notice when exceeding stock', () async {
+      final repo = MockMarketplaceRepository();
+      final cubit = MarketplaceCartCubit(repo);
+
+      await cubit.loadCart();
+      expect(cubit.state, isA<MarketplaceCartLoaded>());
+      final initialLoaded = cubit.state as MarketplaceCartLoaded;
+      final initialItem = initialLoaded.items.first;
+      final originalQuantity = initialItem.quantity;
+
+      // Update with an impossibly high quantity
+      await cubit.updateQuantity(initialItem.id, 99999);
+      expect(cubit.state, isA<MarketplaceCartLoaded>());
+      final afterState = cubit.state as MarketplaceCartLoaded;
+
+      // Quantity must remain unchanged
+      expect(afterState.items.first.quantity, equals(originalQuantity));
+      expect(afterState.userNotice, isNotNull);
+      expect(afterState.userNotice, contains('available in stock'));
     });
 
     test('MarketplaceWishlistCubit loads wishlist, removes and moves to cart', () async {

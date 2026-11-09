@@ -11,6 +11,7 @@ import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
 import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_wishlist_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_wishlist_state.dart';
+import 'package:pickleball_platform/features/player/presentation/widgets/category_icon_helper.dart';
 
 /// Wishlist Page for Player Marketplace.
 class MarketplaceWishlistPage extends StatelessWidget {
@@ -174,9 +175,15 @@ class _MarketplaceWishlistView extends StatelessWidget {
                   ? Image.asset(
                       product.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const Icon(Icons.sports_tennis, size: 36),
+                      errorBuilder: (_, _, _) => Icon(
+                        getCategoryIcon(product.category),
+                        size: 36,
+                      ),
                     )
-                  : const Icon(Icons.sports_tennis, size: 36),
+                  : Icon(
+                      getCategoryIcon(product.category),
+                      size: 36,
+                    ),
             ),
           ),
           const SizedBox(width: AppSpacing.md),

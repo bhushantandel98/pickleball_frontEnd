@@ -4,6 +4,7 @@ import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
 import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
+import 'package:pickleball_platform/features/player/presentation/widgets/category_icon_helper.dart';
 
 /// Card summarizing a player's marketplace order with status, item previews, and amount.
 class OrderCard extends StatelessWidget {
@@ -97,9 +98,15 @@ class OrderCard extends StatelessWidget {
                             ? Image.asset(
                                 order.items[i].product.imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(Icons.sports_tennis, size: 24),
+                                errorBuilder: (_, _, _) => Icon(
+                                  getCategoryIcon(order.items[i].product.category),
+                                  size: 24,
+                                ),
                               )
-                            : const Icon(Icons.sports_tennis, size: 24),
+                            : Icon(
+                                getCategoryIcon(order.items[i].product.category),
+                                size: 24,
+                              ),
                       ),
                     if (order.items.length > 3)
                       Container(

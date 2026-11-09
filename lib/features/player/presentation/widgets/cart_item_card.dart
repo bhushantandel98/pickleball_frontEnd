@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
 import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
+import 'package:pickleball_platform/features/player/presentation/widgets/category_icon_helper.dart';
 
 /// Card displaying an individual cart item with quantity increment/decrement and removal controls.
 class CartItemCard extends StatelessWidget {
@@ -46,7 +47,7 @@ class CartItemCard extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Icon(
-        Icons.shopping_bag_outlined,
+        getCategoryIcon(item.product.category),
         size: 32,
         color: theme.colorScheme.primary.withValues(alpha: 0.6),
       ),

@@ -3,7 +3,7 @@
 **Project:** Pickleball Multi-Role Platform (Frontend)  
 **Last Updated:** 09 November 2026  
 **Current Phase:** Phase 2 — Player Module  
-**Branch:** main  
+**Branch:** dev  
 
 ---
 
@@ -26,15 +26,15 @@
 ## Active Task
 
 - **Task ID:** Feature 2.6 — Player Marketplace Shopping Experience
-- **Description:** Implemented end-to-end Player Marketplace Shopping Experience according to Player PRD v1.6 and Frontend FSD. Includes: (1) Domain entities (`ProductCategory`, `ProductSortOption`, `MarketplaceOrderStatus`, `ProductFilter`, `MarketplaceProduct`, `MarketplaceCartItem`, `MarketplaceDeliveryAddress`, `OrderStatusStep`, `MarketplaceOrder`); (2) Abstract repository contract (`MarketplaceRepository`) and in-memory mock repository (`MockMarketplaceRepository`) pre-seeded with 8 products, active cart, saved wishlist, and 3 mock orders (`ORD-10921`, `ORD-10955`, `ORD-10988`), reference generation (`PKL-ORD-YYYYMMDD-XXXX`), threshold delivery fees (free over ₹999), and order cancellation rules; (3) Cubits & States (`MarketplaceCatalogueCubit`, `ProductDetailsCubit`, `MarketplaceCartCubit`, `MarketplaceWishlistCubit`, `MarketplaceCheckoutCubit`, `MarketplaceOrdersCubit`, `MarketplaceOrderDetailsCubit`); (4) Pages & Widgets (`MarketplaceCataloguePage`, `ProductDetailsPage`, `MarketplaceCartPage`, `MarketplaceWishlistPage`, `MarketplaceCheckoutPage`, `MarketplaceOrdersPage`, `MarketplaceOrderDetailsPage`, `ProductCard`, `ProductSearchBar`, `ProductFilterSheet`, `CartItemCard`, `OrderCard`, `OrderStatusTimeline`); (5) Centralized GoRouter routes in `AppRoutes` and `appRouter`; (6) Full test suite (`test/features/player/marketplace_test.dart`, 23 tests passing; total 204 player feature tests passing); (7) Zero static analysis issues.
+- **Description:** Implemented end-to-end Player Marketplace Shopping Experience according to Player PRD v1.6 and Frontend FSD. Includes: (1) Domain entities (`ProductCategory`, `ProductSortOption`, `MarketplaceOrderStatus`, `ProductFilter`, `MarketplaceProduct`, `MarketplaceCartItem`, `MarketplaceDeliveryAddress`, `OrderStatusStep`, `MarketplaceOrder`); (2) Abstract repository contract (`MarketplaceRepository`) and in-memory mock repository (`MockMarketplaceRepository`) pre-seeded with 8 products, active cart, saved wishlist, and 3 mock orders (`ORD-10921`, `ORD-10955`, `ORD-10988`), reference generation (`PKL-ORD-YYYYMMDD-XXXX`), threshold delivery fees (free over ₹999), order cancellation rules, strict stock validation on `addToCart` and `updateCartQuantity` preventing additions/updates exceeding stock; (3) Category-specific icon/placeholder rendering across catalogue, product details, cart, wishlist, checkout, and order views; (4) Cubits & States (`MarketplaceCatalogueCubit`, `ProductDetailsCubit`, `MarketplaceCartCubit`, `MarketplaceWishlistCubit`, `MarketplaceCheckoutCubit`, `MarketplaceOrdersCubit`, `MarketplaceOrderDetailsCubit`); (5) Pages & Widgets (`MarketplaceCataloguePage`, `ProductDetailsPage`, `MarketplaceCartPage`, `MarketplaceWishlistPage`, `MarketplaceCheckoutPage`, `MarketplaceOrdersPage`, `MarketplaceOrderDetailsPage`, `ProductCard`, `ProductSearchBar`, `ProductFilterSheet`, `CartItemCard`, `OrderCard`, `OrderStatusTimeline`); (6) Centralized GoRouter routes in `AppRoutes` and `appRouter`; (7) Full test suite (`test/features/player/marketplace_test.dart`, 27 tests passing; total 209 player feature tests passing); (8) Zero static analysis issues.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
-- **Status:** Completed — Verification Conducted. Ready for User Review.
+- **Status:** Completed — Targeted Corrections Verified. Ready for User Review.
 
 ---
 
 ## Completed Tasks
 
-- [x] **Feature 2.6:** Player Marketplace Shopping Experience (`MarketplaceCataloguePage`, `ProductDetailsPage`, `MarketplaceCartPage`, `MarketplaceWishlistPage`, `MarketplaceCheckoutPage`, `MarketplaceOrdersPage`, `MarketplaceOrderDetailsPage`), catalog browsing, search & filters, specifications & return policy, wishlist toggling, cart counter, address validation, pay-on-delivery checkout, order status timeline tracking, self-service cancellation, DI registrations, Spring Boot backend handoff §5.8, and test suite (`test/features/player/marketplace_test.dart`, 23 tests passing; 204 player tests passing).
+- [x] **Feature 2.6:** Player Marketplace Shopping Experience (`MarketplaceCataloguePage`, `ProductDetailsPage`, `MarketplaceCartPage`, `MarketplaceWishlistPage`, `MarketplaceCheckoutPage`, `MarketplaceOrdersPage`, `MarketplaceOrderDetailsPage`), catalog browsing, search & filters, specifications & return policy, wishlist toggling, cart counter, stock limits enforcement on add & update, category-specific visual placeholders, address validation, pay-on-delivery checkout, order status timeline tracking, self-service cancellation, DI registrations, Spring Boot backend handoff §5.8, and test suite (`test/features/player/marketplace_test.dart`, 27 tests passing; 209 player tests passing).
 - [x] **Feature 2.5:** Player Tournament Discovery & Registration (`TournamentDiscoveryPage`, `TournamentDetailsPage`, `TournamentRegistrationPage`, `TournamentConfirmationPage`), tournament search & filters, DUPR & age eligibility, division capacity, doubles partner prefill, waiver acceptance, reference generation, and test suite (`test/features/player/tournament_test.dart`, 28 tests passing).
 
 - [x] **P0-01 / P0-02:** Architectural Proposal v1.2.0, folder tree, ADRs, and project documentation created and approved.
@@ -63,8 +63,8 @@
 
 ## Next Tasks (Phase 2 — Player Module)
 
-1. [ ] **Feature 2.6:** Marketplace Shopping Experience (`/player/marketplace`).
-2. [ ] **Feature 2.7:** Coaching & Clinics Discovery Flow (`/player/coaching`).
+1. [ ] **Feature 2.7:** Coaching & Clinics Discovery Flow (`/player/coaching`).
+2. [ ] **Feature 2.8:** Community & Matchmaking (`/player/community`).
 
 
 

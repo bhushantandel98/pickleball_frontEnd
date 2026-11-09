@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
 import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
+import 'package:pickleball_platform/features/player/presentation/widgets/category_icon_helper.dart';
 
 /// Card displaying product preview, price, rating, wishlist toggle, and quick add-to-cart.
 class ProductCard extends StatelessWidget {
@@ -34,40 +35,11 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildFallbackImage(ThemeData theme) {
-    IconData icon;
-    switch (product.category) {
-      case ProductCategory.paddles:
-        icon = Icons.sports_tennis;
-        break;
-      case ProductCategory.balls:
-        icon = Icons.sports_baseball;
-        break;
-      case ProductCategory.shoes:
-      case ProductCategory.footwear:
-        icon = Icons.roller_skating;
-        break;
-      case ProductCategory.equipment:
-        icon = Icons.sports_tennis;
-        break;
-      case ProductCategory.apparel:
-        icon = Icons.checkroom;
-        break;
-      case ProductCategory.accessories:
-        icon = Icons.fitness_center;
-        break;
-      case ProductCategory.bags:
-        icon = Icons.backpack;
-        break;
-      case ProductCategory.all:
-        icon = Icons.shopping_bag;
-        break;
-    }
-
     return Container(
       color: theme.colorScheme.surfaceContainerHighest,
       alignment: Alignment.center,
       child: Icon(
-        icon,
+        getCategoryIcon(product.category),
         size: 48,
         color: theme.colorScheme.primary.withValues(alpha: 0.6),
       ),
