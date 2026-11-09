@@ -401,3 +401,15 @@ During UI development and feature implementation, adhere strictly to the followi
 7. **Full Suite Gating:** Run the complete project test suite (`flutter test`) once as a comprehensive gate during the final pre-Git-push verification.
 8. **Truthful & Precise Reporting:** Always report explicitly which specific tests were executed and their actual command output. Never claim or imply that the full test suite passed if only targeted tests were executed.
 
+---
+
+## 11. Git Workflow & Automated Push Rule
+
+1. **Automatic Git Commit & Push:**
+   - Once changes for a feature, bugfix, or modification are completed and verified (targeted tests pass and static analysis is clean), automatically stage all relevant changes (`git add .`).
+   - Create a commit with a concise, descriptive commit message adhering to conventional commit formatting (e.g. `feat: ...`, `fix: ...`, `docs: ...`).
+   - Automatically push the commit to the `dev` branch (`git push origin dev`).
+2. **Default Behavior:**
+   - Always follow this automated commit-and-push workflow unless the user explicitly instructs otherwise (e.g., "do not commit", "do not push", or "keep changes local").
+
+
