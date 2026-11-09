@@ -22,6 +22,7 @@ import 'package:pickleball_platform/features/player/presentation/pages/booking_c
 import 'package:pickleball_platform/features/player/presentation/pages/booking_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/court_availability_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/match_day_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/my_bookings_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/player_dashboard_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_details_page.dart';
@@ -222,11 +223,7 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.playerMatchDay,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Match Day Schedule',
-              path: AppRoutes.playerMatchDay,
-              role: UserRole.player,
-            ),
+            builder: (context, state) => const MatchDayPage(),
           ),
           GoRoute(
             path: AppRoutes.playerMarketplace,

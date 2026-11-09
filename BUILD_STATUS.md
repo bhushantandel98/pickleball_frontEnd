@@ -13,7 +13,7 @@
 |---|---|---|---|---|
 | **Phase 0** | Foundation & Project Setup | **Completed (P0-06 Approved)** | 100% | Mock infrastructure, DI isolation & simulation harness verified |
 | **Phase 1** | Identity & Shared Services | **Completed (Phase 1.2.3 Approved)** | 100% | Welcome, Login, Register, Recovery, Role Selection, Profile & Notifications verified |
-| **Phase 2** | Player Module | **In Progress (Feature 2.3 Completed)** | 55% | Player Dashboard, Venue Discovery, Venue Details, Court Availability, Checkout & Confirmation, My Bookings & History verified |
+| **Phase 2** | Player Module | **In Progress (Feature 2.4 Completed)** | 60% | Player Dashboard, Venue Discovery, Venue Details, Court Availability, Checkout & Confirmation, My Bookings & History, Match Day Hub verified |
 | **Phase 3** | Coach, Academy & Academy Staff | Not Started | 0% | Org scoping & player roster verified |
 | **Phase 4** | Venue Partner & Venue Staff | Not Started | 0% | Slot booking & calendar contract ready |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | Not Started | 0% | Draw, live scoring UI & public views |
@@ -25,8 +25,8 @@
 
 ## Active Task
 
-- **Task ID:** Feature 2.3 — Player My Bookings & Booking History UI
-- **Description:** Implemented end-to-end My Bookings and Booking History experience for the Player module according to Player PRD v1.6 and Frontend FSD. Includes: (1) Domain entity extensions for `CourtBooking` (`copyWith`, `isUpcoming`, `isPast`, `isCancelled`, `canCancel`, `paymentStatusDisplay`); (2) In-memory mock repository (`MockBookingRepository`) with `cancelBooking()`, realistic seeded bookings for upcoming/past/cancelled categories, and `MockBookingRepository.withDefaultBookings()` factory; (3) `MyBookingsCubit` & `BookingDetailsCubit` with reactive filtering, cancellation state, and error handling; (4) `MyBookingsPage` responsive list view with segmented filter tabs (`Upcoming`, `Past`, `Cancelled`) with count badges, pull-to-refresh, empty states with "Book a Court" CTAs, and `BookingCard`s with cancel confirmation dialogs; (5) `BookingDetailsPage` reservation details screen displaying booking reference, copy button, status badges, venue info, court specs, schedule, price breakdown, check-in instructions, and cancellation workflows; (6) GoRouter route registration at `/player/bookings` and `/player/bookings/:id`; (7) 25 focused unit and widget tests (`test/features/player/my_bookings_test.dart`) and 0 static analysis issues across 118 total player module tests.
+- **Task ID:** Feature 2.4 — Player Match Day Hub & Live Views
+- **Description:** Implemented end-to-end Match Day Hub experience for the Player module according to Player PRD v1.6 and Frontend FSD. Includes: (1) Domain entities (`PlayerMatchDayData`, `PlayerMatch`, `CourtLiveMatch`, `StandingsRow`, `BracketNode`, `MatchStatus`); (2) Abstract repository contract (`MatchDayRepository`) and in-memory mock repository (`MockMatchDayRepository`) pre-seeded with realistic tournament data matching Alex Rivera's upcoming tournament commitment ("National Pickleball Open 2026" at Grand Slam Arena), check-in simulation, and testing harness toggles; (3) `MatchDayCubit` & `MatchDayState` handling aggregate loading, tab switching (`mySchedule`, `liveScores`, `bracketStandings`), and match check-in; (4) `MatchScoreCard` widget displaying division, round, court allocation, live set scores with serving indicator, referee name, and check-in CTA button; (5) `CourtLiveCard` widget displaying court status, active match score, elapsed time, and next queued match; (6) `TournamentStandingsTable` widget rendering pool group tables with win/loss/differential records and qualified status badges; (7) `TournamentBracketView` widget rendering single-elimination knockout brackets across Quarter-Finals, Semi-Finals, and Finals rounds; (8) `MatchDayPage` responsive hub with tournament overview header, segmented navigation tabs, empty state with "Explore Tournaments" CTA, and pull-to-refresh; (9) GoRouter route registration at `/player/match-day`; (10) Comprehensive test suite (`test/features/player/match_day_test.dart`, 19 tests passing) and 0 static analysis issues across 137 total player module tests.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
 - **Status:** Completed — Verification Conducted. Ready for User Review.
 
@@ -53,15 +53,15 @@
 - [x] **Feature 2.2.3:** Player Court Availability & Slot Selection UI & Targeted Robustness Fixes (`CourtAvailabilityPage`, `CourtDatePickerStrip`, `CourtSelectorTabs`, `CourtSlotCard`, `BookingSummaryCard`, `CourtAvailabilityCubit`, `CourtAvailabilityState`, `MockVenueRepository`), 14-day rolling date picker, court selector tabs with live slot counts, morning/afternoon/evening slots grid, single slot selection constraint, booking summary with pricing, navigation to booking checkout passing `BookingSelectionPayload`, missing venue error state, responsive desktop/mobile layouts; code review targeted fixes implemented: empty court list `.first` crash prevention with clean empty state presentation (`'No courts available for this date.'`), explicit repository failure handling on date & court changes emitting `CourtAvailabilityFailure` with retry and invalidation of stale selections (`test/features/player/court_availability_test.dart`, 22 tests passing; total 70 player feature tests passing).
 - [x] **Feature 2.2.4:** Player Court Booking Checkout & Confirmation UI (`BookingCheckoutPage`, `BookingConfirmationPage`, `BookingCheckoutCubit`, `MockBookingRepository`, `CourtBooking`, `BookingStatus`), booking detail review, offline Pay-at-Venue workflow with 30-min hold notice, standardized reference generator (`PKL-BKG-YYYYMMDD-XXXX`), confirmed booking presentation, and full unit/widget test suite (`test/features/player/booking_checkout_test.dart`, 23 tests passing; total 93 player feature tests passing).
 - [x] **Feature 2.3:** Player My Bookings & Booking History UI (`MyBookingsPage`, `BookingDetailsPage`, `BookingCard`, `BookingFilterTabs`, `MyBookingsCubit`, `BookingDetailsCubit`, `CourtBooking.copyWith`), categorized tabs for Upcoming, Past, and Cancelled reservations with count badges, pull-to-refresh, empty states with "Book a Court" CTAs, booking details with copy reference and check-in advisory, safe cancellation confirmation dialog, route wiring at `/player/bookings` and `/player/bookings/:id`, and comprehensive unit/widget test suite (`test/features/player/my_bookings_test.dart`, 25 tests passing; total 118 player feature tests passing).
+- [x] **Feature 2.4:** Player Match Day Hub & Live Views (`MatchDayPage`, `MatchScoreCard`, `CourtLiveCard`, `TournamentStandingsTable`, `TournamentBracketView`, `MatchDayCubit`, `MatchDayState`, `MatchDayRepository`, `MockMatchDayRepository`, `PlayerMatchDayData`), tournament overview header, personal fixtures with check-in button, live court tracker with match queue, pool group standings tables, single-elimination knockout tournament bracket view, empty states, pull-to-refresh, route wiring at `/player/match-day`, Spring Boot handoff specification §5.6, and unit/widget test suite (`test/features/player/match_day_test.dart`, 19 tests passing; total 137 player feature tests passing).
 
 ---
 
 ## Next Tasks (Phase 2 — Player Module)
 
-1. [ ] **Feature 2.4:** Academy & Coach Discovery Flow (`/player/discovery/academies`).
-2. [ ] **Feature 2.5:** Tournament Discovery & Entry (`/player/tournaments`).
-3. [ ] **Feature 2.6:** Match Day Hub & Live Scoring Views (`/player/match-day`).
-4. [ ] **Feature 2.7:** Marketplace Shopping Experience (`/player/marketplace`).
+1. [ ] **Feature 2.5:** Academy & Coach Discovery Flow (`/player/discovery/academies`).
+2. [ ] **Feature 2.6:** Tournament Discovery & Entry (`/player/tournaments`).
+3. [ ] **Feature 2.7:** Marketplace Shopping Experience (`/player/marketplace`).
 
 
 ---

@@ -53,7 +53,7 @@
 - `/player/discovery/venues/:id/availability` — Court availability and slot booking placeholder route [Feature 2.2.3]
 - `/player/bookings` — My bookings (Upcoming/Past, Cancel/Reschedule, Offline payment status)
 - `/player/tournaments` — Tournament browse, category selection, registration status
-- `/player/match-day` — My match schedule, live score, standings, brackets
+- `/player/match-day` — My match schedule, live score, standings, brackets ([`MatchDayPage`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/match_day_page.dart)) [Implemented - Feature 2.4]
 - `/player/marketplace` — Products catalog, order placement, order history, tracking
 
 ### 2.3 Coach & Academy Modules (Phase 3)
@@ -342,6 +342,18 @@
 - Routes: `AppRoutes.playerBookings` (`/player/bookings`) and `AppRoutes.playerBookingDetails` (`/player/bookings/:id`) wired into [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart).
 - Tests: `test/features/player/my_bookings_test.dart` (25 tests passing).
 - Backend Contract Handoff: §5.5 in [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md).
+
+### 7.7 Feature 2.4 - Player Match Day Hub & Live Views
+- `MatchDayPage` ([`lib/features/player/presentation/pages/match_day_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/match_day_page.dart)) — Match Day Hub screen featuring tournament overview banner, segmented navigation tabs (`My Schedule`, `Live Courts`, `Bracket & Pools`), empty state with "Explore Tournaments" action, and pull-to-refresh synchronization.
+- `MatchScoreCard` ([`lib/features/player/presentation/widgets/match_score_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/match_score_card.dart)) — Match fixture card rendering division, category, court allocation, live/scheduled status badge, active server indicator dot, set-by-set score matrix, assigned referee, and interactive check-in button.
+- `CourtLiveCard` ([`lib/features/player/presentation/widgets/court_live_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/court_live_card.dart)) — Real-time court status monitor displaying court name, court surface/type, active match score with elapsed time, and next scheduled match in queue.
+- `TournamentStandingsTable` ([`lib/features/player/presentation/widgets/tournament_standings_table.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/tournament_standings_table.dart)) — Pool stage standings table with group selector chips, position ranks, matches played, win/loss record, points differential, and qualification badges.
+- `TournamentBracketView` ([`lib/features/player/presentation/widgets/tournament_bracket_view.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/tournament_bracket_view.dart)) — Knockout bracket view featuring round selector chips (Quarter-Finals, Semi-Finals, Finals), player seedings, match scores, and winner highlights.
+- `MatchDayCubit` & `MatchDayState` ([`lib/features/player/presentation/cubit/match_day_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/match_day_cubit.dart)) — State management coordinating `MatchDayInitial`, `MatchDayLoading`, `MatchDayLoaded` (with `MatchDayTab` switching), and `MatchDayFailure`.
+- Domain Entities & Repositories: `PlayerMatchDayData`, `PlayerMatch`, `CourtLiveMatch`, `StandingsRow`, `BracketNode`, `MatchStatus` in [`lib/features/player/domain/entities/match_day_data.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/match_day_data.dart), `MatchDayRepository` in [`lib/features/player/domain/repositories/match_day_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/match_day_repository.dart), and `MockMatchDayRepository` in [`lib/features/player/data/repositories/mock_match_day_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_match_day_repository.dart).
+- Routes: `AppRoutes.playerMatchDay` (`/player/match-day`) wired into [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart).
+- Tests: `test/features/player/match_day_test.dart` (19 tests passing).
+- Backend Contract Handoff: §5.6 in [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md).
 
 
 

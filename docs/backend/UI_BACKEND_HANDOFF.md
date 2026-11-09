@@ -1711,6 +1711,151 @@ The My Bookings experience allows players to track all current and historical co
 | **Past** | `status == 'completed'` OR `date < today` (and not cancelled) | Historical | Descending by `date` (most recent game first) |
 | **Cancelled** | `status == 'cancelled'` | Any date | Descending by `date` (most recently cancelled first) |
 
+---
+
+### 5.6 Player Match Day Hub (Feature 2.4)
+
+#### Screen Overview
+The Player Match Day Hub is the operational destination for registered tournament players on game day. Accessible from the Player Dashboard (`Upcoming Activities` fixture card and `Match Day` quick action), it provides centralized access to the active tournament overview, the player's personalized schedule and check-in workflows, live court scoreboards across all tournament courts, group stage standings, and the knockout elimination bracket.
+
+- **Route:** `/player/match-day` (`AppRoutes.playerMatchDay`)
+- **Domain Entities:** `PlayerMatchDayData`, `PlayerMatch`, `CourtLiveMatch`, `StandingsRow`, `BracketNode`, `MatchStatus` (`scheduled`, `warmup`, `live`, `completed`, `delayed`)
+- **Cubit / State:** `MatchDayCubit` (`MatchDayInitial`, `MatchDayLoading`, `MatchDayLoaded`, `MatchDayFailure`)
+- **Tabs:** `MatchDayTab.mySchedule` ("My Schedule"), `MatchDayTab.liveScores` ("Live Courts"), `MatchDayTab.bracketStandings` ("Bracket & Pools")
+
+#### Proposed Backend API Contracts
+
+##### 1. Retrieve Player Match Day Aggregate Data
+- **Endpoint:** `GET /api/v1/player/match-day`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Query Parameters (Optional):**
+  - `tournamentId`: Specific active tournament identifier (defaults to player's current active tournament).
+- **Player Scoping:** The response is scoped to the authenticated player via JWT claims to populate `myMatches` and identify the player's seeds and opponent pairings.
+
+**Proposed Success Response (`200 OK`):**
+```json
+{
+  "tournamentId": "tourn_001",
+  "tournamentName": "National Pickleball Open 2026",
+  "tournamentVenue": "Grand Slam Pickleball Arena",
+  "date": "2026-11-09T00:00:00.000Z",
+  "myMatches": [
+    {
+      "id": "match_live_001",
+      "tournamentId": "tourn_001",
+      "tournamentName": "National Pickleball Open 2026",
+      "category": "Men's Singles Open",
+      "round": "Semi-Final",
+      "courtName": "Court 1 (Championship Court)",
+      "scheduledTime": "2026-11-09T15:45:00.000Z",
+      "status": "live",
+      "player1Name": "Alex Rivera",
+      "player1Seed": 5,
+      "player1Score": [11, 8, 6],
+      "player2Name": "Jordan Cruz",
+      "player2Seed": 3,
+      "player2Score": [9, 11, 4],
+      "currentSet": 3,
+      "serverIndex": 1,
+      "refereeName": "Carlos Vega",
+      "winnerName": null,
+      "isCheckedIn": true
+    },
+    {
+      "id": "match_sched_002",
+      "tournamentId": "tourn_001",
+      "tournamentName": "National Pickleball Open 2026",
+      "category": "Mixed Doubles 3.5",
+      "round": "Quarter-Final",
+      "courtName": "Court 3",
+      "scheduledTime": "2026-11-09T17:30:00.000Z",
+      "status": "scheduled",
+      "player1Name": "Alex Rivera / Maya Lin",
+      "player1Seed": 2,
+      "player1Score": [],
+      "player2Name": "Rohan Verma / Priya Rao",
+      "player2Seed": 4,
+      "player2Score": [],
+      "currentSet": 1,
+      "serverIndex": 1,
+      "refereeName": "Sara Connor",
+      "winnerName": null,
+      "isCheckedIn": false,
+      "checkInDeadline": "2026-11-09T17:15:00.000Z"
+    }
+  ],
+  "courtMatches": [
+    {
+      "courtId": "court_1",
+      "courtName": "Court 1 (Championship Court)",
+      "tournamentName": "National Pickleball Open 2026",
+      "category": "Men's Singles Open",
+      "currentMatch": { "id": "match_live_001", "score": "11-9, 8-11, 6-4" },
+      "nextMatch": { "id": "court1_next", "scheduledTime": "17:00" }
+    }
+  ],
+  "standings": [
+    {
+      "rank": 1,
+      "playerName": "Alex Rivera",
+      "pool": "Pool A",
+      "matchesPlayed": 3,
+      "matchesWon": 3,
+      "matchesLost": 0,
+      "pointDifferential": 18,
+      "isQualified": true
+    }
+  ],
+  "bracket": [
+    {
+      "id": "sf_1",
+      "roundName": "Semi-Finals",
+      "matchIndex": 1,
+      "player1": "Alex Rivera",
+      "player1Seed": 5,
+      "player1Score": "11, 8, 6",
+      "player2": "Jordan Cruz",
+      "player2Seed": 3,
+      "player2Score": "9, 11, 4",
+      "isLive": true,
+      "court": "Court 1"
+    }
+  ]
+}
+```
+
+##### 2. Check In to Match
+- **Endpoint:** `POST /api/v1/player/match-day/matches/{id}/check-in`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Business Rules:**
+  - Marks the player as present and available for court call.
+  - Returns `400 Bad Request` if check-in deadline has expired.
+  - Updates match status to `warmup` or flags player as checked-in for referee / tournament desk queue.
+
+**Proposed Success Response (`200 OK`):**
+```json
+{
+  "message": "Player successfully checked in for match fixture.",
+  "matchId": "match_sched_002",
+  "isCheckedIn": true,
+  "checkInTimestamp": "2026-11-09T17:05:00.000Z"
+}
+```
+
+#### Screen Elements & Interactions
+1. **Tournament Header Card**: Tournament name, venue location, game date, active match badge count.
+2. **Tab 1 — My Schedule**:
+   - Player's fixtures for the day (live, upcoming, completed).
+   - Set-by-set score display, serving indicators, referee assignment.
+   - Interactive Check-in action button for scheduled matches.
+3. **Tab 2 — Live Courts**:
+   - All court allocation monitor with live match progress and next match queue.
+4. **Tab 3 — Bracket & Pools**:
+   - Filterable group stage standings table with qualification status.
+   - Elimination draw tree across Quarter-finals, Semi-finals, and Final.
+5. **Empty State**: Friendly card with "Explore Tournaments" CTA when the player has no fixtures today.
+
+
 
 
 

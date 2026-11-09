@@ -22,13 +22,16 @@ import 'package:pickleball_platform/features/notifications/domain/repositories/n
 import 'package:pickleball_platform/features/notifications/presentation/cubit/notification_preferences_cubit.dart';
 import 'package:pickleball_platform/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_booking_repository.dart';
+import 'package:pickleball_platform/features/player/data/repositories/mock_match_day_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_venue_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/booking_repository.dart';
+import 'package:pickleball_platform/features/player/domain/repositories/match_day_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/venue_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_checkout_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_details_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/match_day_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/my_bookings_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/player_dashboard_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/venue_discovery_cubit.dart';
@@ -133,6 +136,13 @@ Future<void> initServiceLocator() async {
       repository: sl<BookingRepository>(),
     ),
   );
+
+  // --- Match Day Cubit ---
+  sl.registerFactory<MatchDayCubit>(
+    () => MatchDayCubit(
+      repository: sl<MatchDayRepository>(),
+    ),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -200,6 +210,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<BookingRepository>(
     () => MockBookingRepository.withDefaultBookings(),
   );
+
+  // Match Day Repository
+  sl.registerLazySingleton<MatchDayRepository>(
+    () => MockMatchDayRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -245,5 +260,10 @@ void initRemoteServiceLocator() {
   // Booking Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<BookingRepository>(
     () => MockBookingRepository.withDefaultBookings(),
+  );
+
+  // Match Day Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<MatchDayRepository>(
+    () => MockMatchDayRepository(),
   );
 }
