@@ -13,7 +13,7 @@
 |---|---|---|---|---|
 | **Phase 0** | Foundation & Project Setup | **Completed (P0-06 Approved)** | 100% | Mock infrastructure, DI isolation & simulation harness verified |
 | **Phase 1** | Identity & Shared Services | **Completed (Phase 1.2.3 Approved)** | 100% | Welcome, Login, Register, Recovery, Role Selection, Profile & Notifications verified |
-| **Phase 2** | Player Module | **In Progress (Feature 2.6 Completed)** | 75% | Player Dashboard, Venue Discovery, Venue Details, Court Availability, Checkout & Confirmation, My Bookings & History, Match Day Hub, Tournament Discovery & Registration, Marketplace Shopping Experience verified |
+| **Phase 2** | Player Module | **In Progress (Feature 2.7 Completed)** | 87.5% | Player Dashboard, Venue Discovery, Venue Details, Court Availability, Checkout & Confirmation, My Bookings & History, Match Day Hub, Tournament Discovery & Registration, Marketplace Shopping Experience, Academy & Coach Discovery verified |
 | **Phase 3** | Coach, Academy & Academy Staff | Not Started | 0% | Org scoping & player roster verified |
 | **Phase 4** | Venue Partner & Venue Staff | Not Started | 0% | Slot booking & calendar contract ready |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | Not Started | 0% | Draw, live scoring UI & public views |
@@ -25,15 +25,16 @@
 
 ## Active Task
 
-- **Task ID:** Feature 2.6 — Player Marketplace Shopping Experience
-- **Description:** Implemented end-to-end Player Marketplace Shopping Experience according to Player PRD v1.6 and Frontend FSD. Includes: (1) Domain entities (`ProductCategory`, `ProductSortOption`, `MarketplaceOrderStatus`, `ProductFilter`, `MarketplaceProduct`, `MarketplaceCartItem`, `MarketplaceDeliveryAddress`, `OrderStatusStep`, `MarketplaceOrder`); (2) Abstract repository contract (`MarketplaceRepository`) and in-memory mock repository (`MockMarketplaceRepository`) pre-seeded with 8 products, active cart, saved wishlist, and 3 mock orders (`ORD-10921`, `ORD-10955`, `ORD-10988`), reference generation (`PKL-ORD-YYYYMMDD-XXXX`), threshold delivery fees (free over ₹999), order cancellation rules, strict stock validation on `addToCart` and `updateCartQuantity` preventing additions/updates exceeding stock; (3) Category-specific icon/placeholder rendering across catalogue, product details, cart, wishlist, checkout, and order views; (4) Cubits & States (`MarketplaceCatalogueCubit`, `ProductDetailsCubit`, `MarketplaceCartCubit`, `MarketplaceWishlistCubit`, `MarketplaceCheckoutCubit`, `MarketplaceOrdersCubit`, `MarketplaceOrderDetailsCubit`); (5) Pages & Widgets (`MarketplaceCataloguePage`, `ProductDetailsPage`, `MarketplaceCartPage`, `MarketplaceWishlistPage`, `MarketplaceCheckoutPage`, `MarketplaceOrdersPage`, `MarketplaceOrderDetailsPage`, `ProductCard`, `ProductSearchBar`, `ProductFilterSheet`, `CartItemCard`, `OrderCard`, `OrderStatusTimeline`); (6) Centralized GoRouter routes in `AppRoutes` and `appRouter`; (7) Full test suite (`test/features/player/marketplace_test.dart`, 27 tests passing; total 209 player feature tests passing); (8) Zero static analysis issues.
+- **Task ID:** Feature 2.7 — Player Academy & Coach Discovery
+- **Description:** Implemented end-to-end Player Academy & Coach Discovery experience according to Player PRD v1.6, Coach PRD v1.2, Academy PRD v1.3, and Frontend FSD. Includes: (1) Domain entities (`AcademyBranch`, `AcademyProgram`, `AcademyBatch`, `AcademyEnrollmentRequest`, `AcademyEnrollmentStatus`, `CoachItem`, `CoachService`, `CoachInquiryRequest`, `CoachInquiryStatus`); (2) Abstract repository contract (`CoachingAcademyRepository`) and in-memory mock repository (`MockCoachingAcademyRepository`) pre-seeded with 3 branches, programs, schedules/batches, 4 coaches, and active requests with waitlist position calculation; (3) Privacy & permission safeguards: public branch listings strictly conceal internal fee structures and member rosters (exposing only name, location, operating hours, court count, head coach); (4) Enrollment approval gates & waitlist logic: submissions default to `pendingApproval`; full batches join waitlist with live rank if waitlist enabled or reject if disabled; self-approval prohibited; (5) Coach access gate: coach inquiry requests default to `pendingCoachResponse`; no automatic coach dashboard access is granted without coach action; (6) Cubits & States (`AcademyDiscoveryCubit`, `AcademyDetailsCubit`, `AcademyEnrollmentCubit`, `CoachDiscoveryCubit`, `CoachDetailsCubit`, `CoachInquiryCubit`, `MyCoachingRequestsCubit`); (7) Pages & Widgets (`PlayerAcademyCoachPage`, `AcademyDetailsPage`, `AcademyEnrollmentPage`, `CoachDetailsPage`, `CoachInquiryPage`, `AcademyBranchCard`, `CoachCard`, `AcademyBatchCard`, `AcademyEnrollmentRequestTile`, `CoachInquiryRequestTile`); (8) Centralized GoRouter routes in `AppRoutes` and `appRouter`; (9) Spring Boot backend handoff §5.9; (10) Targeted unit and widget test suite (`test/features/player/academy_coach_test.dart`, 25 tests passing; total 234 player feature tests passing); (11) Zero static analysis issues.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
-- **Status:** Completed — Targeted Corrections Verified. Ready for User Review.
+- **Status:** Completed — Verification & Documentation Complete. Ready for User Review.
 
 ---
 
 ## Completed Tasks
 
+- [x] **Feature 2.7:** Player Academy & Coach Discovery (`PlayerAcademyCoachPage`, `AcademyDetailsPage`, `AcademyEnrollmentPage`, `CoachDetailsPage`, `CoachInquiryPage`), public academy discovery with strict privacy boundaries (no fees/roster leak), branch details, program/batch exploration, enrollment requests with waitlist position handling, coach discovery with services & pricing, coach inquiry submissions without automatic dashboard grant, unified "My Requests" tab with cancellation actions, Spring Boot backend handoff §5.9, and test suite (`test/features/player/academy_coach_test.dart`, 25 tests passing; 234 player tests passing).
 - [x] **Feature 2.6:** Player Marketplace Shopping Experience (`MarketplaceCataloguePage`, `ProductDetailsPage`, `MarketplaceCartPage`, `MarketplaceWishlistPage`, `MarketplaceCheckoutPage`, `MarketplaceOrdersPage`, `MarketplaceOrderDetailsPage`), catalog browsing, search & filters, specifications & return policy, wishlist toggling, cart counter, stock limits enforcement on add & update, category-specific visual placeholders, address validation, pay-on-delivery checkout, order status timeline tracking, self-service cancellation, DI registrations, Spring Boot backend handoff §5.8, and test suite (`test/features/player/marketplace_test.dart`, 27 tests passing; 209 player tests passing).
 - [x] **Feature 2.5:** Player Tournament Discovery & Registration (`TournamentDiscoveryPage`, `TournamentDetailsPage`, `TournamentRegistrationPage`, `TournamentConfirmationPage`), tournament search & filters, DUPR & age eligibility, division capacity, doubles partner prefill, waiver acceptance, reference generation, and test suite (`test/features/player/tournament_test.dart`, 28 tests passing).
 
@@ -63,8 +64,7 @@
 
 ## Next Tasks (Phase 2 — Player Module)
 
-1. [ ] **Feature 2.7:** Coaching & Clinics Discovery Flow (`/player/coaching`).
-2. [ ] **Feature 2.8:** Community & Matchmaking (`/player/community`).
+1. [ ] **Feature 2.8:** Community & Matchmaking (`/player/community`).
 
 
 

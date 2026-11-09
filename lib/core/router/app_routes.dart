@@ -37,6 +37,20 @@ abstract final class AppRoutes {
   static const String playerCourtAvailability = '/player/discovery/venues/:id/availability';
   static String playerCourtAvailabilityPath(String id) => '/player/discovery/venues/$id/availability';
   static const String playerAcademies = '/player/discovery/academies';
+  static const String playerAcademyDetails = '/player/discovery/academies/:id';
+  static String playerAcademyDetailsPath(String id) => '/player/discovery/academies/$id';
+  static const String playerAcademyEnrollment =
+      '/player/discovery/academies/:id/enroll/:batchId';
+  static String playerAcademyEnrollmentPath(String id, String batchId,
+          {String? programId}) =>
+      '/player/discovery/academies/$id/enroll/$batchId${programId != null ? '?programId=$programId' : ''}';
+  static const String playerCoachDetails = '/player/discovery/coaches/:id';
+  static String playerCoachDetailsPath(String id) =>
+      '/player/discovery/coaches/$id';
+  static const String playerCoachInquiry =
+      '/player/discovery/coaches/:id/inquiry';
+  static String playerCoachInquiryPath(String id, {String? serviceId}) =>
+      '/player/discovery/coaches/$id/inquiry${serviceId != null ? '?serviceId=$serviceId' : ''}';
   static const String playerBookings = '/player/bookings';
   static const String playerBookingDetails = '/player/bookings/:id';
   static String playerBookingDetailsPath(String id) => '/player/bookings/$id';

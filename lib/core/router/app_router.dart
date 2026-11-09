@@ -23,6 +23,10 @@ import 'package:pickleball_platform/features/player/domain/entities/marketplace_
 import 'package:pickleball_platform/features/player/presentation/pages/booking_checkout_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_details_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/academy_details_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/academy_enrollment_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/coach_details_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/coach_inquiry_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/court_availability_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/marketplace_cart_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/marketplace_catalogue_page.dart';
@@ -32,6 +36,7 @@ import 'package:pickleball_platform/features/player/presentation/pages/marketpla
 import 'package:pickleball_platform/features/player/presentation/pages/marketplace_wishlist_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/match_day_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/my_bookings_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/player_academy_coach_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/player_dashboard_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/product_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
@@ -205,11 +210,45 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.playerAcademies,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Discover Academies & Coaches',
-              path: AppRoutes.playerAcademies,
-              role: UserRole.player,
-            ),
+            builder: (context, state) => const PlayerAcademyCoachPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerAcademyDetails,
+            builder: (context, state) {
+              final branchId = state.pathParameters['id'] ?? '';
+              return AcademyDetailsPage(branchId: branchId);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerAcademyEnrollment,
+            builder: (context, state) {
+              final branchId = state.pathParameters['id'] ?? '';
+              final batchId = state.pathParameters['batchId'] ?? '';
+              final programId = state.uri.queryParameters['programId'] ?? '';
+              return AcademyEnrollmentPage(
+                branchId: branchId,
+                programId: programId,
+                batchId: batchId,
+              );
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerCoachDetails,
+            builder: (context, state) {
+              final coachId = state.pathParameters['id'] ?? '';
+              return CoachDetailsPage(coachId: coachId);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerCoachInquiry,
+            builder: (context, state) {
+              final coachId = state.pathParameters['id'] ?? '';
+              final serviceId = state.uri.queryParameters['serviceId'];
+              return CoachInquiryPage(
+                coachId: coachId,
+                serviceId: serviceId,
+              );
+            },
           ),
           GoRoute(
             path: AppRoutes.playerBookings,

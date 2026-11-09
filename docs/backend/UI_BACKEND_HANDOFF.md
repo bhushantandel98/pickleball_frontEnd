@@ -2301,3 +2301,150 @@ Feature 2.6 implements the complete Player Marketplace Shopping Experience accor
 - **Business Rule:** Rejects cancellation with `400 Bad Request` if order status has progressed beyond `placed` or `processing`.
 
 ---
+
+### §5.9 Feature 2.7 — Player Academy & Coach Discovery Flow
+
+#### 1. Overview & Architectural Principles
+Implements public academy branch discovery, program and batch exploration, enrollment request submission, waitlist handling, registered coach directory browsing, coach service inspection, and coaching inquiry submission.
+
+Strict PRD access and privacy boundaries:
+1. **Public Academy Branch Privacy Constraint:** Public listings must display ONLY permitted branch information (academy name, branch name, address, operating timings, court count, head coach). Fees and player roster data MUST NOT be exposed on public branch listings.
+2. **Academy Approval Requirement:** Academy enrollment requests are never auto-approved. Every request transitions initially to `pendingApproval` (or `waitlisted` if the batch is full and waitlist is enabled). Players cannot approve their own enrollments.
+3. **Waitlist Policy:** Waitlist submission is offered exclusively when `isWaitlistEnabled == true` on a full batch. If a batch is full and the waitlist is closed, enrollment submission is rejected.
+4. **Coaching Dashboard Access Policy:** Submitting a coaching inquiry connects the player with the coach for scheduling. It does NOT automatically grant access to any coaching dashboard. Personal coaching access is granted exclusively after the coach approves.
+
+#### 2. Data Models & Enums
+
+##### AcademyEnrollmentStatus
+- `pendingApproval`: "Pending Academy Approval"
+- `approved`: "Enrolled (Approved)"
+- `waitlisted`: "On Waitlist"
+- `rejected`: "Application Declined"
+- `cancelled`: "Cancelled by Player"
+
+##### CoachInquiryStatus
+- `pendingCoachResponse`: "Awaiting Coach Review"
+- `accepted`: "Inquiry Accepted"
+- `declined`: "Coach Unavailable"
+- `cancelled`: "Cancelled by Player"
+
+##### AcademyBranch Data Fields
+| Field | Type | Description |
+|---|---|---|
+| `id` | `String` | Unique branch identifier (e.g. `acad_branch_001`). |
+| `academyId` | `String` | Parent academy organization identifier. |
+| `academyName` | `String` | Legal / brand name of academy. |
+| `branchName` | `String` | Campus or branch name. |
+| `city` | `String` | Operating city. |
+| `address` | `String` | Street address. |
+| `operatingHours` | `String` | Public operating timings. |
+| `contactPhone` | `String` | Public contact telephone. |
+| `contactEmail` | `String` | Public contact email. |
+| `overview` | `String` | Philosophy, court specs, amenities summary. |
+| `headCoachName` | `String` | Lead or head instructor name. |
+| `courtCount` | `int` | Number of courts at this campus. |
+| `programs` | `List<AcademyProgram>` | Curriculum offerings and batches. |
+
+##### CoachItem Data Fields
+| Field | Type | Description |
+|---|---|---|
+| `id` | `String` | Unique coach identifier (e.g. `coach_001`). |
+| `name` | `String` | Coach's full name. |
+| `title` | `String` | Professional title or accreditation. |
+| `bio` | `String` | Coaching experience overview. |
+| `rating` | `double` | Average review rating (1.0 - 5.0). |
+| `reviewCount` | `int` | Count of verified reviews. |
+| `city` | `String` | Operating city. |
+| `experienceYears` | `int` | Total coaching experience. |
+| `certifications` | `List<String>` | Official certifications (PPR, IPTPA, USAPA). |
+| `specializations` | `List<String>` | Primary training focus areas. |
+| `services` | `List<CoachService>` | Offerings with duration and rates. |
+| `affiliations` | `List<String>` | Affiliated academies or clubs. |
+| `availabilitySchedule` | `String` | General weekly availability. |
+
+#### 3. Backend Endpoints Contract
+
+##### 1. List Public Academy Branches
+- **Endpoint:** `GET /api/v1/player/academies`
+- **Query Params:** `query` (optional string), `city` (optional string)
+- **Response (`200 OK`):**
+```json
+[
+  {
+    "id": "acad_branch_001",
+    "academyId": "acad_001",
+    "academyName": "Pinnacle Sports Pickleball Academy",
+    "branchName": "Worli Sea Face Campus",
+    "city": "Mumbai",
+    "address": "Plot 42, Dr. Annie Besant Road, Worli Sea Face, Mumbai 400018",
+    "operatingHours": "Mon-Sat: 6:00 AM - 9:00 PM, Sun: 7:00 AM - 1:00 PM",
+    "courtCount": 6,
+    "headCoachName": "Coach Vikram Seth",
+    "programCount": 2
+  }
+]
+```
+
+##### 2. Get Academy Branch Details & Curriculum
+- **Endpoint:** `GET /api/v1/player/academies/{id}`
+- **Response (`200 OK`):** Returns complete branch details including `programs` and structured `batches`.
+
+##### 3. Submit Academy Enrollment Request
+- **Endpoint:** `POST /api/v1/player/academies/{branchId}/enroll`
+- **Request Payload:**
+```json
+{
+  "programId": "prog_001",
+  "batchId": "batch_001",
+  "playerName": "Alex Rivera",
+  "playerPhone": "+91 98765 43210",
+  "playerEmail": "alex.rivera@example.com",
+  "playerRating": 3.8,
+  "emergencyContactName": "Carlos Rivera",
+  "emergencyContactPhone": "+91 98765 43211",
+  "notes": "Tournament prep focus",
+  "isWaitlist": false
+}
+```
+- **Response (`201 Created`):**
+```json
+{
+  "id": "ENR-20261109-8421",
+  "status": "pendingApproval",
+  "requestedAt": "2026-11-09T16:30:00Z"
+}
+```
+
+##### 4. Cancel Academy Enrollment Request
+- **Endpoint:** `POST /api/v1/player/academies/enrollments/{requestId}/cancel`
+- **Response (`200 OK`):** Updates status to `cancelled`. Rejects cancellation if already `approved` or `rejected`.
+
+##### 5. List Coaches
+- **Endpoint:** `GET /api/v1/player/coaches`
+- **Query Params:** `query`, `city`, `specialization`
+- **Response (`200 OK`):** Array of `CoachItem` summaries.
+
+##### 6. Submit Coach Inquiry
+- **Endpoint:** `POST /api/v1/player/coaches/{coachId}/inquiries`
+- **Request Payload:**
+```json
+{
+  "serviceId": "srv_001",
+  "playerName": "Alex Rivera",
+  "playerPhone": "+91 98765 43210",
+  "preferredDays": "Tuesdays 8:00 AM",
+  "playerRating": 3.8,
+  "trainingGoal": "Stroke consistency and transition resets",
+  "message": "Interested in private lessons."
+}
+```
+- **Response (`201 Created`):**
+```json
+{
+  "id": "INQ-20261109-1234",
+  "status": "pendingCoachResponse",
+  "submittedAt": "2026-11-09T16:30:00Z"
+}
+```
+
+---
