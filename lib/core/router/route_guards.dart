@@ -88,6 +88,9 @@ class ActiveRoleGuard implements RouteGuard {
     // Whitelisted routes when authenticated without an active role
     if (location == AppRoutes.roleSelection ||
         location == AppRoutes.profile ||
+        location == AppRoutes.editProfile ||
+        location == AppRoutes.accountSettings ||
+        location == AppRoutes.notificationPreferences ||
         location == AppRoutes.notifications ||
         AppRoutes.isPublic(location)) {
       return null;

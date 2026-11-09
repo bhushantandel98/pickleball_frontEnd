@@ -263,6 +263,16 @@ class _DesktopShell extends StatelessWidget {
                   ),
                   const Divider(height: 1),
                   ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    title: const Text('My Profile'),
+                    onTap: () => context.go(AppRoutes.profile),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings_outlined),
+                    title: const Text('Settings'),
+                    onTap: () => context.go(AppRoutes.accountSettings),
+                  ),
+                  ListTile(
                     leading: const Icon(Icons.logout),
                     title: const Text('Sign Out'),
                     onTap: () {
@@ -321,6 +331,11 @@ AppBar _buildAppBar(
           onPressed: () => context.go(AppRoutes.roleSelection),
         ),
       ],
+      IconButton(
+        icon: const Icon(Icons.person_outline),
+        tooltip: 'My Profile',
+        onPressed: () => context.go(AppRoutes.profile),
+      ),
       IconButton(
         icon: const Icon(Icons.notifications_outlined),
         tooltip: 'Notifications',

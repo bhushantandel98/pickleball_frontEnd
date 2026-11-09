@@ -1,8 +1,8 @@
 # BUILD STATUS
 
 **Project:** Pickleball Multi-Role Platform (Frontend)  
-**Last Updated:** 06 November 2026  
-**Current Phase:** Phase 1 — Identity & Shared Services  
+**Last Updated:** 09 November 2026  
+**Current Phase:** Phase 2 — Player Module  
 **Branch:** main  
 
 ---
@@ -12,8 +12,8 @@
 | Phase | Description | Status | Progress | Exit Gate Check |
 |---|---|---|---|---|
 | **Phase 0** | Foundation & Project Setup | **Completed (P0-06 Approved)** | 100% | Mock infrastructure, DI isolation & simulation harness verified |
-| **Phase 1** | Identity & Shared Services | **In Progress (Phase 1.1.5 Completed)** | 50% | Welcome, Login, Register, Recovery & Role Selection verified |
-| **Phase 2** | Player Module | Not Started | 0% | Player journeys end-to-end with mock data |
+| **Phase 1** | Identity & Shared Services | **Completed (Phase 1.2.3 Approved)** | 100% | Welcome, Login, Register, Recovery, Role Selection, Profile & Notifications verified |
+| **Phase 2** | Player Module | **In Progress (Feature 2.3 Completed)** | 55% | Player Dashboard, Venue Discovery, Venue Details, Court Availability, Checkout & Confirmation, My Bookings & History verified |
 | **Phase 3** | Coach, Academy & Academy Staff | Not Started | 0% | Org scoping & player roster verified |
 | **Phase 4** | Venue Partner & Venue Staff | Not Started | 0% | Slot booking & calendar contract ready |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | Not Started | 0% | Draw, live scoring UI & public views |
@@ -25,10 +25,10 @@
 
 ## Active Task
 
-- **Task ID:** Phase 1.1.5 — Role Context State Preservation Fix
-- **Description:** Completed selected role context state preservation across `SessionContext`, `SessionCubit`, and `RoleSelectionPage`. Preserved `activeRoleAssignmentId`, `activeOrganizationId`, `activeOrganizationName`, `activeTournamentId`, and `activeTournamentName`. Added `SessionCubit.setActiveRoleProfile(RoleProfile profile)` ensuring clean context updates, automatic clearing of tournament context when switching to non-tournament roles, and automatic clearing/updating of organization contexts. Verified with targeted test runs.
+- **Task ID:** Feature 2.3 — Player My Bookings & Booking History UI
+- **Description:** Implemented end-to-end My Bookings and Booking History experience for the Player module according to Player PRD v1.6 and Frontend FSD. Includes: (1) Domain entity extensions for `CourtBooking` (`copyWith`, `isUpcoming`, `isPast`, `isCancelled`, `canCancel`, `paymentStatusDisplay`); (2) In-memory mock repository (`MockBookingRepository`) with `cancelBooking()`, realistic seeded bookings for upcoming/past/cancelled categories, and `MockBookingRepository.withDefaultBookings()` factory; (3) `MyBookingsCubit` & `BookingDetailsCubit` with reactive filtering, cancellation state, and error handling; (4) `MyBookingsPage` responsive list view with segmented filter tabs (`Upcoming`, `Past`, `Cancelled`) with count badges, pull-to-refresh, empty states with "Book a Court" CTAs, and `BookingCard`s with cancel confirmation dialogs; (5) `BookingDetailsPage` reservation details screen displaying booking reference, copy button, status badges, venue info, court specs, schedule, price breakdown, check-in instructions, and cancellation workflows; (6) GoRouter route registration at `/player/bookings` and `/player/bookings/:id`; (7) 25 focused unit and widget tests (`test/features/player/my_bookings_test.dart`) and 0 static analysis issues across 118 total player module tests.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
-- **Status:** Completed — Verification Conducted. Awaiting User Approval to proceed to Phase 1.2.
+- **Status:** Completed — Verification Conducted. Ready for User Review.
 
 ---
 
@@ -44,13 +44,24 @@
 - [x] **Phase 1.1.3:** Player Self-Registration & OTP Verification (`RegisterPage`), `RegistrationValidators`, `RegistrationCubit` (with 30-second timer countdown, cleanup, and session-switch replacement on resend), `RegistrationInitiatedEntity` & `PlayerRegistrationSuccessEntity`, request DTOs (`RegisterRequestModel`, `VerifyOtpRequestModel`, `ResendOtpRequestModel`), `MockAuthRepository` and `RemoteAuthRepository` registration implementations, wired into `createAppRouter()` at `AppRoutes.register`, Spring Boot handoff specification §2.3, and comprehensive test suite (`test/features/identity/register_test.dart`, 30 tests passing; total 139 tests across project passing).
 - [x] **Phase 1.1.4:** Password Recovery / Forgot Password Flow (`ForgotPasswordPage`), `ForgotPasswordValidators`, `ForgotPasswordCubit` (with 30-second countdown, resend session tracking, verified reset token handling), domain entities (`PasswordResetInitiatedEntity`, `PasswordResetVerifiedEntity`, `PasswordResetSuccessEntity`), request DTOs (`ForgotPasswordRequestModel`, `ResendPasswordResetOtpRequestModel`, `VerifyPasswordResetOtpRequestModel`, `ResetPasswordRequestModel` with password redaction in `toString()`), `MockAuthRepository` and `RemoteAuthRepository` recovery methods, wired into `createAppRouter()` at `AppRoutes.forgotPassword`, Spring Boot handoff specification §2.4, and comprehensive test suite (`test/features/identity/forgot_password_test.dart`, 33 tests passing; total 172 tests across project passing).
 - [x] **Phase 1.1.5:** Multi-Role Selection & Dashboard Routing (`RoleSelectionPage`), `RoleDashboardRouter` for all 12 platform roles, `RoleSelectionCubit` (single-role auto-continue, remembered choice validation, revoked-role fallback, selection confirmation), `RoleContext` & `RoleProfile` domain entities, `RoleProfileModel` & `RoleContextModel` DTOs, `MockRoleContextRepository` with organization context resolution and `RemoteRoleContextRepository` 503 fallback, enhanced `RoutePlaceholderView`, Spring Boot handoff specification §2.5, and comprehensive test suite (`test/features/role_selection/role_selection_test.dart`, 27 tests passing; total 199 tests across project passing).
+- [x] **Phase 1.2.1:** Shared User Profile & Account Settings UI (`ProfilePage`, `EditProfilePage`, `AccountSettingsPage`), avatar initials / preset badge picker (`ProfileAvatarView`, `AvatarPickerDialog`), `ProfileValidators`, `ProfileCubit` (with immediate update application on return from edit), unsaved changes discard confirmation dialog, read-only mobile display, settings navigation placeholders, SessionCubit logout integration, and comprehensive test suite (`test/features/profile/profile_test.dart`, 22 tests passing).
+- [x] **Phase 1.2.2:** Notification Preferences UI (`NotificationPreferencesPage`), channel master toggles (Push & Email), category toggles (Security, Bookings, Tournaments, Scoring, Coaching, Marketplace, Community, Promotions), General Settings (In-App Sound & Previews), `NotificationPreferencesCubit`, `PreferenceSwitchTile`, default reset dialog, and comprehensive test suite (`test/features/notifications/notification_preferences_test.dart`, 17 tests passing).
+- [x] **Phase 1.2.3:** Notification Centre UI (`NotificationCenterPage`), category filtering tabs (`NotificationCategoryChips`), unread counter badge, rich notification cards (`NotificationTile`), read/unread toggling, mark-all-read dialog, item deletion dialog, cross-role/organization/tournament context-aware destination routing with `"Switch Role"` dialog and unimplemented route fallback (`NotificationDestinationRouter`), `NotificationsCubit`, and comprehensive test suite (`test/features/notifications/notification_center_test.dart`, 24 tests passing; total 41 notification tests passing).
+- [x] **Feature 2.1:** Player Dashboard UI (`PlayerDashboardPage`), `PlayerHeaderCard`, `PlayerQuickActions`, `UpcomingActivitiesSection` (with ascending chronological ordering by `dateTime`), `PlayerStatsGrid`, `RecentActivitySection`, `PlayerDashboardCubit`, `MockPlayerDashboardRepository`, and comprehensive test suite (`test/features/player/player_dashboard_test.dart`, 17 tests passing).
+- [x] **Feature 2.2.1:** Player Venue Discovery & Search UI & Final UI Corrections (`VenueDiscoveryPage`, `VenueCard`, `VenueSearchBar`, `VenueFilterSheet`, `VenueDiscoveryCubit`, `MockVenueRepository`), search field focus and cursor position preserved continuously while filtering, local sample court photographs added with graceful fallback placeholder when unavailable (`test/features/player/venue_discovery_test.dart`, 19 tests passing; total 36 player tests passing).
+- [x] **Feature 2.2.2:** Player Venue Details UI (`VenueDetailsPage`, `VenueGalleryView`, `VenueAmenityChip`, `VenueReviewsSection`, `VenueDetailsCubit`, `MockVenueRepository`), interactive multi-photo gallery preview, court & lighting specifications, amenity icon badges, pricing & policies, player reviews list & dialog, responsive desktop/mobile layouts, and availability navigation (`test/features/player/venue_details_test.dart`, 12 tests passing).
+- [x] **Feature 2.2.3:** Player Court Availability & Slot Selection UI & Targeted Robustness Fixes (`CourtAvailabilityPage`, `CourtDatePickerStrip`, `CourtSelectorTabs`, `CourtSlotCard`, `BookingSummaryCard`, `CourtAvailabilityCubit`, `CourtAvailabilityState`, `MockVenueRepository`), 14-day rolling date picker, court selector tabs with live slot counts, morning/afternoon/evening slots grid, single slot selection constraint, booking summary with pricing, navigation to booking checkout passing `BookingSelectionPayload`, missing venue error state, responsive desktop/mobile layouts; code review targeted fixes implemented: empty court list `.first` crash prevention with clean empty state presentation (`'No courts available for this date.'`), explicit repository failure handling on date & court changes emitting `CourtAvailabilityFailure` with retry and invalidation of stale selections (`test/features/player/court_availability_test.dart`, 22 tests passing; total 70 player feature tests passing).
+- [x] **Feature 2.2.4:** Player Court Booking Checkout & Confirmation UI (`BookingCheckoutPage`, `BookingConfirmationPage`, `BookingCheckoutCubit`, `MockBookingRepository`, `CourtBooking`, `BookingStatus`), booking detail review, offline Pay-at-Venue workflow with 30-min hold notice, standardized reference generator (`PKL-BKG-YYYYMMDD-XXXX`), confirmed booking presentation, and full unit/widget test suite (`test/features/player/booking_checkout_test.dart`, 23 tests passing; total 93 player feature tests passing).
+- [x] **Feature 2.3:** Player My Bookings & Booking History UI (`MyBookingsPage`, `BookingDetailsPage`, `BookingCard`, `BookingFilterTabs`, `MyBookingsCubit`, `BookingDetailsCubit`, `CourtBooking.copyWith`), categorized tabs for Upcoming, Past, and Cancelled reservations with count badges, pull-to-refresh, empty states with "Book a Court" CTAs, booking details with copy reference and check-in advisory, safe cancellation confirmation dialog, route wiring at `/player/bookings` and `/player/bookings/:id`, and comprehensive unit/widget test suite (`test/features/player/my_bookings_test.dart`, 25 tests passing; total 118 player feature tests passing).
 
 ---
 
-## Next Tasks (Phase 1 — Identity & Shared Services)
+## Next Tasks (Phase 2 — Player Module)
 
-1. [ ] **Phase 1.2:** Authentication Domain & Data Layer (TokenStorage, SecureStorage/MockStorage, Token Refresh Interceptor).
-2. [ ] **Phase 1.3:** Auth State Management (AuthBloc, SessionLifecycle, Token Refresh Interceptor).
+1. [ ] **Feature 2.4:** Academy & Coach Discovery Flow (`/player/discovery/academies`).
+2. [ ] **Feature 2.5:** Tournament Discovery & Entry (`/player/tournaments`).
+3. [ ] **Feature 2.6:** Match Day Hub & Live Scoring Views (`/player/match-day`).
+4. [ ] **Feature 2.7:** Marketplace Shopping Experience (`/player/marketplace`).
 
 
 ---
@@ -945,6 +956,704 @@ Route evaluation executes via `CompositeRouteGuard` in prioritized order:
 ### 2. Git Status
 - Working directory is clean and ready.
 - No git commits or pushes were performed, per instruction. Ready for Git staging and commit upon user instruction.
+
+---
+
+## Phase 1.2.1 — Shared User Profile & Account Settings UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Profile Screen (`ProfilePage`):**
+   - [`lib/features/profile/presentation/pages/profile_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/profile/presentation/pages/profile_page.dart): Responsive profile view displaying avatar with initials/preset badges, full name, phone number, optional email address with graceful placeholder ("Not provided"), member status chips ("Active Account", "Verified Mobile"), member since date, authorized platform role badges, and primary action buttons for "Edit Profile" and "Account Settings".
+
+2. **Edit Profile Screen (`EditProfilePage`):**
+   - [`lib/features/profile/presentation/pages/edit_profile_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/profile/presentation/pages/edit_profile_page.dart): Edit form supporting full name, optional email, and avatar motif selection. Primary mobile number is read-only with a lock icon and helper explanation. Tracks dirty state and prompts `AppConfirmationDialog` ("Discard Changes?") on Cancel or System Back (`PopScope`).
+
+3. **Account Settings Screen (`AccountSettingsPage`):**
+   - [`lib/features/profile/presentation/pages/account_settings_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/profile/presentation/pages/account_settings_page.dart): Central hub featuring profile summary snapshot tile, security placeholders (Change Password, Privacy & Security), preferences placeholder (Notification Preferences), and Session Logout with destructive `AppConfirmationDialog` and `SessionCubit.signOut()`.
+
+4. **Reusable Profile Widgets:**
+   - [`lib/features/profile/presentation/widgets/profile_avatar_view.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/profile/presentation/widgets/profile_avatar_view.dart): Circular avatar rendering preset badges or uppercase name initials with optional camera edit badge overlay.
+   - [`lib/features/profile/presentation/widgets/avatar_picker_dialog.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/profile/presentation/widgets/avatar_picker_dialog.dart): Bottom sheet preset badge selector (Initials, Champion, Pro Star, Defender, Speedster, Tournament).
+
+5. **State Management & Validation:**
+   - [`lib/features/profile/presentation/cubit/profile_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/profile/presentation/cubit/profile_cubit.dart): Coordinates `ProfileInitial`, `ProfileLoading`, `ProfileLoaded`, `ProfileUpdating`, and `ProfileFailure` with `UserProfileRepository`.
+   - [`lib/features/profile/presentation/validators/profile_validators.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/profile/presentation/validators/profile_validators.dart): Pure validation enforcing full name format (min 2 chars, valid alphabetic chars) and optional RFC 5322 email syntax.
+
+6. **Service Locator & Routing:**
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `ProfileCubit` factory with `UserProfileRepository`.
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `AppRoutes.profile`, `AppRoutes.editProfile`, and `AppRoutes.accountSettings`.
+   - [`lib/core/router/route_guards.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/route_guards.dart): Whitelisted `/profile`, `/profile/edit`, and `/profile/settings` in `ActiveRoleGuard`.
+   - [`lib/core/widgets/navigation/app_navigation_shell.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/widgets/navigation/app_navigation_shell.dart): Integrated "My Profile" app bar action and desktop sidebar links for Profile and Settings.
+
+7. **Documentation & Handoff:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.6 with complete field specifications, editable vs read-only rules, avatar requirements, validation constraints, and proposed `GET /api/v1/users/me` & `PUT /api/v1/users/me` contracts.
+   - [`MODULE_INDEX.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/MODULE_INDEX.md): Updated route map and Section 6.6 indexing Phase 1.2.1 deliverables.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Profile Suite:**
+  - Command: `flutter test test/features/profile/profile_test.dart`
+  - Result: **Exit Code 0** (`All 22 tests passed! (ran in 5.0s)`).
+  - Breakdown: 4 validator tests, 4 cubit tests, 5 profile page tests (including immediate profile refresh upon pop), 6 edit profile tests, 3 account settings tests.
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/profile/ test/features/profile/`
+  - Result: **Exit Code 0** (`No issues found! (ran in 14.2s)`).
+- **Targeted Router Regression Test:**
+  - Command: `flutter test test/core/router_test.dart`
+  - Result: **Exit Code 0** (`All 28 tests passed! (ran in 1.0s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.1 — Player Dashboard UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Player Dashboard Screen (`PlayerDashboardPage`):**
+   - [`lib/features/player/presentation/pages/player_dashboard_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/player_dashboard_page.dart): Central dashboard for Role 1 (Player) providing personal greeting, DUPR verified skill rating, rating tier chip, quick action cards, upcoming schedule & commitments with empty states, performance & booking statistics, recent activity audit stream, pull-to-refresh (`RefreshIndicator`), and responsive mobile/desktop layout adaptation.
+2. **Profile & Greeting Header (`PlayerHeaderCard`):**
+   - [`lib/features/player/presentation/widgets/player_header_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_header_card.dart): Personal summary with `ProfileAvatarView`, "Welcome back, {firstName}!", DUPR skill rating pill, rating tier chip, play style, location, and shortcut button to `/profile`.
+3. **Quick Actions Hub (`PlayerQuickActions`):**
+   - [`lib/features/player/presentation/widgets/player_quick_actions.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_quick_actions.dart): Responsive grid of 6 touch targets: Book a Court (`/player/discovery/venues`), Find Coaches (`/player/discovery/academies`), Tournaments (`/player/tournaments`), Match Day (`/player/match-day`), Shop Gear (`/player/marketplace`), and My Bookings (`/player/bookings`).
+4. **Upcoming Schedule Section (`UpcomingActivitiesSection`):**
+   - [`lib/features/player/presentation/widgets/upcoming_activities_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/upcoming_activities_section.dart): Commitment tiles for court bookings, tournament matches, and coaching sessions sorted in ascending chronological order by `dateTime`, with status chips (`AppChip.success`, `AppChip.warning`, `AppChip.info`), venue/court info, and empty state with "Book a Court" and "Find Tournaments" CTAs.
+5. **Player Statistics Grid (`PlayerStatsGrid`):**
+   - [`lib/features/player/presentation/widgets/player_stats_grid.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_stats_grid.dart): Performance metric cards for Skill Rating, Matches Played, Win Rate %, Active Bookings, and Tournaments entered.
+6. **Recent Activity Feed (`RecentActivitySection`):**
+   - [`lib/features/player/presentation/widgets/recent_activity_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/recent_activity_section.dart): Stream of completed matches, reservations, and orders with relative timestamps and result badges.
+7. **State Management (`PlayerDashboardCubit` & `PlayerDashboardState`):**
+   - [`lib/features/player/presentation/cubit/player_dashboard_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_cubit.dart): Coordinates initial load, pull-to-refresh, loading state, loaded state, and error handling.
+   - [`lib/features/player/presentation/cubit/player_dashboard_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_state.dart): State hierarchy (`PlayerDashboardInitial`, `PlayerDashboardLoading`, `PlayerDashboardLoaded`, `PlayerDashboardEmpty`, `PlayerDashboardFailure`).
+8. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/player_dashboard_data.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/player_dashboard_data.dart): Pure domain models (`PlayerDashboardData`, `PlayerProfileSummary`, `PlayerStats`, `UpcomingActivity`, `RecentActivityItem`).
+   - [`lib/features/player/domain/repositories/player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/player_dashboard_repository.dart): Clean Architecture repository contract.
+9. **Data Layer (`MockPlayerDashboardRepository`):**
+   - [`lib/features/player/data/repositories/mock_player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_player_dashboard_repository.dart): In-memory mock storage adhering to ADR-011/ADR-015 seeded with realistic player profile, statistics, upcoming commitments, and recent activity.
+10. **Routing & Service Locator:**
+    - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `PlayerDashboardPage` to `AppRoutes.playerDashboard` inside the role navigation shell.
+    - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `PlayerDashboardRepository` singleton and `PlayerDashboardCubit` factory.
+11. **Backend Handoff Documentation:**
+    - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.9 documenting all 5 dashboard sections, full data schemas, expected types, quick action routes, and proposed aggregate API contracts.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Player Dashboard Suite:**
+  - Command: `flutter test test/features/player/player_dashboard_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 3 entity unit tests, 4 cubit unit tests, 10 page/widget tests (initial loading state, loaded full dashboard rendering, empty upcoming schedule state with CTAs, error state with retry, quick actions and profile navigation, dark theme rendering, responsive wide desktop/tablet layout, empty recent activity state, upcoming activity tile navigation, and ascending chronological ordering by `dateTime`).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 5.3s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Phase 1.2.3 — Notification Centre UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Notification Centre Screen (`NotificationCenterPage`):**
+   - [`lib/features/notifications/presentation/pages/notification_center_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/pages/notification_center_page.dart): Responsive inbox screen with 9 category filter chips (`NotificationCategoryChips`), unread count badge, overall empty state ("All caught up!"), category-filter empty state ("No [Category] Notifications" with quick reset), Mark all as read action dialog, and shortcut to Notification Preferences.
+2. **Notification Card Widget (`NotificationTile`):**
+   - [`lib/features/notifications/presentation/widgets/notification_tile.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/widgets/notification_tile.dart): Interactive card with category icon container, unread indicator dot, bold title, relative timestamp ("Just now", "2h ago", "Yesterday"), description, category chip, organization/tournament contextual chips, and popup actions (mark read/unread, delete).
+3. **Category Filter Chips (`NotificationCategoryChips`):**
+   - [`lib/features/notifications/presentation/widgets/notification_category_chips.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/widgets/notification_category_chips.dart): Horizontally scrollable chip row showing All (with total count), Unread (with error-colored unread badge and count), and all 7 domain categories.
+4. **Centralized Destination Router (`NotificationDestinationRouter`):**
+   - [`lib/features/notifications/presentation/router/notification_destination_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/router/notification_destination_router.dart): Centralized destination dispatcher that compares the notification's role (`roleContext` or route prefix), organization (`organizationId` / `organizationName`), and tournament (`tournamentId` / `tournamentName`) against `SessionCubit` (`SessionContext`). Shows a `'Switch Role or Context'` dialog with a `'Switch Role'` action (`AppRoutes.roleSelection`) when the role or organization/tournament context differs, navigates normally when context matches and the destination route is registered in `GoRouter`, and falls back to the notification-details dialog when the destination route is not yet implemented.
+5. **State Management (`NotificationsCubit` & `NotificationsState`):**
+   - [`lib/features/notifications/presentation/cubit/notifications_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/cubit/notifications_cubit.dart): State management for initial load, filter selection, optimistic mark-read/mark-unread, mark-all-read with confirmation, and notification deletion with confirmation.
+   - [`lib/features/notifications/presentation/cubit/notifications_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/cubit/notifications_state.dart): State hierarchy (`NotificationsInitial`, `NotificationsLoading`, `NotificationsLoaded` with computed `filteredNotifications` and `unreadCount`, `NotificationsFailure`).
+6. **Domain Entities & Repository Contract:**
+   - [`lib/features/notifications/domain/entities/notification_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/domain/entities/notification_item.dart): `NotificationItem` (including `roleContext`, `organizationId`, `organizationName`, `tournamentId`, `tournamentName`), `NotificationCategory`, and `NotificationFilterCategory` entities.
+   - [`lib/features/notifications/domain/repositories/notification_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/domain/repositories/notification_repository.dart): Clean Architecture contract for notifications feed operations.
+7. **Data Layer (`MockNotificationRepository`):**
+   - [`lib/features/notifications/data/repositories/mock_notification_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/data/repositories/mock_notification_repository.dart): In-memory mock storage seeded with realistic multi-role, organization-scoped, and tournament-scoped notifications (Bookings, Matches, Tournaments, Academy, Marketplace, Community, Security).
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Replaced placeholder with `NotificationCenterPage` at `AppRoutes.notifications`.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `NotificationRepository` singleton and `NotificationsCubit` factory.
+9. **Documentation & Backend Handoff:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.8 with complete field schemas, filtering rules, lifecycle behavior, and proposed endpoints.
+   - [`MODULE_INDEX.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/MODULE_INDEX.md): Updated route map and Section 6.8 indexing Phase 1.2.3 deliverables.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Notification Centre Suite:**
+  - Command: `flutter test test/features/notifications/notification_center_test.dart`
+  - Result: **Exit Code 0** (`All 24 tests passed! (ran in 4.0s)`).
+  - Breakdown: 2 entity tests, 6 cubit tests, 11 page widget tests (rendering, category filtering, unread filtering, empty filter state with reset, overall empty state, tap navigation with fallback dialog, popup menu read/unread toggle, delete confirmation dialog, mark-all-read confirmation dialog, dark mode rendering, back navigation), and 5 cross-role & context-aware navigation tests (same-role/same-context direct navigation, different-role mismatch dialog & Switch Role routing, different-organization mismatch dialog, different-tournament mismatch dialog, and unimplemented destination fallback dialog).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/notifications/ test/features/notifications/`
+  - Result: **Exit Code 0** (`No issues found! (ran in 7.9s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.1 — Player Dashboard UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Player Dashboard Screen (`PlayerDashboardPage`):**
+   - [`lib/features/player/presentation/pages/player_dashboard_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/player_dashboard_page.dart): Central dashboard for Role 1 (Player) providing personal greeting, DUPR verified skill rating, rating tier chip, quick action cards, upcoming schedule & commitments with empty states, performance & booking statistics, recent activity audit stream, pull-to-refresh (`RefreshIndicator`), and responsive mobile/desktop layout adaptation.
+2. **Profile & Greeting Header (`PlayerHeaderCard`):**
+   - [`lib/features/player/presentation/widgets/player_header_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_header_card.dart): Personal summary with `ProfileAvatarView`, "Welcome back, {firstName}!", DUPR skill rating pill, rating tier chip, play style, location, and shortcut button to `/profile`.
+3. **Quick Actions Hub (`PlayerQuickActions`):**
+   - [`lib/features/player/presentation/widgets/player_quick_actions.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_quick_actions.dart): Responsive grid of 6 touch targets: Book a Court (`/player/discovery/venues`), Find Coaches (`/player/discovery/academies`), Tournaments (`/player/tournaments`), Match Day (`/player/match-day`), Shop Gear (`/player/marketplace`), and My Bookings (`/player/bookings`).
+4. **Upcoming Schedule Section (`UpcomingActivitiesSection`):**
+   - [`lib/features/player/presentation/widgets/upcoming_activities_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/upcoming_activities_section.dart): Commitment tiles for court bookings, tournament matches, and coaching sessions sorted in ascending chronological order by `dateTime`, with status chips (`AppChip.success`, `AppChip.warning`, `AppChip.info`), venue/court info, and empty state with "Book a Court" and "Find Tournaments" CTAs.
+5. **Player Statistics Grid (`PlayerStatsGrid`):**
+   - [`lib/features/player/presentation/widgets/player_stats_grid.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_stats_grid.dart): Performance metric cards for Skill Rating, Matches Played, Win Rate %, Active Bookings, and Tournaments entered.
+6. **Recent Activity Feed (`RecentActivitySection`):**
+   - [`lib/features/player/presentation/widgets/recent_activity_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/recent_activity_section.dart): Stream of completed matches, reservations, and orders with relative timestamps and result badges.
+7. **State Management (`PlayerDashboardCubit` & `PlayerDashboardState`):**
+   - [`lib/features/player/presentation/cubit/player_dashboard_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_cubit.dart): Coordinates initial load, pull-to-refresh, loading state, loaded state, and error handling.
+   - [`lib/features/player/presentation/cubit/player_dashboard_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_state.dart): State hierarchy (`PlayerDashboardInitial`, `PlayerDashboardLoading`, `PlayerDashboardLoaded`, `PlayerDashboardEmpty`, `PlayerDashboardFailure`).
+8. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/player_dashboard_data.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/player_dashboard_data.dart): Pure domain models (`PlayerDashboardData`, `PlayerProfileSummary`, `PlayerStats`, `UpcomingActivity`, `RecentActivityItem`).
+   - [`lib/features/player/domain/repositories/player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/player_dashboard_repository.dart): Clean Architecture repository contract.
+9. **Data Layer (`MockPlayerDashboardRepository`):**
+   - [`lib/features/player/data/repositories/mock_player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_player_dashboard_repository.dart): In-memory mock storage adhering to ADR-011/ADR-015 seeded with realistic player profile, statistics, upcoming commitments, and recent activity.
+10. **Routing & Service Locator:**
+    - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `PlayerDashboardPage` to `AppRoutes.playerDashboard` inside the role navigation shell.
+    - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `PlayerDashboardRepository` singleton and `PlayerDashboardCubit` factory.
+11. **Backend Handoff Documentation:**
+    - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.9 documenting all 5 dashboard sections, full data schemas, expected types, quick action routes, and proposed aggregate API contracts.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Player Dashboard Suite:**
+  - Command: `flutter test test/features/player/player_dashboard_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 3 entity unit tests, 4 cubit unit tests, 10 page/widget tests (initial loading state, loaded full dashboard rendering, empty upcoming schedule state with CTAs, error state with retry, quick actions and profile navigation, dark theme rendering, responsive wide desktop/tablet layout, empty recent activity state, upcoming activity tile navigation, and ascending chronological ordering by `dateTime`).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 5.3s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Phase 1.2.2 — Notification Preferences UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Notification Preferences Screen (`NotificationPreferencesPage`):**
+   - [`lib/features/notifications/presentation/pages/notification_preferences_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/pages/notification_preferences_page.dart): Responsive preference screen organized into Push Notifications (Master switch + 8 categories), Email Notifications (Master switch + 7 categories), General Settings (In-App Sound & Notification Preview details), and Reset to Defaults with `AppConfirmationDialog`.
+2. **Reusable Switch Tile (`PreferenceSwitchTile`):**
+   - [`lib/features/notifications/presentation/widgets/preference_switch_tile.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/widgets/preference_switch_tile.dart): Standardized preference switch row with title, description, icon, and channel-disabled visual styling.
+3. **State Management (`NotificationPreferencesCubit` & `NotificationPreferencesState`):**
+   - [`lib/features/notifications/presentation/cubit/notification_preferences_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/cubit/notification_preferences_cubit.dart): Coordinates initial fetch, channel master toggle pause/resume without resetting individual settings, category toggle updates with optimistic UI and immediate SnackBar feedback, and default settings restoration.
+   - [`lib/features/notifications/presentation/cubit/notification_preferences_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/cubit/notification_preferences_state.dart): State hierarchy (`NotificationPreferencesInitial`, `NotificationPreferencesLoading`, `NotificationPreferencesLoaded`, `NotificationPreferencesFailure`).
+4. **Domain Entities & Repository Contract:**
+   - [`lib/features/notifications/domain/entities/notification_preferences.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/domain/entities/notification_preferences.dart): Verified domain models (`NotificationPreferences`, `PushNotificationPreferences`, `EmailNotificationPreferences`, `GeneralNotificationPreferences`) with `copyWith`, `toMap`, and `fromMap`.
+   - [`lib/features/notifications/domain/repositories/notification_preferences_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/domain/repositories/notification_preferences_repository.dart): Clean Architecture contract for fetching, updating, and resetting preferences.
+5. **Data Layer (`MockNotificationPreferencesRepository`):**
+   - [`lib/features/notifications/data/repositories/mock_notification_preferences_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/data/repositories/mock_notification_preferences_repository.dart): In-memory mock storage seeded with verified platform defaults.
+6. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Added `AppRoutes.notificationPreferences` (`/profile/settings/notifications`).
+   - [`lib/core/router/route_guards.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/route_guards.dart): Whitelisted `/profile/settings/notifications` in `ActiveRoleGuard`.
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `NotificationPreferencesPage` into GoRouter and connected `AccountSettingsPage(onNotifications: ...)`.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `NotificationPreferencesRepository` singleton and `NotificationPreferencesCubit` factory.
+7. **Documentation & Backend Handoff:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.7 with channels and categories breakdown, master switch logic, payload schemas, and proposed API endpoints.
+   - [`MODULE_INDEX.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/MODULE_INDEX.md): Updated route map and Section 6.7 indexing Phase 1.2.2 deliverables.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Notification Preferences Suite:**
+  - Command: `flutter test test/features/notifications/notification_preferences_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 2.0s)`).
+  - Breakdown: 3 entity unit tests, 8 cubit unit tests, 6 page widget tests (master switch pause/resume, individual toggle feedback, default reset dialog with cancel/confirm, dark mode rendering, back navigation).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/notifications/ test/features/notifications/ lib/core/router/ lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 21.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.1 — Player Dashboard UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Player Dashboard Screen (`PlayerDashboardPage`):**
+   - [`lib/features/player/presentation/pages/player_dashboard_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/player_dashboard_page.dart): Central dashboard for Role 1 (Player) providing personal greeting, DUPR verified skill rating, rating tier chip, quick action cards, upcoming schedule & commitments with empty states, performance & booking statistics, recent activity audit stream, pull-to-refresh (`RefreshIndicator`), and responsive mobile/desktop layout adaptation.
+2. **Profile & Greeting Header (`PlayerHeaderCard`):**
+   - [`lib/features/player/presentation/widgets/player_header_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_header_card.dart): Personal summary with `ProfileAvatarView`, "Welcome back, {firstName}!", DUPR skill rating pill, rating tier chip, play style, location, and shortcut button to `/profile`.
+3. **Quick Actions Hub (`PlayerQuickActions`):**
+   - [`lib/features/player/presentation/widgets/player_quick_actions.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_quick_actions.dart): Responsive grid of 6 touch targets: Book a Court (`/player/discovery/venues`), Find Coaches (`/player/discovery/academies`), Tournaments (`/player/tournaments`), Match Day (`/player/match-day`), Shop Gear (`/player/marketplace`), and My Bookings (`/player/bookings`).
+4. **Upcoming Schedule Section (`UpcomingActivitiesSection`):**
+   - [`lib/features/player/presentation/widgets/upcoming_activities_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/upcoming_activities_section.dart): Commitment tiles for court bookings, tournament matches, and coaching sessions sorted in ascending chronological order by `dateTime`, with status chips (`AppChip.success`, `AppChip.warning`, `AppChip.info`), venue/court info, and empty state with "Book a Court" and "Find Tournaments" CTAs.
+5. **Player Statistics Grid (`PlayerStatsGrid`):**
+   - [`lib/features/player/presentation/widgets/player_stats_grid.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_stats_grid.dart): Performance metric cards for Skill Rating, Matches Played, Win Rate %, Active Bookings, and Tournaments entered.
+6. **Recent Activity Feed (`RecentActivitySection`):**
+   - [`lib/features/player/presentation/widgets/recent_activity_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/recent_activity_section.dart): Stream of completed matches, reservations, and orders with relative timestamps and result badges.
+7. **State Management (`PlayerDashboardCubit` & `PlayerDashboardState`):**
+   - [`lib/features/player/presentation/cubit/player_dashboard_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_cubit.dart): Coordinates initial load, pull-to-refresh, loading state, loaded state, and error handling.
+   - [`lib/features/player/presentation/cubit/player_dashboard_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_state.dart): State hierarchy (`PlayerDashboardInitial`, `PlayerDashboardLoading`, `PlayerDashboardLoaded`, `PlayerDashboardEmpty`, `PlayerDashboardFailure`).
+8. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/player_dashboard_data.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/player_dashboard_data.dart): Pure domain models (`PlayerDashboardData`, `PlayerProfileSummary`, `PlayerStats`, `UpcomingActivity`, `RecentActivityItem`).
+   - [`lib/features/player/domain/repositories/player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/player_dashboard_repository.dart): Clean Architecture repository contract.
+9. **Data Layer (`MockPlayerDashboardRepository`):**
+   - [`lib/features/player/data/repositories/mock_player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_player_dashboard_repository.dart): In-memory mock storage adhering to ADR-011/ADR-015 seeded with realistic player profile, statistics, upcoming commitments, and recent activity.
+10. **Routing & Service Locator:**
+    - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `PlayerDashboardPage` to `AppRoutes.playerDashboard` inside the role navigation shell.
+    - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `PlayerDashboardRepository` singleton and `PlayerDashboardCubit` factory.
+11. **Backend Handoff Documentation:**
+    - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.9 documenting all 5 dashboard sections, full data schemas, expected types, quick action routes, and proposed aggregate API contracts.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Player Dashboard Suite:**
+  - Command: `flutter test test/features/player/player_dashboard_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 3 entity unit tests, 4 cubit unit tests, 10 page/widget tests (initial loading state, loaded full dashboard rendering, empty upcoming schedule state with CTAs, error state with retry, quick actions and profile navigation, dark theme rendering, responsive wide desktop/tablet layout, empty recent activity state, upcoming activity tile navigation, and ascending chronological ordering by `dateTime`).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 5.3s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Phase 1.2.3 — Notification Centre UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Notification Centre Screen (`NotificationCenterPage`):**
+   - [`lib/features/notifications/presentation/pages/notification_center_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/pages/notification_center_page.dart): Responsive inbox screen with 9 category filter chips (`NotificationCategoryChips`), unread count badge, overall empty state ("All caught up!"), category-filter empty state ("No [Category] Notifications" with quick reset), Mark all as read action dialog, and shortcut to Notification Preferences.
+2. **Notification Card Widget (`NotificationTile`):**
+   - [`lib/features/notifications/presentation/widgets/notification_tile.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/widgets/notification_tile.dart): Interactive card with category icon container, unread indicator dot, bold title, relative timestamp ("Just now", "2h ago", "Yesterday"), description, category chip, organization/tournament contextual chips, and popup actions (mark read/unread, delete).
+3. **Category Filter Chips (`NotificationCategoryChips`):**
+   - [`lib/features/notifications/presentation/widgets/notification_category_chips.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/widgets/notification_category_chips.dart): Horizontally scrollable chip row showing All (with total count), Unread (with error-colored unread badge and count), and all 7 domain categories.
+4. **Centralized Destination Router (`NotificationDestinationRouter`):**
+   - [`lib/features/notifications/presentation/router/notification_destination_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/router/notification_destination_router.dart): Centralized destination dispatcher that compares the notification's role (`roleContext` or route prefix), organization (`organizationId` / `organizationName`), and tournament (`tournamentId` / `tournamentName`) against `SessionCubit` (`SessionContext`). Shows a `'Switch Role or Context'` dialog with a `'Switch Role'` action (`AppRoutes.roleSelection`) when the role or organization/tournament context differs, navigates normally when context matches and the destination route is registered in `GoRouter`, and falls back to the notification-details dialog when the destination route is not yet implemented.
+5. **State Management (`NotificationsCubit` & `NotificationsState`):**
+   - [`lib/features/notifications/presentation/cubit/notifications_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/cubit/notifications_cubit.dart): State management for initial load, filter selection, optimistic mark-read/mark-unread, mark-all-read with confirmation, and notification deletion with confirmation.
+   - [`lib/features/notifications/presentation/cubit/notifications_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/presentation/cubit/notifications_state.dart): State hierarchy (`NotificationsInitial`, `NotificationsLoading`, `NotificationsLoaded` with computed `filteredNotifications` and `unreadCount`, `NotificationsFailure`).
+6. **Domain Entities & Repository Contract:**
+   - [`lib/features/notifications/domain/entities/notification_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/domain/entities/notification_item.dart): `NotificationItem` (including `roleContext`, `organizationId`, `organizationName`, `tournamentId`, `tournamentName`), `NotificationCategory`, and `NotificationFilterCategory` entities.
+   - [`lib/features/notifications/domain/repositories/notification_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/domain/repositories/notification_repository.dart): Clean Architecture contract for notifications feed operations.
+7. **Data Layer (`MockNotificationRepository`):**
+   - [`lib/features/notifications/data/repositories/mock_notification_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/notifications/data/repositories/mock_notification_repository.dart): In-memory mock storage seeded with realistic multi-role, organization-scoped, and tournament-scoped notifications (Bookings, Matches, Tournaments, Academy, Marketplace, Community, Security).
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Replaced placeholder with `NotificationCenterPage` at `AppRoutes.notifications`.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `NotificationRepository` singleton and `NotificationsCubit` factory.
+9. **Documentation & Backend Handoff:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.8 with complete field schemas, filtering rules, lifecycle behavior, and proposed endpoints.
+   - [`MODULE_INDEX.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/MODULE_INDEX.md): Updated route map and Section 6.8 indexing Phase 1.2.3 deliverables.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Notification Centre Suite:**
+  - Command: `flutter test test/features/notifications/notification_center_test.dart`
+  - Result: **Exit Code 0** (`All 24 tests passed! (ran in 4.0s)`).
+  - Breakdown: 2 entity tests, 6 cubit tests, 11 page widget tests (rendering, category filtering, unread filtering, empty filter state with reset, overall empty state, tap navigation with fallback dialog, popup menu read/unread toggle, delete confirmation dialog, mark-all-read confirmation dialog, dark mode rendering, back navigation), and 5 cross-role & context-aware navigation tests (same-role/same-context direct navigation, different-role mismatch dialog & Switch Role routing, different-organization mismatch dialog, different-tournament mismatch dialog, and unimplemented destination fallback dialog).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/notifications/ test/features/notifications/`
+  - Result: **Exit Code 0** (`No issues found! (ran in 7.9s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.1 — Player Dashboard UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Player Dashboard Screen (`PlayerDashboardPage`):**
+   - [`lib/features/player/presentation/pages/player_dashboard_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/player_dashboard_page.dart): Central dashboard for Role 1 (Player) providing personal greeting, DUPR verified skill rating, rating tier chip, quick action cards, upcoming schedule & commitments with empty states, performance & booking statistics, recent activity audit stream, pull-to-refresh (`RefreshIndicator`), and responsive mobile/desktop layout adaptation.
+2. **Profile & Greeting Header (`PlayerHeaderCard`):**
+   - [`lib/features/player/presentation/widgets/player_header_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_header_card.dart): Personal summary with `ProfileAvatarView`, "Welcome back, {firstName}!", DUPR skill rating pill, rating tier chip, play style, location, and shortcut button to `/profile`.
+3. **Quick Actions Hub (`PlayerQuickActions`):**
+   - [`lib/features/player/presentation/widgets/player_quick_actions.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_quick_actions.dart): Responsive grid of 6 touch targets: Book a Court (`/player/discovery/venues`), Find Coaches (`/player/discovery/academies`), Tournaments (`/player/tournaments`), Match Day (`/player/match-day`), Shop Gear (`/player/marketplace`), and My Bookings (`/player/bookings`).
+4. **Upcoming Schedule Section (`UpcomingActivitiesSection`):**
+   - [`lib/features/player/presentation/widgets/upcoming_activities_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/upcoming_activities_section.dart): Commitment tiles for court bookings, tournament matches, and coaching sessions sorted in ascending chronological order by `dateTime`, with status chips (`AppChip.success`, `AppChip.warning`, `AppChip.info`), venue/court info, and empty state with "Book a Court" and "Find Tournaments" CTAs.
+5. **Player Statistics Grid (`PlayerStatsGrid`):**
+   - [`lib/features/player/presentation/widgets/player_stats_grid.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/player_stats_grid.dart): Performance metric cards for Skill Rating, Matches Played, Win Rate %, Active Bookings, and Tournaments entered.
+6. **Recent Activity Feed (`RecentActivitySection`):**
+   - [`lib/features/player/presentation/widgets/recent_activity_section.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/recent_activity_section.dart): Stream of completed matches, reservations, and orders with relative timestamps and result badges.
+7. **State Management (`PlayerDashboardCubit` & `PlayerDashboardState`):**
+   - [`lib/features/player/presentation/cubit/player_dashboard_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_cubit.dart): Coordinates initial load, pull-to-refresh, loading state, loaded state, and error handling.
+   - [`lib/features/player/presentation/cubit/player_dashboard_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/player_dashboard_state.dart): State hierarchy (`PlayerDashboardInitial`, `PlayerDashboardLoading`, `PlayerDashboardLoaded`, `PlayerDashboardEmpty`, `PlayerDashboardFailure`).
+8. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/player_dashboard_data.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/player_dashboard_data.dart): Pure domain models (`PlayerDashboardData`, `PlayerProfileSummary`, `PlayerStats`, `UpcomingActivity`, `RecentActivityItem`).
+   - [`lib/features/player/domain/repositories/player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/player_dashboard_repository.dart): Clean Architecture repository contract.
+9. **Data Layer (`MockPlayerDashboardRepository`):**
+   - [`lib/features/player/data/repositories/mock_player_dashboard_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_player_dashboard_repository.dart): In-memory mock storage adhering to ADR-011/ADR-015 seeded with realistic player profile, statistics, upcoming commitments, and recent activity.
+10. **Routing & Service Locator:**
+    - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `PlayerDashboardPage` to `AppRoutes.playerDashboard` inside the role navigation shell.
+    - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `PlayerDashboardRepository` singleton and `PlayerDashboardCubit` factory.
+11. **Backend Handoff Documentation:**
+    - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.9 documenting all 5 dashboard sections, full data schemas, expected types, quick action routes, and proposed aggregate API contracts.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Player Dashboard Suite:**
+  - Command: `flutter test test/features/player/player_dashboard_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 3 entity unit tests, 4 cubit unit tests, 10 page/widget tests (initial loading state, loaded full dashboard rendering, empty upcoming schedule state with CTAs, error state with retry, quick actions and profile navigation, dark theme rendering, responsive wide desktop/tablet layout, empty recent activity state, upcoming activity tile navigation, and ascending chronological ordering by `dateTime`).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 5.3s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
+---
+
+## Feature 2.2.1 — Player Venue Discovery & Search UI Verification Audit
+
+### 1. Implemented Architecture & Artifacts
+
+1. **Venue Discovery Screen (`VenueDiscoveryPage`):**
+   - [`lib/features/player/presentation/pages/venue_discovery_page.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/pages/venue_discovery_page.dart): Primary venue discovery screen for players. Provides header with descriptive text, live search input, filter modal trigger with active count badge, sort options popup, active filter chip strip with "Clear all", responsive single-column list (mobile) & 2-column grid (desktop/tablet), empty state with "Clear Filters" CTA, and pull-to-refresh.
+2. **Venue Card Component (`VenueCard`):**
+   - [`lib/features/player/presentation/widgets/venue_card.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_card.dart): Rich card displaying venue name, address, distance, rating with review count, court count, indoor/outdoor chip, night lights badge, facility amenity tags, operating hours, hourly rate pricing, and tap target navigating to `/player/discovery/venues/:id`.
+3. **Venue Search Bar (`VenueSearchBar`):**
+   - [`lib/features/player/presentation/widgets/venue_search_bar.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_search_bar.dart): Live search input with clear button, filter modal trigger, sort options selector, and active filter pill strip.
+4. **Venue Filter Bottom Sheet (`VenueFilterSheet`):**
+   - [`lib/features/player/presentation/widgets/venue_filter_sheet.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/widgets/venue_filter_sheet.dart): Modal sheet for distance filters (Any, < 5 km, < 10 km, < 25 km), rating filters (Any, 4.0+, 4.5+), price tiers (Budget < ₹600, Mid ₹600-₹1,000, Premium > ₹1,000), indoor-only switch, and required amenities multi-selection.
+5. **State Management (`VenueDiscoveryCubit` & `VenueDiscoveryState`):**
+   - [`lib/features/player/presentation/cubit/venue_discovery_cubit.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_cubit.dart): State coordinator managing `VenueDiscoveryInitial`, `VenueDiscoveryLoading`, `VenueDiscoveryLoaded` (with live search, multi-facet filtering, and sorting), and `VenueDiscoveryFailure`.
+   - [`lib/features/player/presentation/cubit/venue_discovery_state.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/presentation/cubit/venue_discovery_state.dart): State hierarchy.
+6. **Domain Layer & Contracts:**
+   - [`lib/features/player/domain/entities/venue_item.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/entities/venue_item.dart): `VenueItem`, `VenueFilter`, `VenuePriceTier`, `VenueSortOption`.
+   - [`lib/features/player/domain/repositories/venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/domain/repositories/venue_repository.dart): Clean Architecture repository contract.
+7. **Data Layer (`MockVenueRepository`):**
+   - [`lib/features/player/data/repositories/mock_venue_repository.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/features/player/data/repositories/mock_venue_repository.dart): In-memory mock storage adhering to ADR-011 and ADR-015 with 7 diverse venues across Mumbai/Thane/Navi Mumbai with varying distances, prices, ratings, and amenities.
+8. **Routing & Service Locator:**
+   - [`lib/core/router/app_routes.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_routes.dart): Registered `AppRoutes.playerVenues` (`/player/discovery/venues`) and `AppRoutes.playerVenueDetails` (`/player/discovery/venues/:id`).
+   - [`lib/core/router/app_router.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/core/router/app_router.dart): Wired `VenueDiscoveryPage` into GoRouter and added venue details placeholder.
+   - [`lib/app/service_locator.dart`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/lib/app/service_locator.dart): Registered `VenueRepository` singleton and `VenueDiscoveryCubit` factory.
+9. **Backend Handoff Documentation:**
+   - [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md): Added Section 2.10 documenting complete venue schemas, query parameters, filter behavior, and proposed endpoints.
+
+### 2. Targeted Verification Commands & Test Accounting
+- **Targeted Venue Discovery Suite:**
+  - Command: `flutter test test/features/player/venue_discovery_test.dart`
+  - Result: **Exit Code 0** (`All 17 tests passed! (ran in 1.4s)`).
+  - Breakdown: 2 entity unit tests, 7 cubit unit tests, 8 widget tests (loading state, loaded listing, dynamic search filtering, empty search results with clear filters CTA, card navigation to placeholder, dark theme rendering, desktop responsive 2-column grid layout, error view with retry).
+- **Targeted Combined Player Module Suite:**
+  - Command: `flutter test test/features/player/`
+  - Result: **Exit Code 0** (`All 34 tests passed! (ran in 2.2s)` across Dashboard and Venue Discovery).
+- **Targeted Static Analysis:**
+  - Command: `flutter analyze lib/features/player/ test/features/player/ lib/core/router/app_router.dart lib/core/router/app_routes.dart lib/app/service_locator.dart`
+  - Result: **Exit Code 0** (`No issues found! (ran in 8.4s)`).
+
+### 3. Git Status
+- No git commits or pushes performed, per instructions.
+
 
 
 

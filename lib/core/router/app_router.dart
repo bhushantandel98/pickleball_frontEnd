@@ -14,6 +14,22 @@ import 'package:pickleball_platform/features/identity/presentation/pages/forgot_
 import 'package:pickleball_platform/features/identity/presentation/pages/login_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/register_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/welcome_page.dart';
+import 'package:pickleball_platform/features/notifications/presentation/pages/notification_center_page.dart';
+import 'package:pickleball_platform/features/notifications/presentation/pages/notification_preferences_page.dart';
+import 'package:pickleball_platform/features/player/domain/entities/court_booking.dart';
+import 'package:pickleball_platform/features/player/domain/entities/court_item.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/booking_checkout_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/booking_confirmation_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/booking_details_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/court_availability_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/my_bookings_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/player_dashboard_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/venue_details_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/venue_discovery_page.dart';
+import 'package:pickleball_platform/features/profile/presentation/pages/account_settings_page.dart';
+import 'package:pickleball_platform/features/profile/presentation/pages/edit_profile_page.dart';
+import 'package:pickleball_platform/features/profile/presentation/pages/profile_page.dart';
+import 'package:pickleball_platform/shared/entities/user_profile.dart';
 
 /// Central factory creating the declarative [GoRouter] instance for all 12 platform roles.
 GoRouter createAppRouter({
@@ -89,17 +105,29 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: AppRoutes.notifications,
-        builder: (context, state) => const RoutePlaceholderView(
-          title: 'Notification Center',
-          path: AppRoutes.notifications,
-        ),
+        builder: (context, state) => const NotificationCenterPage(),
       ),
       GoRoute(
         path: AppRoutes.profile,
-        builder: (context, state) => const RoutePlaceholderView(
-          title: 'User Profile',
-          path: AppRoutes.profile,
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.editProfile,
+        builder: (context, state) {
+          final profile = state.extra as UserProfile?;
+          return EditProfilePage(initialProfile: profile);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.accountSettings,
+        builder: (context, state) => AccountSettingsPage(
+          onNotifications: () =>
+              context.push(AppRoutes.notificationPreferences),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationPreferences,
+        builder: (context, state) => const NotificationPreferencesPage(),
       ),
 
       // --- Public Unauthenticated Routes (FSD §3.1) ---
@@ -131,18 +159,34 @@ GoRouter createAppRouter({
           // 1. Player
           GoRoute(
             path: AppRoutes.playerDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Player Dashboard',
-              path: AppRoutes.playerDashboard,
-              role: UserRole.player,
-            ),
+            builder: (context, state) => const PlayerDashboardPage(),
           ),
           GoRoute(
             path: AppRoutes.playerVenues,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Discover Courts & Venues',
-              path: AppRoutes.playerVenues,
-              role: UserRole.player,
+            builder: (context, state) => const VenueDiscoveryPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerVenueDetails,
+            builder: (context, state) => VenueDetailsPage(
+              venueId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.playerCourtAvailability,
+            builder: (context, state) => CourtAvailabilityPage(
+              venueId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.playerBookingCheckout,
+            builder: (context, state) => BookingCheckoutPage(
+              payload: state.extra as BookingSelectionPayload?,
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.playerBookingConfirmation,
+            builder: (context, state) => BookingConfirmationPage(
+              booking: state.extra as CourtBooking?,
             ),
           ),
           GoRoute(
@@ -155,11 +199,18 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.playerBookings,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'My Bookings',
-              path: AppRoutes.playerBookings,
-              role: UserRole.player,
-            ),
+            builder: (context, state) => const MyBookingsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerBookingDetails,
+            builder: (context, state) {
+              final bookingId = state.pathParameters['id'] ?? '';
+              final initialBooking = state.extra as CourtBooking?;
+              return BookingDetailsPage(
+                bookingId: bookingId,
+                initialBooking: initialBooking,
+              );
+            },
           ),
           GoRoute(
             path: AppRoutes.playerTournaments,

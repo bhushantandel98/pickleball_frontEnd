@@ -18,7 +18,10 @@ abstract final class AppRoutes {
   static const String accountSuspended = '/account-suspended';
   static const String permissionDenied = '/permission-denied';
   static const String notifications = '/notifications';
+  static const String notificationPreferences = '/profile/settings/notifications';
   static const String profile = '/profile';
+  static const String editProfile = '/profile/edit';
+  static const String accountSettings = '/profile/settings';
 
   // --- Public Unauthenticated Routes (FSD §3.1) ---
   static const String publicTournament = '/public/tournaments/:id';
@@ -29,8 +32,18 @@ abstract final class AppRoutes {
   static const String player = '/player';
   static const String playerDashboard = '/player/dashboard';
   static const String playerVenues = '/player/discovery/venues';
+  static const String playerVenueDetails = '/player/discovery/venues/:id';
+  static String playerVenueDetailsPath(String id) => '/player/discovery/venues/$id';
+  static const String playerCourtAvailability = '/player/discovery/venues/:id/availability';
+  static String playerCourtAvailabilityPath(String id) => '/player/discovery/venues/$id/availability';
   static const String playerAcademies = '/player/discovery/academies';
   static const String playerBookings = '/player/bookings';
+  static const String playerBookingDetails = '/player/bookings/:id';
+  static String playerBookingDetailsPath(String id) => '/player/bookings/$id';
+  static const String playerBookingCheckout = '/player/bookings/checkout';
+  static String playerBookingCheckoutPath() => '/player/bookings/checkout';
+  static const String playerBookingConfirmation = '/player/bookings/confirmation';
+  static String playerBookingConfirmationPath() => '/player/bookings/confirmation';
   static const String playerTournaments = '/player/tournaments';
   static const String playerMatchDay = '/player/match-day';
   static const String playerMarketplace = '/player/marketplace';
