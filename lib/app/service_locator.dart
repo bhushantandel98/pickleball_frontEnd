@@ -22,17 +22,23 @@ import 'package:pickleball_platform/features/notifications/domain/repositories/n
 import 'package:pickleball_platform/features/notifications/presentation/cubit/notification_preferences_cubit.dart';
 import 'package:pickleball_platform/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_booking_repository.dart';
+import 'package:pickleball_platform/features/player/data/repositories/mock_marketplace_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_match_day_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_tournament_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_venue_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/booking_repository.dart';
+import 'package:pickleball_platform/features/player/domain/repositories/marketplace_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/match_day_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/tournament_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/venue_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_checkout_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_details_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_cart_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_catalogue_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_orders_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_wishlist_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/match_day_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/my_bookings_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/player_dashboard_cubit.dart';
@@ -153,6 +159,26 @@ Future<void> initServiceLocator() async {
       repository: sl<TournamentRepository>(),
     ),
   );
+
+  // --- Marketplace Catalogue Cubit ---
+  sl.registerFactory<MarketplaceCatalogueCubit>(
+    () => MarketplaceCatalogueCubit(sl<MarketplaceRepository>()),
+  );
+
+  // --- Marketplace Cart Cubit ---
+  sl.registerFactory<MarketplaceCartCubit>(
+    () => MarketplaceCartCubit(sl<MarketplaceRepository>()),
+  );
+
+  // --- Marketplace Wishlist Cubit ---
+  sl.registerFactory<MarketplaceWishlistCubit>(
+    () => MarketplaceWishlistCubit(sl<MarketplaceRepository>()),
+  );
+
+  // --- Marketplace Orders Cubit ---
+  sl.registerFactory<MarketplaceOrdersCubit>(
+    () => MarketplaceOrdersCubit(sl<MarketplaceRepository>()),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -230,6 +256,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<TournamentRepository>(
     () => MockTournamentRepository(),
   );
+
+  // Marketplace Repository
+  sl.registerLazySingleton<MarketplaceRepository>(
+    () => MockMarketplaceRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -285,5 +316,10 @@ void initRemoteServiceLocator() {
   // Tournament Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<TournamentRepository>(
     () => MockTournamentRepository(),
+  );
+
+  // Marketplace Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<MarketplaceRepository>(
+    () => MockMarketplaceRepository(),
   );
 }

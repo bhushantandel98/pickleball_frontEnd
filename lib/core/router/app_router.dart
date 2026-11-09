@@ -19,13 +19,21 @@ import 'package:pickleball_platform/features/notifications/presentation/pages/no
 import 'package:pickleball_platform/features/player/domain/entities/court_booking.dart';
 import 'package:pickleball_platform/features/player/domain/entities/court_item.dart';
 import 'package:pickleball_platform/features/player/domain/entities/tournament_item.dart';
+import 'package:pickleball_platform/features/player/domain/entities/marketplace_item.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_checkout_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/booking_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/court_availability_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/marketplace_cart_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/marketplace_catalogue_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/marketplace_checkout_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/marketplace_order_details_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/marketplace_orders_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/marketplace_wishlist_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/match_day_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/my_bookings_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/player_dashboard_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/product_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_discovery_page.dart';
@@ -257,11 +265,41 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.playerMarketplace,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Marketplace Shop',
-              path: AppRoutes.playerMarketplace,
-              role: UserRole.player,
-            ),
+            builder: (context, state) => const MarketplaceCataloguePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerProductDetails,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return ProductDetailsPage(productId: id);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerMarketplaceCart,
+            builder: (context, state) => const MarketplaceCartPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerMarketplaceWishlist,
+            builder: (context, state) => const MarketplaceWishlistPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerMarketplaceCheckout,
+            builder: (context, state) {
+              final extra = state.extra;
+              final directItems = extra is List<MarketplaceCartItem> ? extra : null;
+              return MarketplaceCheckoutPage(directItems: directItems);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerMarketplaceOrders,
+            builder: (context, state) => const MarketplaceOrdersPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.playerMarketplaceOrderDetails,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return MarketplaceOrderDetailsPage(orderId: id);
+            },
           ),
 
           // 2. Coach

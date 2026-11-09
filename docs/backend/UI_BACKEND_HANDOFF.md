@@ -2143,3 +2143,161 @@ Returns the detailed `TournamentItem` matching the requested ID, including categ
 ```
 
 
+### 5.8 Feature 2.6 — Player Marketplace Shopping Experience
+
+#### Overview
+Feature 2.6 implements the complete Player Marketplace Shopping Experience according to Player PRD v1.6 and Frontend FSD §3.2. It enables players to browse an equipment/merchandise catalog, search and filter gear (paddles, balls, shoes, bags, apparel, accessories), inspect detailed product specs and return windows, save wishlist items, manage a dynamic shopping cart, complete checkout with delivery address validation and pay-upon-receipt payment, and track the step-by-step shipment timeline of their placed orders with self-service cancellation for eligible orders.
+
+- **Catalogue Route:** `/player/marketplace` (`AppRoutes.playerMarketplace`)
+- **Product Details Route:** `/player/marketplace/products/:id` (`AppRoutes.playerProductDetails`)
+- **Cart Route:** `/player/marketplace/cart` (`AppRoutes.playerMarketplaceCart`)
+- **Wishlist Route:** `/player/marketplace/wishlist` (`AppRoutes.playerMarketplaceWishlist`)
+- **Checkout Route:** `/player/marketplace/checkout` (`AppRoutes.playerMarketplaceCheckout`)
+- **My Orders Route:** `/player/marketplace/orders` (`AppRoutes.playerMarketplaceOrders`)
+- **Order Details Route:** `/player/marketplace/orders/:id` (`AppRoutes.playerMarketplaceOrderDetails`)
+
+#### Proposed API Contracts (Awaiting Backend Implementation)
+
+##### 1. Get Product Catalog
+- **Endpoint:** `GET /api/v1/player/marketplace/products`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Query Parameters:**
+  - `query` (optional string): Keyword search matching title, brand, or description.
+  - `category` (optional enum): `paddles`, `balls`, `equipment`, `footwear`, `apparel`, `accessories`.
+  - `minPrice` (optional float): Minimum price bound in INR.
+  - `maxPrice` (optional float): Maximum price bound in INR.
+  - `inStockOnly` (optional boolean): Filter only items with `stockCount > 0`.
+  - `minRating` (optional float): Filter products by minimum rating (e.g. 4.0, 4.5).
+  - `brand` (optional string): Filter products by brand name.
+  - `sort` (optional enum): `featured`, `priceLow`, `priceHigh`, `ratingHigh`, `newest`.
+
+**Proposed Success Response (`200 OK`):**
+```json
+{
+  "products": [
+    {
+      "id": "prod_001",
+      "title": "Pro Carbon 3K Precision Paddle",
+      "brand": "Apex Paddle & Gear Co.",
+      "sellerName": "Apex Paddle & Gear Co.",
+      "description": "Engineered for aggressive tournament play with 3K raw carbon fiber face and 16mm core.",
+      "price": 11999.0,
+      "originalPrice": 13499.0,
+      "rating": 4.8,
+      "reviewCount": 124,
+      "category": "paddles",
+      "imageUrl": "https://cdn.pickleball.com/products/prod_001.jpg",
+      "galleryImages": [
+        "https://cdn.pickleball.com/products/prod_001_1.jpg",
+        "https://cdn.pickleball.com/products/prod_001_2.jpg"
+      ],
+      "inStock": true,
+      "stockCount": 18,
+      "returnPolicyDays": 7,
+      "specifications": {
+        "Core": "16mm Polymer Honeycomb",
+        "Face": "3K Toray Raw Carbon Fiber",
+        "Weight": "7.9 - 8.3 oz",
+        "Grip Size": "4 1/4 inch",
+        "USAPA Approved": "Yes"
+      },
+      "availableSizes": [],
+      "availableColors": ["Stealth Black", "Neon Lime"],
+      "isFeatured": true,
+      "isWishlisted": false
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+##### 2. Get Product Details
+- **Endpoint:** `GET /api/v1/player/marketplace/products/{id}`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+
+**Proposed Response (`200 OK`):** Returns the full `MarketplaceProduct` representation.
+
+##### 3. Get / Toggle Wishlist
+- **Get Wishlist:** `GET /api/v1/player/marketplace/wishlist`
+- **Toggle Wishlist:** `POST /api/v1/player/marketplace/wishlist/{productId}/toggle`
+- **Response (`200 OK`):** `{"isWishlisted": true, "productId": "prod_001"}`
+
+##### 4. Shopping Cart Endpoints
+- **Get Cart:** `GET /api/v1/player/marketplace/cart`
+- **Add to Cart:** `POST /api/v1/player/marketplace/cart`
+  - Body: `{"productId": "prod_001", "quantity": 1, "size": "UK 9", "color": "Stealth Black"}`
+- **Update Quantity:** `PUT /api/v1/player/marketplace/cart/{itemId}`
+  - Body: `{"quantity": 3}`
+- **Remove Item:** `DELETE /api/v1/player/marketplace/cart/{itemId}`
+- **Clear Cart:** `DELETE /api/v1/player/marketplace/cart`
+
+##### 5. Place Marketplace Order (Checkout)
+- **Endpoint:** `POST /api/v1/player/marketplace/orders`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Request Payload:**
+```json
+{
+  "items": [
+    {
+      "productId": "prod_001",
+      "quantity": 1,
+      "selectedSize": null,
+      "selectedColor": "Stealth Black",
+      "price": 11999.0
+    }
+  ],
+  "deliveryAddress": {
+    "fullName": "Aarav Sharma",
+    "phoneNumber": "9876543210",
+    "streetAddress": "Flat 402, Green Glen Layout, Bellandur",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "postalCode": "560103",
+    "landmark": "Opposite Community Park"
+  },
+  "paymentMethod": "Pay upon Receipt (UPI / Cash)",
+  "subtotal": 11999.0,
+  "deliveryFee": 0.0,
+  "totalAmount": 11999.0
+}
+```
+- **Response (`201 Created`):**
+```json
+{
+  "id": "PKL-ORD-20261109-8421",
+  "orderDate": "2026-11-09T15:30:00Z",
+  "status": "placed",
+  "paymentMethod": "Pay upon Receipt (UPI / Cash)",
+  "paymentStatus": "Pending Delivery",
+  "subtotal": 11999.0,
+  "deliveryFee": 0.0,
+  "totalAmount": 11999.0,
+  "estimatedDeliveryDate": "2026-11-13T18:00:00Z",
+  "trackingTimeline": [
+    {
+      "title": "Order Placed",
+      "description": "Your order has been verified and confirmed.",
+      "timestamp": "2026-11-09T15:30:00Z",
+      "isCompleted": true,
+      "isCurrent": false
+    },
+    {
+      "title": "Processing",
+      "description": "Seller is preparing items for dispatch.",
+      "timestamp": null,
+      "isCompleted": false,
+      "isCurrent": true
+    }
+  ]
+}
+```
+
+##### 6. Order Cancellation
+- **Endpoint:** `POST /api/v1/player/marketplace/orders/{id}/cancel`
+- **Headers:** `Authorization: Bearer <jwt_access_token>`
+- **Request Payload:** `{"reason": "Ordered wrong paddle weight"}`
+- **Business Rule:** Rejects cancellation with `400 Bad Request` if order status has progressed beyond `placed` or `processing`.
+
+---

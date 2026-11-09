@@ -53,6 +53,14 @@ abstract final class AppRoutes {
   static String playerTournamentConfirmationPath(String id) => '/player/tournaments/$id/confirmation';
   static const String playerMatchDay = '/player/match-day';
   static const String playerMarketplace = '/player/marketplace';
+  static const String playerProductDetails = '/player/marketplace/products/:id';
+  static String playerProductDetailsPath(String id) => '/player/marketplace/products/$id';
+  static const String playerMarketplaceCart = '/player/marketplace/cart';
+  static const String playerMarketplaceWishlist = '/player/marketplace/wishlist';
+  static const String playerMarketplaceCheckout = '/player/marketplace/checkout';
+  static const String playerMarketplaceOrders = '/player/marketplace/orders';
+  static const String playerMarketplaceOrderDetails = '/player/marketplace/orders/:id';
+  static String playerMarketplaceOrderDetailsPath(String id) => '/player/marketplace/orders/$id';
 
   // --- Role 2: Coach ---
   static const String coach = '/coach';
