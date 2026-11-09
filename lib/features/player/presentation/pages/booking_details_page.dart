@@ -64,15 +64,7 @@ class _BookingDetailsView extends StatelessWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      final success = await context.read<BookingDetailsCubit>().cancelBooking(booking.id);
-      if (context.mounted && success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Booking ${booking.bookingReference} has been cancelled.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      await context.read<BookingDetailsCubit>().cancelBooking(booking.id);
     }
   }
 
