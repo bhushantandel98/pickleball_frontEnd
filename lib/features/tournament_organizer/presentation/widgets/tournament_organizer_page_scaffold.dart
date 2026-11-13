@@ -36,23 +36,28 @@ class TournamentOrganizerPageScaffold extends StatelessWidget {
   });
 
   String? _resolveOrganizerId(BuildContext context) {
-    if (organizerId != null && organizerId!.trim().isNotEmpty) {
-      return organizerId!.trim();
-    }
     try {
       final session = context.read<SessionCubit>().state;
-      if (session.isAuthenticated &&
-          !session.isSuspended &&
-          session.activeRole == UserRole.tournamentOrganizer) {
-        final orgId = session.activeOrganizationId;
-        if (orgId != null && orgId.trim().isNotEmpty) {
-          return orgId.trim();
-        }
+      if (!session.isAuthenticated ||
+          session.isSuspended ||
+          session.activeRole != UserRole.tournamentOrganizer) {
+        return null;
       }
+
+      final sessionOrgId = session.activeOrganizationId?.trim();
+      if (sessionOrgId == null || sessionOrgId.isEmpty) {
+        return null;
+      }
+
+      if (organizerId != null && organizerId!.trim().isNotEmpty) {
+        return organizerId!.trim() == sessionOrgId ? sessionOrgId : null;
+      }
+
+      return sessionOrgId;
     } catch (_) {
-      // SessionCubit is not mounted in context.
+      // SessionCubit is not mounted in context; deny access.
+      return null;
     }
-    return null;
   }
 
   @override
