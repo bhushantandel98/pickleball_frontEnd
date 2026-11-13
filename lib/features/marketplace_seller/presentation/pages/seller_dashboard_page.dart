@@ -34,6 +34,7 @@ class SellerDashboardPage extends StatelessWidget {
       bodyBuilder: (context, state) {
         final theme = Theme.of(context);
         final profile = state.profile;
+        final missingDocs = profile.missingRequiredDocumentTypes;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,11 +52,15 @@ class SellerDashboardPage extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: () =>
                       context.go(AppRoutes.marketplaceSellerOnboarding),
-                  icon: const Icon(Icons.edit_outlined),
+                  icon: Icon(
+                    profile.canEditProfile
+                        ? Icons.edit_outlined
+                        : Icons.visibility_outlined,
+                  ),
                   label: Text(
-                    profile.canSubmitForVerification
+                    profile.canEditProfile
                         ? 'Edit Profile & KYC'
-                        : 'View Profile & KYC',
+                        : 'View Profile & KYC (Locked)',
                   ),
                 ),
               ],
@@ -68,25 +73,30 @@ class SellerDashboardPage extends StatelessWidget {
                   _DetailRow(label: 'Store Name', value: profile.businessName),
                   _DetailRow(
                     label: 'Legal Entity',
-                    value: profile.legalEntityName,
+                    value:
+                        '${profile.legalEntityName} (${profile.entityType.label})',
                   ),
                   _DetailRow(
                     label: 'Pickleball Focus',
                     value: profile.pickleballFocus.label,
                   ),
                   _DetailRow(
-                    label: 'Contact',
-                    value: '${profile.contactEmail} • ${profile.contactPhone}',
+                    label: 'Verified Contact',
+                    value:
+                        '${profile.contactEmail} ${profile.isEmailVerified ? '(Verified)' : ''} • '
+                        '${profile.contactPhone} ${profile.isMobileVerified ? '(Verified)' : ''}',
                   ),
                   _DetailRow(
                     label: 'Address',
-                    value:
-                        '${profile.businessAddress}, ${profile.city}, ${profile.state} - ${profile.postalCode}',
+                    value: profile.businessAddress.isEmpty
+                        ? 'Not yet completed'
+                        : '${profile.businessAddress}, ${profile.city}, ${profile.state} - ${profile.postalCode}',
                   ),
                   _DetailRow(
                     label: 'GSTIN / PAN',
                     value:
-                        '${profile.gstNumber.isEmpty ? 'Not provided' : profile.gstNumber} • ${profile.panNumber.isEmpty ? 'PAN pending' : profile.panNumber}',
+                        '${profile.gstNumber.isEmpty ? 'Not provided' : profile.gstNumber} • '
+                        '${profile.panNumber.isEmpty ? 'PAN pending' : profile.panNumber}',
                   ),
                   if (profile.bankAccountLast4.isNotEmpty)
                     _DetailRow(
@@ -99,15 +109,15 @@ class SellerDashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'Uploaded KYC Documents (${profile.documents.length})',
+              'Mandatory KYC Checklist (${profile.requiredDocumentTypes.length - missingDocs.length}/${profile.requiredDocumentTypes.length} complete)',
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.sm),
             if (profile.documents.isEmpty)
               const EmptyStateView(
-                title: 'No KYC Documents Uploaded',
+                title: 'No KYC Documents Selected',
                 message:
-                    'Open Seller KYC Onboarding to upload your business registration and tax documents.',
+                    'Open Seller KYC Onboarding to attach your mandatory Address Proof, PAN Card, and Business documents.',
               )
             else
               AppCard(
@@ -121,6 +131,29 @@ class SellerDashboardPage extends StatelessWidget {
                   ],
                 ),
               ),
+            if (profile.submissionHistory.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Text('Submission History', style: theme.textTheme.titleLarge),
+              const SizedBox(height: AppSpacing.sm),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: profile.submissionHistory
+                      .map(
+                        (h) => Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: Text(
+                            '${h.submittedAt.toLocal().toString().split('.').first} — ${h.statusAtSubmission.label}'
+                            '${h.reviewNote != null ? ': ${h.reviewNote}' : ''}',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ],
           ],
         );
       },
@@ -142,6 +175,7 @@ class _VerificationStatusCard extends StatelessWidget {
       SellerVerificationStatus.rejected ||
       SellerVerificationStatus.suspended =>
         theme.colorScheme.error,
+      SellerVerificationStatus.needsInformation => Colors.orange,
       SellerVerificationStatus.pendingReview ||
       SellerVerificationStatus.staffRecommended =>
         theme.colorScheme.primary,
@@ -216,7 +250,7 @@ class _DetailRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 150,
+            width: 160,
             child: Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -243,7 +277,11 @@ class _DocumentSummaryRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        const Icon(Icons.description_outlined),
+        Icon(
+          doc.mimeType == 'application/pdf'
+              ? Icons.picture_as_pdf_outlined
+              : Icons.image_outlined,
+        ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
@@ -251,7 +289,8 @@ class _DocumentSummaryRow extends StatelessWidget {
             children: [
               Text(doc.type.label, style: theme.textTheme.titleSmall),
               Text(
-                doc.fileName,
+                '${doc.fileName} (${doc.formattedSize}) • '
+                '${doc.isLocalMockOnly ? 'Local preview (mock — not uploaded to server)' : 'Uploaded'}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -260,7 +299,7 @@ class _DocumentSummaryRow extends StatelessWidget {
           ),
         ),
         Chip(
-          label: Text(doc.isVerifiedByStaff ? 'Staff Checked' : 'Uploaded'),
+          label: Text(doc.isVerifiedByStaff ? 'Staff Checked' : 'Attached'),
         ),
       ],
     );

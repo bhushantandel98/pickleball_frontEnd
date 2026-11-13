@@ -92,6 +92,7 @@ class ActiveRoleGuard implements RouteGuard {
         location == AppRoutes.accountSettings ||
         location == AppRoutes.notificationPreferences ||
         location == AppRoutes.notifications ||
+        location == AppRoutes.marketplaceSellerOnboarding ||
         AppRoutes.isPublic(location)) {
       return null;
     }
@@ -115,6 +116,12 @@ class RoleAuthorizationGuard implements RouteGuard {
     if (targetRole == null) return null; // Non-role-scoped route
 
     if (session.activeRole == null) return null; // Defer to ActiveRoleGuard
+
+    // Any authenticated, non-suspended user may initiate independent seller
+    // registration/onboarding before holding the marketplaceSeller role.
+    if (location == AppRoutes.marketplaceSellerOnboarding) {
+      return null;
+    }
 
     if (session.activeRole != targetRole) {
       return AppRoutes.permissionDenied;

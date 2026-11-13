@@ -175,6 +175,29 @@ class SessionCubit extends Cubit<SessionContext> {
     ));
   }
 
+  /// Links a newly registered Marketplace Seller organization to the current
+  /// authenticated session, preserving existing multi-role assignments.
+  Future<void> linkSellerOrganization({
+    required String sellerId,
+    required String businessName,
+  }) async {
+    if (!state.isAuthenticated || state.isSuspended) return;
+
+    final updatedRoles = List<UserRole>.from(state.availableRoles);
+    if (!updatedRoles.contains(UserRole.marketplaceSeller)) {
+      updatedRoles.add(UserRole.marketplaceSeller);
+    }
+
+    emit(state.copyWith(
+      availableRoles: updatedRoles,
+      activeRole: UserRole.marketplaceSeller,
+      activeOrganizationId: sellerId,
+      activeOrganizationName: businessName,
+      clearActiveTournamentId: true,
+      clearActiveTournamentName: true,
+    ));
+  }
+
   /// Signs out of the current session and resets state to unauthenticated.
   void signOut() {
     emit(const SessionContext.unauthenticated());

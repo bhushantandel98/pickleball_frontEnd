@@ -2,25 +2,33 @@ import 'package:equatable/equatable.dart';
 
 /// Verification lifecycle for a Marketplace Seller.
 ///
-/// Application Staff may review and recommend (`staffRecommended`), while only
-/// Application Admin grants final `approved` or `rejected` status.
+/// Application Staff may review and recommend (`staffRecommended`) or request
+/// more details (`needsInformation`), while only Application Admin grants final
+/// `approved` or `rejected` status.
 enum SellerVerificationStatus {
-  draft('Draft', 'Complete your business profile and upload required KYC documents.'),
+  draft(
+    'Draft',
+    'Complete your business profile and upload all mandatory KYC documents.',
+  ),
   pendingReview(
     'Pending Staff Review',
-    'Submitted for Application Staff review. Sellers cannot self-approve.',
+    'Submitted for Application Staff review. Editing is locked until review completes.',
   ),
   staffRecommended(
     'Recommended by Staff',
-    'Application Staff recommended approval. Awaiting final Application Admin decision.',
+    'Application Staff recommended approval. Awaiting final Application Admin decision; editing remains locked.',
+  ),
+  needsInformation(
+    'Needs Information',
+    'Additional details or documents were requested. Update your profile and resubmit.',
+  ),
+  rejected(
+    'Rejected',
+    'Application was rejected. Review the feedback, update details/documents, and resubmit.',
   ),
   approved(
     'Verified Seller',
-    'Approved by Application Admin. You can proceed to product catalog creation (Feature 6.2).',
-  ),
-  rejected(
-    'Changes Requested / Rejected',
-    'Update your business details or documents and resubmit for verification.',
+    'Approved by Application Admin. Profile & KYC details are locked; proceed to product catalog (Feature 6.2).',
   ),
   suspended(
     'Suspended',
@@ -31,6 +39,26 @@ enum SellerVerificationStatus {
   final String description;
 
   const SellerVerificationStatus(this.label, this.description);
+
+  bool get isEditable =>
+      this == SellerVerificationStatus.draft ||
+      this == SellerVerificationStatus.needsInformation ||
+      this == SellerVerificationStatus.rejected;
+
+  bool get isLocked => !isEditable;
+}
+
+/// Legal entity type determining mandatory business document requirements.
+enum SellerEntityType {
+  individualSoleProprietor('Individual / Sole Proprietor', false),
+  partnershipLlp('Partnership / LLP', true),
+  privateLimited('Private Limited Company', true),
+  registeredBusiness('Registered Proprietorship / Shop Act', true);
+
+  final String label;
+  final bool requiresBusinessDocuments;
+
+  const SellerEntityType(this.label, this.requiresBusinessDocuments);
 }
 
 /// Allowed pickleball-specific business focus categories.
@@ -49,9 +77,10 @@ enum SellerPickleballFocus {
 
 /// Supported KYC / business verification document types for Seller onboarding.
 enum SellerDocumentType {
-  businessRegistration('Business Registration / Shop Act'),
+  addressProof('Address Proof (Utility Bill / Rent Agreement / Bank Statement)'),
+  panCard('PAN Card (Individual / Business)'),
+  businessRegistration('Business Registration / Incorporation / Shop Act'),
   gstCertificate('GST Registration Certificate'),
-  panCard('Business / Proprietor PAN Card'),
   identityProof('Authorized Signatory ID Proof');
 
   final String label;
@@ -59,11 +88,18 @@ enum SellerDocumentType {
   const SellerDocumentType(this.label);
 }
 
-/// Uploaded KYC / business document metadata attached to a [SellerProfile].
+/// Uploaded/attached KYC document metadata attached to a [SellerProfile].
+///
+/// In mock mode, [isLocalMockOnly] is `true` and [localFileRef] holds a local
+/// reference pending secure multipart upload to the backend.
 class SellerKycDocument extends Equatable {
   final String id;
   final SellerDocumentType type;
   final String fileName;
+  final String mimeType;
+  final int fileSizeBytes;
+  final String localFileRef;
+  final bool isLocalMockOnly;
   final DateTime uploadedAt;
   final bool isVerifiedByStaff;
   final String? note;
@@ -72,27 +108,19 @@ class SellerKycDocument extends Equatable {
     required this.id,
     required this.type,
     required this.fileName,
+    this.mimeType = 'application/pdf',
+    this.fileSizeBytes = 0,
+    this.localFileRef = '',
+    this.isLocalMockOnly = true,
     required this.uploadedAt,
     this.isVerifiedByStaff = false,
     this.note,
   });
 
-  SellerKycDocument copyWith({
-    String? id,
-    SellerDocumentType? type,
-    String? fileName,
-    DateTime? uploadedAt,
-    bool? isVerifiedByStaff,
-    String? note,
-  }) {
-    return SellerKycDocument(
-      id: id ?? this.id,
-      type: type ?? this.type,
-      fileName: fileName ?? this.fileName,
-      uploadedAt: uploadedAt ?? this.uploadedAt,
-      isVerifiedByStaff: isVerifiedByStaff ?? this.isVerifiedByStaff,
-      note: note ?? this.note,
-    );
+  String get formattedSize {
+    if (fileSizeBytes <= 0) return 'Unknown size';
+    final kb = (fileSizeBytes / 1024).ceil();
+    return '$kb KB';
   }
 
   @override
@@ -100,10 +128,30 @@ class SellerKycDocument extends Equatable {
         id,
         type,
         fileName,
+        mimeType,
+        fileSizeBytes,
+        localFileRef,
+        isLocalMockOnly,
         uploadedAt,
         isVerifiedByStaff,
         note,
       ];
+}
+
+/// Historical record of a seller verification submission & review outcome.
+class SellerSubmissionRecord extends Equatable {
+  final DateTime submittedAt;
+  final SellerVerificationStatus statusAtSubmission;
+  final String? reviewNote;
+
+  const SellerSubmissionRecord({
+    required this.submittedAt,
+    required this.statusAtSubmission,
+    this.reviewNote,
+  });
+
+  @override
+  List<Object?> get props => [submittedAt, statusAtSubmission, reviewNote];
 }
 
 /// Marketplace Seller business profile & verification record (Feature 6.1).
@@ -112,10 +160,13 @@ class SellerProfile extends Equatable {
   final String ownerUserId;
   final String businessName;
   final String legalEntityName;
+  final SellerEntityType entityType;
   final SellerPickleballFocus pickleballFocus;
   final bool isPickleballOnlyConfirmed;
   final String contactEmail;
+  final bool isEmailVerified;
   final String contactPhone;
+  final bool isMobileVerified;
   final String businessAddress;
   final String city;
   final String state;
@@ -126,6 +177,7 @@ class SellerProfile extends Equatable {
   final String bankAccountLast4;
   final String ifscCode;
   final List<SellerKycDocument> documents;
+  final List<SellerSubmissionRecord> submissionHistory;
   final SellerVerificationStatus verificationStatus;
   final String? staffRecommendationNote;
   final String? adminDecisionReason;
@@ -138,10 +190,13 @@ class SellerProfile extends Equatable {
     required this.ownerUserId,
     required this.businessName,
     required this.legalEntityName,
+    this.entityType = SellerEntityType.registeredBusiness,
     this.pickleballFocus = SellerPickleballFocus.paddlesAndGear,
     this.isPickleballOnlyConfirmed = true,
     required this.contactEmail,
+    this.isEmailVerified = false,
     required this.contactPhone,
+    this.isMobileVerified = false,
     required this.businessAddress,
     required this.city,
     required this.state,
@@ -152,6 +207,7 @@ class SellerProfile extends Equatable {
     this.bankAccountLast4 = '',
     this.ifscCode = '',
     this.documents = const [],
+    this.submissionHistory = const [],
     this.verificationStatus = SellerVerificationStatus.draft,
     this.staffRecommendationNote,
     this.adminDecisionReason,
@@ -160,20 +216,46 @@ class SellerProfile extends Equatable {
     this.isActive = true,
   });
 
-  bool get canSubmitForVerification =>
-      verificationStatus == SellerVerificationStatus.draft ||
-      verificationStatus == SellerVerificationStatus.rejected;
+  bool get canEditProfile => verificationStatus.isEditable;
+  bool get canSubmitForVerification => verificationStatus.isEditable;
 
   bool get isVerified =>
       verificationStatus == SellerVerificationStatus.approved && isActive;
 
+  /// Returns the mandatory [SellerDocumentType]s required for this seller's
+  /// [entityType] and tax registration.
+  List<SellerDocumentType> get requiredDocumentTypes {
+    final requiredTypes = <SellerDocumentType>[
+      SellerDocumentType.addressProof,
+      SellerDocumentType.panCard,
+    ];
+    if (entityType.requiresBusinessDocuments) {
+      requiredTypes.add(SellerDocumentType.businessRegistration);
+    }
+    if (gstNumber.trim().isNotEmpty) {
+      requiredTypes.add(SellerDocumentType.gstCertificate);
+    }
+    return requiredTypes;
+  }
+
+  /// Returns the mandatory document types not yet attached to [documents].
+  List<SellerDocumentType> get missingRequiredDocumentTypes {
+    final attachedTypes = documents.map((d) => d.type).toSet();
+    return requiredDocumentTypes
+        .where((type) => !attachedTypes.contains(type))
+        .toList(growable: false);
+  }
+
   SellerProfile copyWith({
     String? businessName,
     String? legalEntityName,
+    SellerEntityType? entityType,
     SellerPickleballFocus? pickleballFocus,
     bool? isPickleballOnlyConfirmed,
     String? contactEmail,
+    bool? isEmailVerified,
     String? contactPhone,
+    bool? isMobileVerified,
     String? businessAddress,
     String? city,
     String? state,
@@ -184,6 +266,7 @@ class SellerProfile extends Equatable {
     String? bankAccountLast4,
     String? ifscCode,
     List<SellerKycDocument>? documents,
+    List<SellerSubmissionRecord>? submissionHistory,
     SellerVerificationStatus? verificationStatus,
     String? staffRecommendationNote,
     String? adminDecisionReason,
@@ -196,11 +279,14 @@ class SellerProfile extends Equatable {
       ownerUserId: ownerUserId,
       businessName: businessName ?? this.businessName,
       legalEntityName: legalEntityName ?? this.legalEntityName,
+      entityType: entityType ?? this.entityType,
       pickleballFocus: pickleballFocus ?? this.pickleballFocus,
       isPickleballOnlyConfirmed:
           isPickleballOnlyConfirmed ?? this.isPickleballOnlyConfirmed,
       contactEmail: contactEmail ?? this.contactEmail,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       contactPhone: contactPhone ?? this.contactPhone,
+      isMobileVerified: isMobileVerified ?? this.isMobileVerified,
       businessAddress: businessAddress ?? this.businessAddress,
       city: city ?? this.city,
       state: state ?? this.state,
@@ -211,6 +297,7 @@ class SellerProfile extends Equatable {
       bankAccountLast4: bankAccountLast4 ?? this.bankAccountLast4,
       ifscCode: ifscCode ?? this.ifscCode,
       documents: documents ?? this.documents,
+      submissionHistory: submissionHistory ?? this.submissionHistory,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       staffRecommendationNote:
           staffRecommendationNote ?? this.staffRecommendationNote,
@@ -227,10 +314,13 @@ class SellerProfile extends Equatable {
         ownerUserId,
         businessName,
         legalEntityName,
+        entityType,
         pickleballFocus,
         isPickleballOnlyConfirmed,
         contactEmail,
+        isEmailVerified,
         contactPhone,
+        isMobileVerified,
         businessAddress,
         city,
         state,
@@ -241,6 +331,7 @@ class SellerProfile extends Equatable {
         bankAccountLast4,
         ifscCode,
         documents,
+        submissionHistory,
         verificationStatus,
         staffRecommendationNote,
         adminDecisionReason,

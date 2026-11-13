@@ -2993,23 +2993,25 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 ### 9.1 Feature 6.1 — Seller Registration & Profile
 
 #### 1. Overview & Architecture
-- **Frontend Layer:** `lib/features/marketplace_seller/` (`MarketplaceSellerRepository`, `MockMarketplaceSellerRepository`, `MarketplaceSellerCubit`, `SellerPageScaffold`, `SellerDashboardPage`, `SellerOnboardingPage`).
-- **Routes:** `/marketplace-seller/dashboard`, `/marketplace-seller/onboarding`.
-- **Session Context:** Requires authenticated, non-suspended `UserRole.marketplaceSeller` session with matching `activeOrganizationId` (`sellerId`) and `userId`. Missing/null `isActive` in `SellerProfileModel.fromJson()` defaults to `false`.
+- **Frontend Layer:** `lib/features/marketplace_seller/` (`MarketplaceSellerRepository`, `MockMarketplaceSellerRepository`, `MarketplaceSellerCubit`, `SellerPageScaffold`, `KycDocumentPickerDialog`, `SellerDashboardPage`, `SellerOnboardingPage`).
+- **Routes:** `/marketplace-seller/onboarding` (accessible to any authenticated, non-suspended user for independent seller registration before `activeOrganizationId` exists), `/marketplace-seller/dashboard` (requires `UserRole.marketplaceSeller` + `activeOrganizationId`).
+- **Session Context:** Missing/null `isActive` in `SellerProfileModel.fromJson()` defaults to `false`.
 
 #### 2. Key Entities & Payloads
-- **Seller Profile (`SellerProfile`):** `sellerId`, `ownerUserId`, `businessName`, `legalEntityName`, `pickleballFocus` (`paddlesAndGear`, `apparelAndFootwear`, `courtEquipmentAndNets`, `multiCategoryPickleball`), `isPickleballOnlyConfirmed`, `contactEmail`, `contactPhone`, `businessAddress`, `city`, `state`, `postalCode`, `gstNumber`, `panNumber`, `bankAccountHolder`, `bankAccountLast4`, `ifscCode`, `documents[]`, `verificationStatus` (`draft`, `pendingReview`, `staffRecommended`, `approved`, `rejected`, `suspended`), `staffRecommendationNote`, `adminDecisionReason`, `submittedAt`, `approvedAt`, `isActive`.
-- **KYC Document (`SellerKycDocument`):** `id`, `type` (`businessRegistration`, `gstCertificate`, `panCard`, `identityProof`), `fileName`, `uploadedAt`, `isVerifiedByStaff`, `note`.
+- **Seller Profile (`SellerProfile`):** `sellerId`, `ownerUserId`, `businessName`, `legalEntityName`, `entityType` (`individualSoleProprietor`, `partnershipLlp`, `privateLimited`, `registeredBusiness`), `pickleballFocus` (`paddlesAndGear`, `apparelAndFootwear`, `courtEquipmentAndNets`, `multiCategoryPickleball`), `isPickleballOnlyConfirmed`, `contactEmail`, `isEmailVerified`, `contactPhone`, `isMobileVerified`, `businessAddress`, `city`, `state`, `postalCode`, `gstNumber`, `panNumber`, `bankAccountHolder`, `bankAccountLast4`, `ifscCode`, `documents[]`, `submissionHistory[]`, `verificationStatus` (`draft`, `pendingReview`, `staffRecommended`, `needsInformation`, `rejected`, `approved`, `suspended`), `staffRecommendationNote`, `adminDecisionReason`, `submittedAt`, `approvedAt`, `isActive`.
+- **KYC Document (`SellerKycDocument`):** `id`, `type` (`addressProof`, `panCard`, `businessRegistration`, `gstCertificate`, `identityProof`), `fileName`, `mimeType` (`application/pdf`, `image/jpeg`, `image/png`), `fileSizeBytes`, `localFileRef`, `isLocalMockOnly`, `uploadedAt`, `isVerifiedByStaff`, `note`.
 
 #### 3. Proposed Future REST API Endpoints
-1. `GET /api/v1/marketplace-seller/{sellerId}/profile` — Fetch authenticated seller's business profile, KYC documents, and verification status.
-2. `PUT /api/v1/marketplace-seller/{sellerId}/profile` — Save/update business details and pickleball-only declaration (server preserves `verificationStatus` and audit fields).
-3. `POST /api/v1/marketplace-seller/{sellerId}/documents` — Upload KYC document metadata/file (`type`, `fileName` / multipart file).
-4. `DELETE /api/v1/marketplace-seller/{sellerId}/documents/{documentId}` — Remove uploaded document (allowed only in `draft` / `rejected` states).
-5. `POST /api/v1/marketplace-seller/{sellerId}/submit-verification` — Submit seller profile and KYC documents for Application Staff review (`pendingReview`).
+1. `GET /api/v1/marketplace-seller/me` — Fetch seller profile linked to the authenticated `userId` (returns `null` / `404` if not yet registered).
+2. `POST /api/v1/marketplace-seller/register/request-otp` — Send verification OTPs to mandatory mobile number & email (`409 Conflict` if identifiers already belong to another seller).
+3. `POST /api/v1/marketplace-seller/register` — Verify mobile & email OTPs, create seller organization & profile (`draft`), and link `UserRole.marketplaceSeller` + `organizationId`.
+4. `PUT /api/v1/marketplace-seller/{sellerId}/profile` — Save/update business details (allowed only in `draft`, `needsInformation`, or `rejected`; returns `403 Forbidden` when locked).
+5. `POST /api/v1/marketplace-seller/{sellerId}/documents` — Multipart upload of PDF/image KYC document (`type`, `file`, `mimeType`, `fileSizeBytes`; allowed only when editable).
+6. `DELETE /api/v1/marketplace-seller/{sellerId}/documents/{documentId}` — Remove attached document (allowed only in `draft`, `needsInformation`, or `rejected`).
+7. `POST /api/v1/marketplace-seller/{sellerId}/submit-verification` — Validate mandatory documents individually (`addressProof`, `panCard`, `businessRegistration` for business entities, `gstCertificate` if GSTIN set), append `submissionHistory`, and transition to `pendingReview` (locking edits).
 
 #### 4. Authorization & Governance Rules
 - Only pickleball-related sellers and merchandise are permitted (`isPickleballOnlyConfirmed == true`).
 - Seller verification and product approval are strictly separate workflows.
-- Application Staff may review and recommend (`staffRecommended`), while only Application Admin can grant final `approved` / `rejected` status. Sellers cannot self-approve or modify `verificationStatus`.
-- Backend must validate `sellerId` and `ownerUserId` from the authenticated JWT/session context and return `403 Forbidden` on cross-seller access.
+- Application Staff may review, recommend (`staffRecommended`), or request additional details (`needsInformation`), while only Application Admin can grant final `approved` / `rejected` status.
+- Profile & KYC mutations are locked in `pendingReview`, `staffRecommended`, `approved`, and `suspended` states (`403 Forbidden`); editing re-opens only in `needsInformation` or `rejected`.

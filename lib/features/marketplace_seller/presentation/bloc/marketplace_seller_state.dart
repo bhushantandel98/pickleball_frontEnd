@@ -16,6 +16,50 @@ class MarketplaceSellerLoading extends MarketplaceSellerState {
   const MarketplaceSellerLoading();
 }
 
+/// Authenticated user has not yet registered a Marketplace Seller organization.
+class MarketplaceSellerUnregistered extends MarketplaceSellerState {
+  final String userId;
+  final bool otpSent;
+  final bool isMutating;
+  final String? feedbackMessage;
+  final String? errorMessage;
+
+  const MarketplaceSellerUnregistered({
+    required this.userId,
+    this.otpSent = false,
+    this.isMutating = false,
+    this.feedbackMessage,
+    this.errorMessage,
+  });
+
+  MarketplaceSellerUnregistered copyWith({
+    bool? otpSent,
+    bool? isMutating,
+    String? feedbackMessage,
+    String? errorMessage,
+    bool clearFeedback = false,
+    bool clearError = false,
+  }) {
+    return MarketplaceSellerUnregistered(
+      userId: userId,
+      otpSent: otpSent ?? this.otpSent,
+      isMutating: isMutating ?? this.isMutating,
+      feedbackMessage:
+          clearFeedback ? null : (feedbackMessage ?? this.feedbackMessage),
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        userId,
+        otpSent,
+        isMutating,
+        feedbackMessage,
+        errorMessage,
+      ];
+}
+
 class MarketplaceSellerLoaded extends MarketplaceSellerState {
   final SellerProfile profile;
   final bool isMutating;

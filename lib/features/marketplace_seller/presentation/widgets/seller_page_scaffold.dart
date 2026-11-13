@@ -14,46 +14,45 @@ import 'package:pickleball_platform/features/marketplace_seller/presentation/blo
 /// Shared wrapper for Marketplace Seller pages providing DI-aware
 /// [MarketplaceSellerCubit], strict session/role/organization validation via
 /// [SessionCubit], snackbar feedback, pull-to-refresh, and loading/error states.
+///
+/// When [allowUnregistered] is `true` (e.g. Seller Onboarding), any authenticated,
+/// non-suspended user may initiate independent seller registration even before
+/// `activeOrganizationId` or `UserRole.marketplaceSeller` is assigned.
 class SellerPageScaffold extends StatelessWidget {
   final MarketplaceSellerCubit? cubit;
   final String? sellerId;
   final String? userId;
+  final bool allowUnregistered;
   final String title;
   final String subtitle;
   final Widget Function(BuildContext context, MarketplaceSellerLoaded state)
       bodyBuilder;
+  final Widget Function(
+    BuildContext context,
+    MarketplaceSellerUnregistered state,
+  )? unregisteredBuilder;
 
   const SellerPageScaffold({
     super.key,
     this.cubit,
     this.sellerId,
     this.userId,
+    this.allowUnregistered = false,
     required this.title,
     required this.subtitle,
     required this.bodyBuilder,
+    this.unregisteredBuilder,
   });
 
-  (String, String)? _resolveAuthContext(BuildContext context) {
+  (String, String?)? _resolveAuthContext(BuildContext context) {
     try {
       final session = context.read<SessionCubit>().state;
-      if (!session.isAuthenticated ||
-          session.isSuspended ||
-          session.activeRole != UserRole.marketplaceSeller) {
+      if (!session.isAuthenticated || session.isSuspended) {
         return null;
       }
 
-      final sessionSellerId = session.activeOrganizationId?.trim();
       final sessionUserId = session.userId?.trim();
-      if (sessionSellerId == null ||
-          sessionSellerId.isEmpty ||
-          sessionUserId == null ||
-          sessionUserId.isEmpty) {
-        return null;
-      }
-
-      if (sellerId != null &&
-          sellerId!.trim().isNotEmpty &&
-          sellerId!.trim() != sessionSellerId) {
+      if (sessionUserId == null || sessionUserId.isEmpty) {
         return null;
       }
       if (userId != null &&
@@ -62,7 +61,31 @@ class SellerPageScaffold extends StatelessWidget {
         return null;
       }
 
-      return (sessionSellerId, sessionUserId);
+      final sessionSellerId = session.activeOrganizationId?.trim();
+
+      if (!allowUnregistered) {
+        if (session.activeRole != UserRole.marketplaceSeller) {
+          return null;
+        }
+        if (sessionSellerId == null || sessionSellerId.isEmpty) {
+          return null;
+        }
+      }
+
+      if (sellerId != null &&
+          sellerId!.trim().isNotEmpty &&
+          sellerId!.trim() != sessionSellerId) {
+        return null;
+      }
+
+      final scopedSellerId =
+          session.activeRole == UserRole.marketplaceSeller &&
+                  sessionSellerId != null &&
+                  sessionSellerId.isNotEmpty
+              ? sessionSellerId
+              : null;
+
+      return (sessionUserId, scopedSellerId);
     } catch (_) {
       return null;
     }
@@ -76,24 +99,25 @@ class SellerPageScaffold extends StatelessWidget {
         body: ErrorStateView(
           title: 'Marketplace Seller Access Required',
           message:
-              'A valid authenticated Marketplace Seller session with an assigned seller organization is required.',
+              'A valid authenticated session is required to access Marketplace Seller onboarding or dashboard.',
         ),
       );
     }
 
-    final (resolvedSellerId, resolvedUserId) = auth;
+    final (resolvedUserId, resolvedSellerId) = auth;
 
     if (cubit != null) {
       return BlocProvider<MarketplaceSellerCubit>.value(
         value: cubit!
           ..loadProfile(
-            sellerId: resolvedSellerId,
             userId: resolvedUserId,
+            sellerId: resolvedSellerId,
           ),
         child: _SellerScaffoldBody(
           title: title,
           subtitle: subtitle,
           bodyBuilder: bodyBuilder,
+          unregisteredBuilder: unregisteredBuilder,
         ),
       );
     }
@@ -106,8 +130,8 @@ class SellerPageScaffold extends StatelessWidget {
                 repository: MockMarketplaceSellerRepository(),
               );
         instance.loadProfile(
-          sellerId: resolvedSellerId,
           userId: resolvedUserId,
+          sellerId: resolvedSellerId,
         );
         return instance;
       },
@@ -115,6 +139,7 @@ class SellerPageScaffold extends StatelessWidget {
         title: title,
         subtitle: subtitle,
         bodyBuilder: bodyBuilder,
+        unregisteredBuilder: unregisteredBuilder,
       ),
     );
   }
@@ -125,11 +150,16 @@ class _SellerScaffoldBody extends StatelessWidget {
   final String subtitle;
   final Widget Function(BuildContext context, MarketplaceSellerLoaded state)
       bodyBuilder;
+  final Widget Function(
+    BuildContext context,
+    MarketplaceSellerUnregistered state,
+  )? unregisteredBuilder;
 
   const _SellerScaffoldBody({
     required this.title,
     required this.subtitle,
     required this.bodyBuilder,
+    this.unregisteredBuilder,
   });
 
   @override
@@ -153,40 +183,62 @@ class _SellerScaffoldBody extends StatelessWidget {
       ),
       body: BlocConsumer<MarketplaceSellerCubit, MarketplaceSellerState>(
         listener: (context, state) {
+          String? feedback;
+          String? error;
           if (state is MarketplaceSellerLoaded) {
-            if (state.feedbackMessage != null) {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(content: Text(state.feedbackMessage!)),
-                );
-              context.read<MarketplaceSellerCubit>().clearFeedback();
-            } else if (state.errorMessage != null) {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(state.errorMessage!),
-                    backgroundColor: theme.colorScheme.error,
-                  ),
-                );
-              context.read<MarketplaceSellerCubit>().clearFeedback();
-            }
+            feedback = state.feedbackMessage;
+            error = state.errorMessage;
+          } else if (state is MarketplaceSellerUnregistered) {
+            feedback = state.feedbackMessage;
+            error = state.errorMessage;
+          }
+
+          if (feedback != null) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(feedback)));
+            context.read<MarketplaceSellerCubit>().clearFeedback();
+          } else if (error != null) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(error),
+                  backgroundColor: theme.colorScheme.error,
+                ),
+              );
+            context.read<MarketplaceSellerCubit>().clearFeedback();
           }
         },
         builder: (context, state) {
           if (state is MarketplaceSellerInitial ||
               state is MarketplaceSellerLoading) {
             return const LoadingView(
-              message: 'Loading Marketplace Seller profile...',
+              message: 'Loading Marketplace Seller workspace...',
             );
           }
           if (state is MarketplaceSellerFailure) {
             return ErrorStateView(
-              title: 'Unable to Load Seller Profile',
+              title: 'Unable to Load Seller Workspace',
               message: state.message,
               onRetry: () =>
                   context.read<MarketplaceSellerCubit>().refreshProfile(),
+            );
+          }
+          if (state is MarketplaceSellerUnregistered) {
+            if (unregisteredBuilder != null) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: ResponsiveContainer(
+                  maxWidth: 1120,
+                  child: unregisteredBuilder!(context, state),
+                ),
+              );
+            }
+            return const ErrorStateView(
+              title: 'Seller Profile Not Registered',
+              message:
+                  'Complete independent seller registration at /marketplace-seller/onboarding first.',
             );
           }
           if (state is MarketplaceSellerLoaded) {
