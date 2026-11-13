@@ -20,6 +20,10 @@ import 'package:pickleball_platform/features/academy/presentation/pages/academy_
 import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_attendance_page.dart';
 import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_dashboard_page.dart';
 import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_operations_page.dart';
+import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_bookings_page.dart';
+import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_calendar_page.dart';
+import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_dashboard_page.dart';
+import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_locations_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -423,35 +427,19 @@ GoRouter createAppRouter({
           // 5. Venue Partner
           GoRoute(
             path: AppRoutes.venuePartnerDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Venue Partner Dashboard',
-              path: AppRoutes.venuePartnerDashboard,
-              role: UserRole.venuePartner,
-            ),
+            builder: (context, state) => const VenuePartnerDashboardPage(),
           ),
           GoRoute(
             path: AppRoutes.venuePartnerLocations,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Locations & Courts',
-              path: AppRoutes.venuePartnerLocations,
-              role: UserRole.venuePartner,
-            ),
+            builder: (context, state) => const VenuePartnerLocationsPage(),
           ),
           GoRoute(
             path: AppRoutes.venuePartnerCalendar,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Court Booking Calendar',
-              path: AppRoutes.venuePartnerCalendar,
-              role: UserRole.venuePartner,
-            ),
+            builder: (context, state) => const VenuePartnerCalendarPage(),
           ),
           GoRoute(
             path: AppRoutes.venuePartnerBookings,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Booking Requests & Payments',
-              path: AppRoutes.venuePartnerBookings,
-              role: UserRole.venuePartner,
-            ),
+            builder: (context, state) => const VenuePartnerBookingsPage(),
           ),
 
           // 6. Venue Staff

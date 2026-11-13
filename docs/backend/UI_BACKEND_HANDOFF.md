@@ -2860,3 +2860,26 @@ Enable delegated Academy Staff members to execute daily branch-scoped operations
 - Backend must validate `academyId` and `staffId` from the authenticated session (`403 Forbidden` on mismatch or inactive staff).
 - Every read and mutation must enforce `branchId ∈ staffProfile.assignedBranchIds` and required permission (`403 Forbidden` if missing).
 - Academy Staff endpoints must **never** expose branch creation/deletion, coach invitation/revocation, staff permission self-escalation, or Coach personal coaching data.
+
+---
+
+### 7.1 Feature 3.7 — Venue Partner Module
+
+#### 1. Purpose
+Enable Venue Partners to manage their owned venue locations, courts, standard/peak pricing, booking rules (slot duration, advance window, cancellation cutoff, confirmation mode), availability/maintenance blocks, booking requests, offline manual payment status, delegated venue staff status, and operational expenses.
+
+#### 2. Proposed Data Contracts
+- **Venue Location (`VenueLocation`):** `id`, `partnerId`, `name`, `city`, `address`, `operatingHours`, `slotDurationMinutes`, `advanceBookingWindowDays`, `cancellationCutoffHours`, `confirmationMode` ∈ `AUTO_CONFIRM | MANUAL_APPROVAL`, `isActive`.
+- **Venue Court (`VenueCourt`):** `id`, `partnerId`, `locationId`, `name`, `surfaceType`, `isIndoor`, `hasLighting`, `hourlyRateInr`, `peakHourlyRateInr`, `isActive`.
+- **Booking & Offline Payment (`VenuePartnerBooking`):** `status` ∈ `PENDING | CONFIRMED | CHECKED_IN | COMPLETED | CANCELLED | DECLINED`, `paymentStatus` ∈ `UNPAID | PAID_AT_VENUE | PENDING_VERIFICATION` (**V1 offline/manual only; no Razorpay checkout or refund execution**).
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/venue-partner/{partnerId}/workspace` — Aggregated multi-location workspace load.
+2. `POST /api/v1/venue-partner/{partnerId}/locations`, `PATCH /api/v1/venue-partner/{partnerId}/locations/{locationId}` — Create/update location profile, operating hours, booking rules, and active status.
+3. `POST /api/v1/venue-partner/{partnerId}/courts`, `PATCH /api/v1/venue-partner/{partnerId}/courts/{courtId}` — Create courts and update standard/peak hourly rates or active status.
+4. `POST /api/v1/venue-partner/{partnerId}/availability-blocks`, `DELETE /api/v1/venue-partner/{partnerId}/availability-blocks/{blockId}` — Add/remove maintenance or private hold blocks.
+5. `PATCH /api/v1/venue-partner/{partnerId}/bookings/{bookingId}/status`, `PATCH /api/v1/venue-partner/{partnerId}/bookings/{bookingId}/payment` — Manage booking lifecycle and record offline manual payment status.
+6. `POST /api/v1/venue-partner/{partnerId}/expenses`, `PATCH /api/v1/venue-partner/{partnerId}/staff/{staffAssignmentId}` — Log venue expenses and toggle delegated Venue Staff active status.
+
+#### 4. Authorization & Ownership Rules
+- Backend must enforce `partnerId` ownership against the authenticated Venue Partner context (`403 Forbidden` on mismatch) and verify every location, court, block, booking, staff assignment, and expense belongs to `partnerId`.
