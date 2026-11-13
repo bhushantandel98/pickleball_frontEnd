@@ -2813,3 +2813,26 @@ Allow coaches to create, inspect, edit, and cancel their personal coaching booki
 4. **Cancel Personal Booking**
    - `POST /api/v1/coach/personal-bookings/{bookingId}/cancel`
    - **Behavior:** Coach-only cancellation. Transitions booking to `CANCELLED` and appends `CANCELLED` history entry with optional reason.
+
+---
+
+### 6.5 Feature 3.5 — Academy Module
+
+#### 1. Purpose
+Enable Academy owners/administrators to manage multi-branch academy facilities, academy-owned coaching programs and batches, coach affiliation invitations and branch/schedule permissions, and student enrollment requests and tuition fee tracking, while keeping coach personal coaching data strictly private and separate.
+
+#### 2. Proposed Data Contracts
+- **Workspace Payload (`GET /api/v1/academy/{academyId}/workspace`):** Returns `profile` (`academyId`, `academyName`, `ownerName`, `primaryCity`, `contactEmail`), `branches[]`, `programs[]`, `batches[]`, `coachAffiliations[]`, and `enrollments[]`.
+- **Coach Affiliation:** `status` ∈ `PENDING_COACH_ACCEPTANCE | ACCEPTED | DECLINED | REVOKED`, `assignedBranchIds[]`, `canModifyOfficialSchedule` (`boolean`).
+- **Enrollment Record:** `status` ∈ `PENDING | WAITLISTED | APPROVED | DECLINED`, `waitlistPosition` (`int?`), `feeStatus` ∈ `PAID | PENDING | OVERDUE`, `tuitionAmountInr` (`number`).
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/academy/{academyId}/workspace` — Aggregated multi-branch workspace load (supports optional `?branchId=`).
+2. `POST /api/v1/academy/{academyId}/branches`, `PATCH /api/v1/academy/{academyId}/branches/{branchId}` — Create, update, and toggle branch active status.
+3. `POST /api/v1/academy/{academyId}/programs`, `PATCH /api/v1/academy/{academyId}/programs/{programId}` — Create and toggle academy programs.
+4. `POST /api/v1/academy/{academyId}/batches` — Create batch under a program with capacity and optional accepted coach assignment.
+5. `POST /api/v1/academy/{academyId}/coaches/invite`, `PATCH /api/v1/academy/{academyId}/coaches/{affiliationId}`, `POST /api/v1/academy/{academyId}/coaches/{affiliationId}/revoke` — Invite coaches (starts as `PENDING_COACH_ACCEPTANCE`), update branch/schedule permissions, or revoke affiliation.
+6. `PATCH /api/v1/academy/{academyId}/enrollments/{enrollmentId}/status`, `PATCH /api/v1/academy/{academyId}/enrollments/{enrollmentId}/tuition` — Approve/waitlist/decline enrollments (enforcing batch capacity) and record manual tuition fee updates.
+
+#### 4. Open Business Rules
+Tracked in [`docs/OPEN_DECISIONS.md`](../OPEN_DECISIONS.md) under `DEC-ACADEMY-001` through `DEC-ACADEMY-003`.

@@ -12,6 +12,11 @@ import 'package:pickleball_platform/core/widgets/state_views/empty_view.dart';
 import 'package:pickleball_platform/core/widgets/state_views/permission_denied_view.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/forgot_password_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/login_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_branches_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_coaches_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_dashboard_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_enrollments_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_programs_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -379,43 +384,23 @@ GoRouter createAppRouter({
           // 3. Academy
           GoRoute(
             path: AppRoutes.academyDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Academy Dashboard',
-              path: AppRoutes.academyDashboard,
-              role: UserRole.academy,
-            ),
+            builder: (context, state) => const AcademyDashboardPage(),
           ),
           GoRoute(
             path: AppRoutes.academyBranches,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Branch Facilities',
-              path: AppRoutes.academyBranches,
-              role: UserRole.academy,
-            ),
+            builder: (context, state) => const AcademyBranchesPage(),
           ),
           GoRoute(
             path: AppRoutes.academyPrograms,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Coaching Programs',
-              path: AppRoutes.academyPrograms,
-              role: UserRole.academy,
-            ),
+            builder: (context, state) => const AcademyProgramsPage(),
           ),
           GoRoute(
             path: AppRoutes.academyCoaches,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Coach Staff Directory',
-              path: AppRoutes.academyCoaches,
-              role: UserRole.academy,
-            ),
+            builder: (context, state) => const AcademyCoachesPage(),
           ),
           GoRoute(
             path: AppRoutes.academyEnrollments,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Student Enrollments',
-              path: AppRoutes.academyEnrollments,
-              role: UserRole.academy,
-            ),
+            builder: (context, state) => const AcademyEnrollmentsPage(),
           ),
 
           // 4. Academy Staff

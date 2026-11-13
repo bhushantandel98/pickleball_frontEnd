@@ -37,6 +37,9 @@ import 'package:pickleball_platform/features/player/domain/repositories/marketpl
 import 'package:pickleball_platform/features/player/domain/repositories/match_day_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/tournament_repository.dart';
+import 'package:pickleball_platform/features/academy/data/repositories/mock_academy_repository.dart';
+import 'package:pickleball_platform/features/academy/domain/repositories/academy_repository.dart';
+import 'package:pickleball_platform/features/academy/presentation/bloc/academy_cubit.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
@@ -291,6 +294,11 @@ Future<void> initServiceLocator() async {
   sl.registerFactory<PersonalCoachingCubit>(
     () => PersonalCoachingCubit(repository: sl<PersonalCoachingRepository>()),
   );
+
+  // --- Academy Cubit ---
+  sl.registerFactory<AcademyCubit>(
+    () => AcademyCubit(repository: sl<AcademyRepository>()),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -403,6 +411,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<PersonalCoachingRepository>(
     () => MockPersonalCoachingRepository(),
   );
+
+  // Academy Repository
+  sl.registerLazySingleton<AcademyRepository>(
+    () => MockAcademyRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -493,5 +506,10 @@ void initRemoteServiceLocator() {
   // Coach Personal Coaching Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<PersonalCoachingRepository>(
     () => MockPersonalCoachingRepository(),
+  );
+
+  // Academy Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<AcademyRepository>(
+    () => MockAcademyRepository(),
   );
 }

@@ -60,3 +60,22 @@ This document tracks unresolved PRD questions and business rules discovered duri
 - Question: How should session times be normalized across timezones, and should a minimum travel buffer between different venues/branches trigger a conflict warning?
 - Current implementation: Overlap warnings trigger only on direct time-range intersection (`startA < endB && endA > startB`) using local device time without travel-buffer thresholds.
 - Status: Open.
+
+---
+
+### Academy Module — Feature 3.5
+
+**DEC-ACADEMY-001: Automatic Waitlist Promotion on Seat Opening**
+- Question: When an approved student drops out or batch capacity increases, should the first waitlisted student be automatically promoted to Approved, or must an Academy admin manually approve them?
+- Current implementation: Waitlisted students remain in `Waitlisted` until manually approved by the Academy admin.
+- Status: Open.
+
+**DEC-ACADEMY-002: Batch-to-Branch Coach Assignment Scope**
+- Question: Can an affiliated coach be assigned to a batch at a branch where they are not yet listed under `assignedBranchIds`, or must branch assignment be a prerequisite?
+- Current implementation: `MockAcademyRepository.createBatch` filters assignable coaches to accepted affiliations assigned to the program's branch.
+- Status: Open.
+
+**DEC-ACADEMY-003: Academy Tuition Billing Cycle & Proration**
+- Question: Should mid-month student enrollments incur full monthly tuition or prorated tuition based on remaining sessions?
+- Current implementation: Enrollment records capture the full `monthlyTuitionInr` from the parent program without proration.
+- Status: Open.
