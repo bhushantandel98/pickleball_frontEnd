@@ -2958,3 +2958,29 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 #### 4. Authorization & Ownership Rules
 - Backend must validate `staffId` and `tournamentId` from the authenticated JWT/session context (never trusting unverified client-supplied IDs), verify `isActive == true`, enforce delegated permission codes on every endpoint (`403 Forbidden`), and block cross-tournament access.
 - Tournament Staff must never create/edit tournaments, alter scoring rules, modify categories/draws, or self-escalate permissions.
+
+
+---
+
+### 8.3 Feature 5.3 — Referee Module
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/referee/` (`RefereeRepository`, `MockRefereeRepository`, `RefereeCubit`, `RefereePageScaffold`, `RefereeDashboardPage`, `RefereeScoringPage`).
+- **Session Context:** Requires authenticated, non-suspended `UserRole.referee` session with matching `activeTournamentId` and `userId`. Missing `isActive` in `RefereeProfileModel.fromJson()` defaults to `false`.
+
+#### 2. Key Entities & Payloads
+- **Referee Profile (`RefereeProfile`):** `refereeId`, `tournamentId`, `tournamentName`, `venueName`, `refereeName`, `refereeEmail`, `certificationLevel`, `isActive`.
+- **Match Assignment (`RefereeMatchAssignment`):** `id`, `tournamentId`, `categoryName`, `eventFormat` (`singles` / `doubles`), `roundLabel`, `courtName`, `scheduledTime`, `participantA`, `participantB`, `refereeId`, `scoringConfig` (`method`, `pointsPerGame`, `winBy`, `bestOfGames`, `trackPositionsAndServiceOrder`), `status` (`scheduled` / `inProgress` / `completed`), `games[]` (`gameNumber`, `scoreA`, `scoreB`, `isComplete`), `currentGameIndex`, `servingSide`, `serverNumber`, `winnerLabel`, `submittedAt`.
+- **Read-Only Schedule & Standings:** `OrganizerMatchSlot` list for tournament Match Day schedule and `RefereeStandingEntry` (`categoryName`, `participantLabel`, `played`, `won`, `lost`, `pointDifferential`).
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/referee/{tournamentId}/{refereeId}/workspace` — Load tournament-scoped workspace (`profile`, `assignedMatches`, `tournamentSchedule`, `standings`).
+2. `POST /api/v1/referee/{tournamentId}/{refereeId}/matches/{matchId}/start` — Transition assigned match from `scheduled` to `inProgress`.
+3. `POST /api/v1/referee/{tournamentId}/{refereeId}/matches/{matchId}/point` — Award point (`{ "side": "A" | "B" }`) using organizer-defined `scoringConfig`.
+4. `POST /api/v1/referee/{tournamentId}/{refereeId}/matches/{matchId}/switch-serve` — Advance serving side / server number.
+5. `POST /api/v1/referee/{tournamentId}/{refereeId}/matches/{matchId}/submit` — Submit and lock final match result (`finalScoreOverride`, `winnerOverride` optional).
+
+#### 4. Authorization & Ownership Rules
+- Backend must validate `refereeId` and `tournamentId` from the authenticated JWT/session context, verify `isActive == true`, and enforce match-level assignment ownership (`match.refereeId == refereeId && match.tournamentId == tournamentId`).
+- Organizer-defined `scoringConfig` is strictly read-only for Referees.
+- Once a match result is submitted (`submittedAt != null` / `completed`), all Referee score mutation and resubmission endpoints must return `403 Forbidden`.

@@ -33,6 +33,8 @@ import 'package:pickleball_platform/features/tournament_organizer/presentation/p
 import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_staff_page.dart';
 import 'package:pickleball_platform/features/tournament_staff/presentation/pages/tournament_staff_dashboard_page.dart';
 import 'package:pickleball_platform/features/tournament_staff/presentation/pages/tournament_staff_operations_page.dart';
+import 'package:pickleball_platform/features/referee/presentation/pages/referee_dashboard_page.dart';
+import 'package:pickleball_platform/features/referee/presentation/pages/referee_scoring_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -501,19 +503,12 @@ GoRouter createAppRouter({
           // 9. Referee
           GoRoute(
             path: AppRoutes.refereeDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Assigned Matches',
-              path: AppRoutes.refereeDashboard,
-              role: UserRole.referee,
-            ),
+            builder: (context, state) => const RefereeDashboardPage(),
           ),
           GoRoute(
             path: AppRoutes.refereeScoring,
-            builder: (context, state) => RoutePlaceholderView(
-              title: 'Match Live Scoring Pad',
-              path: state.uri.path,
-              role: UserRole.referee,
-              params: state.pathParameters,
+            builder: (context, state) => RefereeScoringPage(
+              matchId: state.pathParameters['id'],
             ),
           ),
 

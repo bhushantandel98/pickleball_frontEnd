@@ -55,6 +55,9 @@ import 'package:pickleball_platform/features/tournament_organizer/presentation/b
 import 'package:pickleball_platform/features/tournament_staff/data/repositories/mock_tournament_staff_repository.dart';
 import 'package:pickleball_platform/features/tournament_staff/domain/repositories/tournament_staff_repository.dart';
 import 'package:pickleball_platform/features/tournament_staff/presentation/cubit/tournament_staff_cubit.dart';
+import 'package:pickleball_platform/features/referee/data/repositories/mock_referee_repository.dart';
+import 'package:pickleball_platform/features/referee/domain/repositories/referee_repository.dart';
+import 'package:pickleball_platform/features/referee/presentation/bloc/referee_cubit.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
@@ -343,6 +346,13 @@ Future<void> initServiceLocator() async {
       repository: sl<TournamentStaffRepository>(),
     ),
   );
+
+  // --- Referee Cubit ---
+  sl.registerFactory<RefereeCubit>(
+    () => RefereeCubit(
+      repository: sl<RefereeRepository>(),
+    ),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -485,6 +495,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<TournamentStaffRepository>(
     () => MockTournamentStaffRepository(),
   );
+
+  // Referee Repository
+  sl.registerLazySingleton<RefereeRepository>(
+    () => MockRefereeRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -605,5 +620,10 @@ void initRemoteServiceLocator() {
   // Tournament Staff Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<TournamentStaffRepository>(
     () => MockTournamentStaffRepository(),
+  );
+
+  // Referee Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<RefereeRepository>(
+    () => MockRefereeRepository(),
   );
 }
