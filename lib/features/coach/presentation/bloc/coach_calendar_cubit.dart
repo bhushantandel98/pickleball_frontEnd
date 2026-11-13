@@ -18,18 +18,14 @@ class CoachCalendarCubit extends Cubit<CoachCalendarState> {
     final result = await repository.getCalendarData(coachId: coachId);
     switch (result) {
       case Success(:final data):
-        if (data.isCompletelyEmpty) {
-          emit(const CoachCalendarEmpty());
-        } else {
-          emit(
-            CoachCalendarLoaded(
-              data: data,
-              selectedDate: CoachCalendarLoaded.normalizeDate(
-                initialDate ?? DateTime.now(),
-              ),
+        emit(
+          CoachCalendarLoaded(
+            data: data,
+            selectedDate: CoachCalendarLoaded.normalizeDate(
+              initialDate ?? DateTime.now(),
             ),
-          );
-        }
+          ),
+        );
       case FailureResult(:final failure):
         emit(CoachCalendarFailure(failure));
     }
@@ -40,9 +36,7 @@ class CoachCalendarCubit extends Cubit<CoachCalendarState> {
     final result = await repository.getCalendarData(coachId: coachId);
     switch (result) {
       case Success(:final data):
-        if (data.isCompletelyEmpty) {
-          emit(const CoachCalendarEmpty());
-        } else if (prev is CoachCalendarLoaded) {
+        if (prev is CoachCalendarLoaded) {
           emit(prev.copyWith(data: data, clearFeedback: true));
         } else {
           emit(

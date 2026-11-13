@@ -1,8 +1,8 @@
 # BUILD STATUS
 
 **Project:** Pickleball Multi-Role Platform (Frontend)  
-**Last Updated:** 09 November 2026  
-**Current Phase:** Phase 2 — Player Module  
+**Last Updated:** 13 November 2026  
+**Current Phase:** Phase 3 — Coach, Academy & Academy Staff  
 **Branch:** dev  
 
 ---
@@ -26,7 +26,7 @@
 ## Active Task
 
 - **Task ID:** Feature 3.3 — Coach Calendar & Availability
-- **Description:** Implemented the Phase 3 Coach Profile at `/coach/profile` using Clean Architecture, `CoachProfileCubit`, local mock repository, and existing shared profile avatar components (`ProfileAvatarView`, `AvatarPickerDialog`): (1) Domain entities (`CoachProfile`, `CoachCertification`, `CoachServiceOffering`, `CoachAvailabilityWindow`) in `lib/features/coach/domain/entities/coach_profile.dart`; (2) `CoachProfileRepository` and `MockCoachProfileRepository` with input validation and empty/error test hooks; (3) `CoachProfileCubit` & `CoachProfileState`; (4) `CoachProfilePage` and section widgets covering Personal Details & photo picker, Experience, Certifications (add/edit/remove without verification workflows), Specializations (add/remove), Personal Coaching Services (add/edit/remove) & Personal Coaching Fees (kept separate from academy finances), and Display-only Availability (no scheduling/calendar management); (5) Wired `AppRoutes.coachProfile` in `app_router.dart`, `role_nav_config.dart`, and `service_locator.dart`; (6) Targeted Cubit & widget tests (`test/features/coach/coach_profile_test.dart`, 17 tests passing; total 31 Coach feature tests passing; `flutter analyze` 0 issues); (7) Unresolved Coach PRD decisions (`DEC-COACH-001` through `DEC-COACH-006`) tracked in [`docs/OPEN_DECISIONS.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/OPEN_DECISIONS.md).
+- **Description:** Implemented the Phase 3 Coach Calendar & Availability feature at `/coach/calendar` using Clean Architecture, `CoachCalendarCubit`, and local mock repository: (1) Domain entities (`CoachCalendarViewMode`, `CalendarEntryContext`, `CoachCalendarSession`, `CoachBlockedTime`, `PersonalAvailabilityWindow`, `ScheduleConflictWarning`, `CoachCalendarData`) in `lib/features/coach/domain/entities/coach_calendar.dart`; (2) `CoachCalendarRepository` and `MockCoachCalendarRepository` with personal sessions, multiple accepted academy affiliations & assigned branches/batches (read-only unless `canModifySchedule == true`), blocked times, personal availability windows, and overlapping schedule fixtures; (3) `CoachCalendarCubit` & `CoachCalendarState` (including empty-calendar handling via `CoachCalendarLoaded` so coaches with no existing sessions can still configure personal availability and blocked times); (4) `CoachCalendarPage`, `CoachCalendarScheduleView` (Day/Week/Month views & context filtering), `CoachAvailabilityManagementSection` (availability & blocked-time dialogs), and `CoachCalendarConflictBanner` (non-blocking overlap warnings); (5) Wired `AppRoutes.coachCalendar` in `app_router.dart`, `role_nav_config.dart`, and `service_locator.dart`; (6) Unresolved Coach PRD decisions (`DEC-COACH-001` through `DEC-COACH-009`) tracked in [`docs/OPEN_DECISIONS.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/OPEN_DECISIONS.md) and backend contracts added to [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md) (§6.3).
 - **Assigned To:** Lead Frontend Architect (Antigravity)
 - **Status:** Completed — Ready for User Review.
 
