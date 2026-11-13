@@ -27,6 +27,10 @@ import 'package:pickleball_platform/features/venue_partner/presentation/pages/ve
 import 'package:pickleball_platform/features/venue_staff/presentation/pages/venue_staff_bookings_page.dart';
 import 'package:pickleball_platform/features/venue_staff/presentation/pages/venue_staff_dashboard_page.dart';
 import 'package:pickleball_platform/features/venue_staff/presentation/pages/venue_staff_tasks_page.dart';
+import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_create_wizard_page.dart';
+import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_draws_page.dart';
+import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_organizer_dashboard_page.dart';
+import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_staff_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -462,36 +466,23 @@ GoRouter createAppRouter({
           // 7. Tournament Organizer
           GoRoute(
             path: AppRoutes.tournamentOrganizerDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Tournament Organizer Dashboard',
-              path: AppRoutes.tournamentOrganizerDashboard,
-              role: UserRole.tournamentOrganizer,
-            ),
+            builder: (context, state) =>
+                const TournamentOrganizerDashboardPage(),
           ),
           GoRoute(
             path: AppRoutes.tournamentOrganizerCreate,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Create Tournament Wizard',
-              path: AppRoutes.tournamentOrganizerCreate,
-              role: UserRole.tournamentOrganizer,
-            ),
+            builder: (context, state) => const TournamentCreateWizardPage(),
           ),
           GoRoute(
             path: AppRoutes.tournamentOrganizerDraws,
-            builder: (context, state) => RoutePlaceholderView(
-              title: 'Tournament Draws & Seeding',
-              path: state.uri.path,
-              role: UserRole.tournamentOrganizer,
-              params: state.pathParameters,
+            builder: (context, state) => TournamentDrawsPage(
+              tournamentId: state.pathParameters['id'],
             ),
           ),
           GoRoute(
             path: AppRoutes.tournamentOrganizerStaff,
-            builder: (context, state) => RoutePlaceholderView(
-              title: 'Staff Delegation & Referee Assignment',
-              path: state.uri.path,
-              role: UserRole.tournamentOrganizer,
-              params: state.pathParameters,
+            builder: (context, state) => TournamentStaffPage(
+              tournamentId: state.pathParameters['id'],
             ),
           ),
 

@@ -2905,3 +2905,36 @@ Enable delegated Venue Staff to operate strictly within their assigned `partnerI
 #### 4. Authorization & Ownership Rules
 - Backend must verify `staffId` belongs to `partnerId` and `isActive == true`, enforce delegated permission codes on every endpoint, and reject (`403 Forbidden`) any access or mutation targeting an unassigned `locationId` or another `partnerId`.
 - Venue Staff must never be permitted to create/modify venue locations, court pricing, booking rules, or staff permissions.
+
+---
+
+## 8. Phase 5 — Tournament Operations
+
+### 8.1 Feature 5.1 — Tournament Organizer Module
+
+#### 1. Purpose
+Enable Tournament Organizers to create, configure, publish, and operate tournaments supporting **Singles**, **Doubles**, **Mixed Doubles**, and **Team** disciplines across **Round Robin** and **Knockout** formats, including eligibility/capacity rules, automatic registration, draw generation & manual seeding, court/referee scheduling, staff delegation, Match Day monitoring, and category-level finance summaries.
+
+#### 2. Proposed Data Entities & Contracts
+- **Tournament (`OrganizerTournament`):** `id`, `organizerId`, `organizationName`, `name`, `venueName`, `city`, `address`, `startDate`, `endDate`, `registrationDeadline`, `prizePool`, `description`, `rules[]`, `status` ∈ `DRAFT | PUBLISHED | REGISTRATION_OPEN | IN_PROGRESS | COMPLETED | CANCELLED`, `defaultScoring` (`TournamentScoringConfig`), `categories[]`, `courts[]`, `isPubliclyPublished`.
+- **Scoring Rules (`TournamentScoringConfig`):** `method` ∈ `RALLY_SCORING | SIDE_OUT_SCORING`, `pointsPerGame` (`11 | 15 | 21`), `bestOfGames` (`1 | 3 | 5`), `winBy` (`1 | 2`), `trackPositionsAndServiceOrder`. Loaded read-only by Referee scoring UI.
+- **Category (`OrganizerCategoryConfig`):** `id`, `tournamentId`, `organizerId`, `name`, `eventFormat` ∈ `SINGLES | DOUBLES | MIXED_DOUBLES | TEAM`, `bracketFormat` ∈ `ROUND_ROBIN | KNOCKOUT`, `minRating`, `maxRating`, `minAge`, `maxAge`, `entryFeeInr`, `maxParticipants`, `registeredCount`, `teamSize`, `autoApproveEligible`, `isRegistrationOpen`.
+- **Registration (`OrganizerRegistrationRecord`):** `id`, `tournamentId`, `organizerId`, `categoryId`, `eventFormat`, `playerName`, `partnerOrTeamName`, `playerEmail`, `playerPhone`, `playerRating`, `playerAge`, `status` ∈ `AUTO_CONFIRMED | PENDING_REVIEW | REJECTED | WITHDRAWN`, `feePaidInr`, `registeredAt`.
+- **Draw & Match (`DrawSeedEntry`, `OrganizerMatchSlot`):** `seedNumber`, `groupName` (for Round Robin pools), `roundLabel`, `matchNumber`, `participantA`, `participantB`, `courtName`, `scheduledTime`, `refereeId`, `status` ∈ `SCHEDULED | IN_PROGRESS | COMPLETED`, `scoreSummary`, `winnerLabel`.
+- **Staff & Referee Delegation (`OrganizerStaffAssignment`):** `id`, `tournamentId`, `organizerId`, `userId`, `name`, `email`, `role` ∈ `TOURNAMENT_STAFF | REFEREE`, `delegatedPermissions[]` (including separate `MANAGE_REFEREES` and `EDIT_MATCH_SCORE` flags for `TOURNAMENT_STAFF`), `isActive`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/tournament-organizer/{organizerId}/workspace` — Load owned tournaments, registrations, draws, matches, and staff/referee assignments.
+2. `POST /api/v1/tournament-organizer/{organizerId}/tournaments` — Create tournament with scoring rules, courts, and initial categories.
+3. `PATCH /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/status` — Transition lifecycle (`DRAFT -> PUBLISHED -> REGISTRATION_OPEN -> IN_PROGRESS -> COMPLETED`).
+4. `POST /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/categories` — Add category with discipline, bracket format, DUPR/age bounds, fee, capacity, and `autoApproveEligible`.
+5. `POST /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/categories/{categoryId}/registrations` — Process registration; auto-confirm (`AUTO_CONFIRMED`) when tournament/category are open, DUPR/age eligibility passes, partner/team info is valid, and `registeredCount < maxParticipants`.
+6. `POST /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/categories/{categoryId}/draw` — Generate Round Robin or Knockout draw from confirmed entries.
+7. `PATCH /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/categories/{categoryId}/seeds` — Update manual seed ordering and rebuild match pairings.
+8. `PATCH /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/matches/{matchId}/schedule` — Assign court, start time, and active Referee with court-time conflict validation.
+9. `PATCH /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/matches/{matchId}/score` — Record or correct match score and winner.
+10. `POST /api/v1/tournament-organizer/{organizerId}/tournaments/{tournamentId}/staff`, `PATCH .../staff/{assignmentId}` — Assign Tournament Staff / Referees, toggle active status, and manage delegated permissions.
+
+#### 4. Validation, Authorization & Error Handling
+- Enforce `organizerId` ownership on every endpoint (`403 Forbidden` on mismatch or cross-organizer access).
+- Return `400 Bad Request` / `422 Unprocessable Entity` for invalid date ordering, empty categories on publish, rating/age eligibility failures, missing partner/team name on non-Singles entries, or court schedule conflicts (`409 Conflict` when capacity is full or court time overlaps).

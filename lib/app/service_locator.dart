@@ -49,6 +49,9 @@ import 'package:pickleball_platform/features/venue_partner/presentation/bloc/ven
 import 'package:pickleball_platform/features/venue_staff/data/repositories/mock_venue_staff_repository.dart';
 import 'package:pickleball_platform/features/venue_staff/domain/repositories/venue_staff_repository.dart';
 import 'package:pickleball_platform/features/venue_staff/presentation/cubit/venue_staff_cubit.dart';
+import 'package:pickleball_platform/features/tournament_organizer/data/repositories/mock_tournament_organizer_repository.dart';
+import 'package:pickleball_platform/features/tournament_organizer/domain/repositories/tournament_organizer_repository.dart';
+import 'package:pickleball_platform/features/tournament_organizer/presentation/bloc/tournament_organizer_cubit.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
@@ -323,6 +326,13 @@ Future<void> initServiceLocator() async {
   sl.registerFactory<VenueStaffCubit>(
     () => VenueStaffCubit(repository: sl<VenueStaffRepository>()),
   );
+
+  // --- Tournament Organizer Cubit ---
+  sl.registerFactory<TournamentOrganizerCubit>(
+    () => TournamentOrganizerCubit(
+      repository: sl<TournamentOrganizerRepository>(),
+    ),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -455,6 +465,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<VenueStaffRepository>(
     () => MockVenueStaffRepository(),
   );
+
+  // Tournament Organizer Repository
+  sl.registerLazySingleton<TournamentOrganizerRepository>(
+    () => MockTournamentOrganizerRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -565,5 +580,10 @@ void initRemoteServiceLocator() {
   // Venue Staff Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<VenueStaffRepository>(
     () => MockVenueStaffRepository(),
+  );
+
+  // Tournament Organizer Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<TournamentOrganizerRepository>(
+    () => MockTournamentOrganizerRepository(),
   );
 }
