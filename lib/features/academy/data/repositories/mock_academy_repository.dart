@@ -278,6 +278,19 @@ class MockAcademyRepository implements AcademyRepository {
     );
   }
 
+  FailureResult<AcademyWorkspaceData>? _validateAcademyOwnership(
+    String academyId,
+  ) {
+    if (academyId.trim().isEmpty || academyId != _data.profile.academyId) {
+      return const FailureResult(
+        ForbiddenFailure(
+          message: 'Unauthorized: academy context mismatch.',
+        ),
+      );
+    }
+    return null;
+  }
+
   @override
   Future<Result<AcademyWorkspaceData>> getWorkspaceData({
     required String academyId,
@@ -287,6 +300,8 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to load academy workspace data.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
     return Success(_data);
   }
 
@@ -305,6 +320,8 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to create branch.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
     if (name.trim().isEmpty || city.trim().isEmpty || address.trim().isEmpty) {
       return const FailureResult(
         ValidationFailure(
@@ -359,6 +376,8 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to update branch.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
     if (name.trim().isEmpty || city.trim().isEmpty || address.trim().isEmpty) {
       return const FailureResult(
         ValidationFailure(
@@ -369,6 +388,14 @@ class MockAcademyRepository implements AcademyRepository {
     if (courtCount <= 0) {
       return const FailureResult(
         ValidationFailure(message: 'Court count must be at least 1.'),
+      );
+    }
+    final existing = _data.branches
+        .where((b) => b.id == branchId && b.academyId == academyId)
+        .firstOrNull;
+    if (existing == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Branch not found for this academy.'),
       );
     }
 
@@ -406,6 +433,16 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to update branch status.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+    final existing = _data.branches
+        .where((b) => b.id == branchId && b.academyId == academyId)
+        .firstOrNull;
+    if (existing == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Branch not found for this academy.'),
+      );
+    }
     final updatedBranches = _data.branches
         .map((b) => b.id == branchId ? b.copyWith(isActive: isActive) : b)
         .toList();
@@ -435,6 +472,8 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to create program.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
     if (title.trim().isEmpty || monthlyTuitionInr < 0) {
       return const FailureResult(
         ValidationFailure(
@@ -442,10 +481,12 @@ class MockAcademyRepository implements AcademyRepository {
         ),
       );
     }
-    final branch = _data.branches.where((b) => b.id == branchId).firstOrNull;
+    final branch = _data.branches
+        .where((b) => b.id == branchId && b.academyId == academyId)
+        .firstOrNull;
     if (branch == null) {
       return const FailureResult(
-        NotFoundFailure(message: 'Selected branch not found.'),
+        NotFoundFailure(message: 'Selected branch not found for this academy.'),
       );
     }
 
@@ -484,6 +525,16 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to update program status.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+    final existing = _data.programs
+        .where((p) => p.id == programId && p.academyId == academyId)
+        .firstOrNull;
+    if (existing == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Program not found for this academy.'),
+      );
+    }
     final updatedPrograms = _data.programs
         .map((p) => p.id == programId ? p.copyWith(isActive: isActive) : p)
         .toList();
@@ -512,6 +563,8 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to create batch.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
     if (name.trim().isEmpty || scheduleLabel.trim().isEmpty || capacity <= 0) {
       return const FailureResult(
         ValidationFailure(
@@ -519,10 +572,12 @@ class MockAcademyRepository implements AcademyRepository {
         ),
       );
     }
-    final program = _data.programs.where((p) => p.id == programId).firstOrNull;
+    final program = _data.programs
+        .where((p) => p.id == programId && p.academyId == academyId)
+        .firstOrNull;
     if (program == null) {
       return const FailureResult(
-        NotFoundFailure(message: 'Program not found.'),
+        NotFoundFailure(message: 'Program not found for this academy.'),
       );
     }
 
@@ -530,6 +585,7 @@ class MockAcademyRepository implements AcademyRepository {
     if (assignedCoachId != null && assignedCoachId.isNotEmpty) {
       coach = _data.coachAffiliations
           .where((c) =>
+              c.academyId == academyId &&
               c.coachId == assignedCoachId &&
               c.status == CoachAffiliationStatus.accepted)
           .firstOrNull;
@@ -537,6 +593,14 @@ class MockAcademyRepository implements AcademyRepository {
         return const FailureResult(
           ValidationFailure(
             message: 'Only accepted affiliated coaches can be assigned to batches.',
+          ),
+        );
+      }
+      if (!coach.assignedBranchIds.contains(program.branchId)) {
+        return FailureResult(
+          ValidationFailure(
+            message:
+                'Coach must be assigned to ${program.branchName} before leading this batch.',
           ),
         );
       }
@@ -582,6 +646,8 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to send coach invitation.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
     if (coachName.trim().isEmpty || branchIds.isEmpty) {
       return const FailureResult(
         ValidationFailure(
@@ -590,10 +656,19 @@ class MockAcademyRepository implements AcademyRepository {
       );
     }
 
-    final branchNames = _data.branches
-        .where((b) => branchIds.contains(b.id))
-        .map((b) => b.name)
+    final uniqueBranchIds = branchIds.toSet().toList();
+    final validBranches = _data.branches
+        .where((b) => b.academyId == academyId && uniqueBranchIds.contains(b.id))
         .toList();
+    if (validBranches.length != uniqueBranchIds.length) {
+      return const FailureResult(
+        NotFoundFailure(
+          message:
+              'One or more selected branches were not found for this academy.',
+        ),
+      );
+    }
+    final branchNames = validBranches.map((b) => b.name).toList();
 
     final affiliation = AcademyCoachAffiliation(
       id: 'aff_${DateTime.now().microsecondsSinceEpoch}',
@@ -635,21 +710,40 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to update coach assignment.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
     if (branchIds.isEmpty) {
       return const FailureResult(
         ValidationFailure(message: 'Select at least one assigned branch.'),
       );
     }
+    final existing = _data.coachAffiliations
+        .where((c) => c.id == affiliationId && c.academyId == academyId)
+        .firstOrNull;
+    if (existing == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Coach affiliation not found for this academy.'),
+      );
+    }
 
-    final branchNames = _data.branches
-        .where((b) => branchIds.contains(b.id))
-        .map((b) => b.name)
+    final uniqueBranchIds = branchIds.toSet().toList();
+    final validBranches = _data.branches
+        .where((b) => b.academyId == academyId && uniqueBranchIds.contains(b.id))
         .toList();
+    if (validBranches.length != uniqueBranchIds.length) {
+      return const FailureResult(
+        NotFoundFailure(
+          message:
+              'One or more selected branches were not found for this academy.',
+        ),
+      );
+    }
+    final branchNames = validBranches.map((b) => b.name).toList();
 
     final updated = _data.coachAffiliations.map((c) {
       if (c.id != affiliationId) return c;
       return c.copyWith(
-        assignedBranchIds: List<String>.from(branchIds),
+        assignedBranchIds: List<String>.from(uniqueBranchIds),
         assignedBranchNames: branchNames,
         canModifyOfficialSchedule: canModifyOfficialSchedule,
       );
@@ -674,6 +768,16 @@ class MockAcademyRepository implements AcademyRepository {
     if (shouldFail) {
       return const FailureResult(
         ServerFailure(message: 'Unable to revoke affiliation.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+    final existing = _data.coachAffiliations
+        .where((c) => c.id == affiliationId && c.academyId == academyId)
+        .firstOrNull;
+    if (existing == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Coach affiliation not found for this academy.'),
       );
     }
     final updated = _data.coachAffiliations.map((c) {
@@ -703,24 +807,41 @@ class MockAcademyRepository implements AcademyRepository {
         ServerFailure(message: 'Unable to update enrollment status.'),
       );
     }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
 
-    final enr =
-        _data.enrollments.where((e) => e.id == enrollmentId).firstOrNull;
+    final enr = _data.enrollments
+        .where((e) => e.id == enrollmentId && e.academyId == academyId)
+        .firstOrNull;
     if (enr == null) {
       return const FailureResult(
-        NotFoundFailure(message: 'Enrollment record not found.'),
+        NotFoundFailure(message: 'Enrollment record not found for this academy.'),
       );
     }
+
+    // No-op if status is unchanged — prevents duplicate seat increments/decrements.
+    if (enr.status == newStatus) {
+      return Success(_data);
+    }
+
+    final batch = _data.batches
+        .where((b) => b.id == enr.batchId && b.academyId == academyId)
+        .firstOrNull;
+    if (batch == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Batch not found for enrollment.'),
+      );
+    }
+
+    final wasApproved = enr.status == EnrollmentRequestStatus.approved;
+    final willBeApproved = newStatus == EnrollmentRequestStatus.approved;
 
     var updatedBatches = _data.batches;
     int? nextWaitlistPos;
     var clearWaitlist = false;
 
-    if (newStatus == EnrollmentRequestStatus.approved &&
-        enr.status != EnrollmentRequestStatus.approved) {
-      final batch =
-          _data.batches.where((b) => b.id == enr.batchId).firstOrNull;
-      if (batch != null && batch.isFull) {
+    if (!wasApproved && willBeApproved) {
+      if (batch.isFull) {
         return const FailureResult(
           ValidationFailure(
             message:
@@ -728,17 +849,26 @@ class MockAcademyRepository implements AcademyRepository {
           ),
         );
       }
-      if (batch != null) {
-        updatedBatches = _data.batches
-            .map((b) => b.id == batch.id
-                ? b.copyWith(enrolledCount: b.enrolledCount + 1)
-                : b)
-            .toList();
-      }
+      updatedBatches = _data.batches
+          .map((b) => b.id == batch.id
+              ? b.copyWith(enrolledCount: b.enrolledCount + 1)
+              : b)
+          .toList();
       clearWaitlist = true;
-    } else if (newStatus == EnrollmentRequestStatus.waitlisted) {
+    } else if (wasApproved && !willBeApproved) {
+      updatedBatches = _data.batches
+          .map((b) => b.id == batch.id
+              ? b.copyWith(
+                  enrolledCount: (b.enrolledCount - 1).clamp(0, b.capacity),
+                )
+              : b)
+          .toList();
+    }
+
+    if (newStatus == EnrollmentRequestStatus.waitlisted) {
       final currentWaitlisted = _data.enrollments
           .where((e) =>
+              e.academyId == academyId &&
               e.batchId == enr.batchId &&
               e.status == EnrollmentRequestStatus.waitlisted)
           .length;
@@ -776,6 +906,17 @@ class MockAcademyRepository implements AcademyRepository {
     if (shouldFail) {
       return const FailureResult(
         ServerFailure(message: 'Unable to update tuition status.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+
+    final existing = _data.enrollments
+        .where((e) => e.id == enrollmentId && e.academyId == academyId)
+        .firstOrNull;
+    if (existing == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Enrollment record not found for this academy.'),
       );
     }
 

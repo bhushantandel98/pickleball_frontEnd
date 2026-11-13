@@ -2830,9 +2830,10 @@ Enable Academy owners/administrators to manage multi-branch academy facilities, 
 1. `GET /api/v1/academy/{academyId}/workspace` — Aggregated multi-branch workspace load (supports optional `?branchId=`).
 2. `POST /api/v1/academy/{academyId}/branches`, `PATCH /api/v1/academy/{academyId}/branches/{branchId}` — Create, update, and toggle branch active status.
 3. `POST /api/v1/academy/{academyId}/programs`, `PATCH /api/v1/academy/{academyId}/programs/{programId}` — Create and toggle academy programs.
-4. `POST /api/v1/academy/{academyId}/batches` — Create batch under a program with capacity and optional accepted coach assignment.
+4. `POST /api/v1/academy/{academyId}/batches` — Create batch under a program with capacity and optional accepted coach assignment (coach must hold `ACCEPTED` affiliation AND be assigned to the program's `branchId`).
 5. `POST /api/v1/academy/{academyId}/coaches/invite`, `PATCH /api/v1/academy/{academyId}/coaches/{affiliationId}`, `POST /api/v1/academy/{academyId}/coaches/{affiliationId}/revoke` — Invite coaches (starts as `PENDING_COACH_ACCEPTANCE`), update branch/schedule permissions, or revoke affiliation.
-6. `PATCH /api/v1/academy/{academyId}/enrollments/{enrollmentId}/status`, `PATCH /api/v1/academy/{academyId}/enrollments/{enrollmentId}/tuition` — Approve/waitlist/decline enrollments (enforcing batch capacity) and record manual tuition fee updates.
+6. `PATCH /api/v1/academy/{academyId}/enrollments/{enrollmentId}/status`, `PATCH /api/v1/academy/{academyId}/enrollments/{enrollmentId}/tuition` — Approve/waitlist/decline enrollments (idempotent on repeated status; consumes 1 seat on transition to `APPROVED`, releases 1 seat when `APPROVED` transitions to `WAITLISTED`/`DECLINED`) and record manual tuition fee updates.
+7. **Authorization & Ownership:** All endpoints validate that `academyId` matches the caller's academy context (`403 Forbidden` on mismatch) and that referenced branches, programs, batches, coach affiliations, and enrollments belong to `academyId` (`404 Not Found` otherwise).
 
 #### 4. Open Business Rules
 Tracked in [`docs/OPEN_DECISIONS.md`](../OPEN_DECISIONS.md) under `DEC-ACADEMY-001` through `DEC-ACADEMY-003`.
