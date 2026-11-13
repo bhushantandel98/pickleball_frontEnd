@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/features/marketplace_seller/domain/entities/seller_profile_entities.dart';
@@ -154,6 +156,7 @@ class MarketplaceSellerCubit extends Cubit<MarketplaceSellerState> {
     required String mimeType,
     required int fileSizeBytes,
     required String localFileRef,
+    Uint8List? fileBytes,
   }) async {
     await _runMutation(
       () => _repository.attachKycDocument(
@@ -164,6 +167,7 @@ class MarketplaceSellerCubit extends Cubit<MarketplaceSellerState> {
         mimeType: mimeType,
         fileSizeBytes: fileSizeBytes,
         localFileRef: localFileRef,
+        fileBytes: fileBytes,
       ),
       successMessage:
           '${type.label} selected locally (ready for verification submission).',

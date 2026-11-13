@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/features/marketplace_seller/domain/entities/seller_profile_entities.dart';
 
@@ -53,6 +55,7 @@ abstract class MarketplaceSellerRepository {
     required String mimeType,
     required int fileSizeBytes,
     required String localFileRef,
+    Uint8List? fileBytes,
   });
 
   Future<Result<SellerProfile>> removeKycDocument({

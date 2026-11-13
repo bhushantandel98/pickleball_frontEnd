@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 
 /// Verification lifecycle for a Marketplace Seller.
@@ -99,6 +101,7 @@ class SellerKycDocument extends Equatable {
   final String mimeType;
   final int fileSizeBytes;
   final String localFileRef;
+  final Uint8List? fileBytes;
   final bool isLocalMockOnly;
   final DateTime uploadedAt;
   final bool isVerifiedByStaff;
@@ -111,6 +114,7 @@ class SellerKycDocument extends Equatable {
     this.mimeType = 'application/pdf',
     this.fileSizeBytes = 0,
     this.localFileRef = '',
+    this.fileBytes,
     this.isLocalMockOnly = true,
     required this.uploadedAt,
     this.isVerifiedByStaff = false,

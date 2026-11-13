@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:pickleball_platform/core/errors/failures.dart';
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/features/marketplace_seller/data/models/seller_profile_models.dart';
@@ -454,6 +456,7 @@ class MockMarketplaceSellerRepository implements MarketplaceSellerRepository {
     required String mimeType,
     required int fileSizeBytes,
     required String localFileRef,
+    Uint8List? fileBytes,
   }) async {
     final (existing, failure) = _resolveAuthorizedSeller(sellerId, userId);
     if (failure != null) return FailureResult(failure);
@@ -468,7 +471,9 @@ class MockMarketplaceSellerRepository implements MarketplaceSellerRepository {
     }
 
     final trimmed = fileName.trim();
-    if (trimmed.isEmpty || localFileRef.trim().isEmpty) {
+    if (trimmed.isEmpty ||
+        (localFileRef.trim().isEmpty &&
+            (fileBytes == null || fileBytes.isEmpty))) {
       return const FailureResult(
         ValidationFailure(message: 'Select a valid PDF or image document.'),
       );
@@ -499,6 +504,7 @@ class MockMarketplaceSellerRepository implements MarketplaceSellerRepository {
           mimeType: mimeType,
           fileSizeBytes: fileSizeBytes,
           localFileRef: localFileRef.trim(),
+          fileBytes: fileBytes,
           isLocalMockOnly: true,
           uploadedAt: DateTime.now(),
         ),

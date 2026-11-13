@@ -706,18 +706,30 @@ class _OnboardingFormState extends State<_OnboardingForm> {
       value == null || value.trim().isEmpty ? 'Required' : null;
 
   Future<void> _pickDocument() async {
-    final picked = await KycDocumentPickerDialog.show(
-      context,
-      documentType: _selectedDocType,
-    );
-    if (picked != null && mounted) {
-      await context.read<MarketplaceSellerCubit>().attachKycDocument(
-            type: _selectedDocType,
-            fileName: picked.fileName,
-            mimeType: picked.mimeType,
-            fileSizeBytes: picked.fileSizeBytes,
-            localFileRef: picked.localFileRef,
+    final result = await KycDeviceFilePicker.pickDocument();
+    if (!mounted) return;
+
+    switch (result) {
+      case KycPickCancelled():
+        return;
+      case KycPickError(:final message):
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
           );
+      case KycPickSuccess(:final document):
+        await context.read<MarketplaceSellerCubit>().attachKycDocument(
+              type: _selectedDocType,
+              fileName: document.fileName,
+              mimeType: document.mimeType,
+              fileSizeBytes: document.fileSizeBytes,
+              localFileRef: document.localFileRef,
+              fileBytes: document.fileBytes,
+            );
     }
   }
 
