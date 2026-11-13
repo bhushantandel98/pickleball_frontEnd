@@ -37,10 +37,13 @@ import 'package:pickleball_platform/features/player/domain/repositories/marketpl
 import 'package:pickleball_platform/features/player/domain/repositories/match_day_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/tournament_repository.dart';
+import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
+import 'package:pickleball_platform/features/coach/domain/repositories/coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/domain/repositories/coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/domain/repositories/coach_profile_repository.dart';
+import 'package:pickleball_platform/features/coach/presentation/bloc/coach_calendar_cubit.dart';
 import 'package:pickleball_platform/features/coach/presentation/bloc/coach_dashboard_cubit.dart';
 import 'package:pickleball_platform/features/coach/presentation/bloc/coach_profile_cubit.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/venue_repository.dart';
@@ -275,6 +278,11 @@ Future<void> initServiceLocator() async {
   sl.registerFactory<CoachProfileCubit>(
     () => CoachProfileCubit(repository: sl<CoachProfileRepository>()),
   );
+
+  // --- Coach Calendar Cubit ---
+  sl.registerFactory<CoachCalendarCubit>(
+    () => CoachCalendarCubit(repository: sl<CoachCalendarRepository>()),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -377,6 +385,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<CoachProfileRepository>(
     () => MockCoachProfileRepository(),
   );
+
+  // Coach Calendar Repository
+  sl.registerLazySingleton<CoachCalendarRepository>(
+    () => MockCoachCalendarRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -457,5 +470,10 @@ void initRemoteServiceLocator() {
   // Coach Profile Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<CoachProfileRepository>(
     () => MockCoachProfileRepository(),
+  );
+
+  // Coach Calendar Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<CoachCalendarRepository>(
+    () => MockCoachCalendarRepository(),
   );
 }

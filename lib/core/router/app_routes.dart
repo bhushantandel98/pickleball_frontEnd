@@ -80,6 +80,7 @@ abstract final class AppRoutes {
   // --- Role 2: Coach ---
   static const String coach = '/coach';
   static const String coachDashboard = '/coach/dashboard';
+  static const String coachCalendar = '/coach/calendar';
   static const String coachBatches = '/coach/batches';
   static const String coachProfile = '/coach/profile';
 

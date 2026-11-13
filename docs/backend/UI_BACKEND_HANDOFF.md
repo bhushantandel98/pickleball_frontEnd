@@ -2642,3 +2642,100 @@ The Player Community & Matchmaking feature (`/player/community`) provides a dedi
 4. **Push / In-App Notifications:** Real-time push notifications for new comments, poll votes, and match acceptances are postponed to Phase 3 notification triggers.
 
 ---
+
+## 6. Phase 3 — Coach Module
+
+### 6.3 Feature 3.3 — Coach Calendar & Availability
+
+#### 1. Purpose
+Provide a unified Day / Week / Month calendar for coaches combining personal coaching sessions and read-only official schedules from accepted academy affiliations and assigned branches/batches, along with personal availability management, personal blocked-time periods, and non-blocking scheduling overlap warnings.
+
+#### 2. Proposed Data Contracts
+
+```json
+{
+  "coachId": "coach_001",
+  "acceptedAffiliations": [
+    {
+      "academyId": "acad_001",
+      "academyName": "Apex Pickleball Academy",
+      "assignedBranches": [
+        {
+          "branchId": "branch_andheri",
+          "branchName": "Andheri West Branch",
+          "city": "Mumbai"
+        }
+      ]
+    }
+  ],
+  "sessions": [
+    {
+      "id": "cal_p_002",
+      "title": "Serve & Spin Clinic — Ananya Rao",
+      "sessionType": "Personal 1-on-1",
+      "contextType": "personal",
+      "startTime": "2026-11-13T18:30:00Z",
+      "endTime": "2026-11-13T19:30:00Z",
+      "venueOrBranchName": "Dink & Smash Club, Juhu",
+      "statusLabel": "Confirmed",
+      "participantCount": 1,
+      "canModifySchedule": true
+    },
+    {
+      "id": "cal_a_001",
+      "title": "Intermediate Doubles Batch B2",
+      "sessionType": "Academy Batch",
+      "contextType": "academy",
+      "startTime": "2026-11-13T19:00:00Z",
+      "endTime": "2026-11-13T20:30:00Z",
+      "venueOrBranchName": "Andheri West Branch",
+      "academyId": "acad_001",
+      "academyName": "Apex Pickleball Academy",
+      "branchId": "branch_andheri",
+      "branchName": "Andheri West Branch",
+      "batchName": "Batch B2",
+      "statusLabel": "Academy Official Schedule",
+      "participantCount": 8,
+      "canModifySchedule": false
+    }
+  ],
+  "blockedTimes": [
+    {
+      "id": "blk_001",
+      "title": "Personal Errand / Recovery",
+      "startTime": "2026-11-14T13:00:00Z",
+      "endTime": "2026-11-14T15:00:00Z",
+      "reason": "Off-court recovery"
+    }
+  ],
+  "personalAvailability": [
+    {
+      "id": "avl_001",
+      "dayOfWeek": 1,
+      "dayLabel": "Monday",
+      "startTimeLabel": "07:00",
+      "endTimeLabel": "10:00",
+      "locationNote": "Grand Slam Pickleball Arena, Bandra",
+      "isActive": true
+    }
+  ]
+}
+```
+
+#### 3. Proposed Future REST API Endpoints
+
+1. **Get Coach Calendar & Availability**
+   - `GET /api/v1/coach/calendar?from={isoDate}&to={isoDate}`
+   - **Behavior:** Returns combined personal sessions, official sessions strictly scoped to accepted academy affiliations and assigned branches/batches (with `canModifySchedule` flag), personal blocked times, and personal availability windows.
+2. **Create / Delete Personal Blocked Time**
+   - `POST /api/v1/coach/calendar/blocked-times`
+   - `DELETE /api/v1/coach/calendar/blocked-times/{blockedTimeId}`
+   - **Behavior:** Validates `endTime > startTime`; never alters or cancels academy sessions.
+3. **Manage Personal Availability Windows**
+   - `POST /api/v1/coach/calendar/availability`
+   - `PATCH /api/v1/coach/calendar/availability/{windowId}`
+   - `DELETE /api/v1/coach/calendar/availability/{windowId}`
+   - **Behavior:** Updates personal coaching availability only; academy official schedules remain read-only unless explicit schedule-modification permission is granted.
+
+#### 4. Open Business Rules
+Tracked in [`docs/OPEN_DECISIONS.md`](../OPEN_DECISIONS.md) under `DEC-COACH-007` through `DEC-COACH-009` (recurrence & slot duration rules, booking cutoff/advance horizon, timezone & cross-branch travel buffer thresholds).

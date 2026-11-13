@@ -52,6 +52,12 @@ class RoleNavConfig {
             selectedIcon: Icons.dashboard,
           ),
           NavDestinationItem(
+            label: 'Calendar',
+            routePath: AppRoutes.coachCalendar,
+            icon: Icons.calendar_month_outlined,
+            selectedIcon: Icons.calendar_month,
+          ),
+          NavDestinationItem(
             label: 'Batches',
             routePath: AppRoutes.coachBatches,
             icon: Icons.groups_outlined,

@@ -41,3 +41,22 @@ This document tracks unresolved PRD questions and business rules discovered duri
 - Question: Should pending academy invitations remain visible when the coach selects the general Academy overview filter, or only under All Contexts?
 - Current implementation: Invitations appear under Pending Tasks in Academy overview, but selecting a specific accepted academy hides invitations from other academies.
 - Status: Open.
+
+---
+
+### Coach Calendar & Availability — Feature 3.3
+
+**DEC-COACH-007: Availability Recurrence & Slot Duration Rules**
+- Question: Should personal coaching availability windows support recurring weekly patterns with fixed slot durations (e.g., 30/60/90 min), or custom per-date overrides?
+- Current implementation: `PersonalAvailabilityWindow` stores day-of-week labels and start/end time strings without enforcing slot-duration splits or recurrence exceptions.
+- Status: Open.
+
+**DEC-COACH-008: Booking Cutoff & Advance Window Rules**
+- Question: What minimum booking notice (cutoff) and maximum advance booking horizon apply to personal coaching slots?
+- Current implementation: No cutoff or advance booking horizon is enforced in the calendar UI or mock repository.
+- Status: Open.
+
+**DEC-COACH-009: Timezone & Cross-Branch Travel Buffer Thresholds**
+- Question: How should session times be normalized across timezones, and should a minimum travel buffer between different venues/branches trigger a conflict warning?
+- Current implementation: Overlap warnings trigger only on direct time-range intersection (`startA < endB && endA > startB`) using local device time without travel-buffer thresholds.
+- Status: Open.
