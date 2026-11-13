@@ -31,6 +31,8 @@ import 'package:pickleball_platform/features/tournament_organizer/presentation/p
 import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_draws_page.dart';
 import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_organizer_dashboard_page.dart';
 import 'package:pickleball_platform/features/tournament_organizer/presentation/pages/tournament_staff_page.dart';
+import 'package:pickleball_platform/features/tournament_staff/presentation/pages/tournament_staff_dashboard_page.dart';
+import 'package:pickleball_platform/features/tournament_staff/presentation/pages/tournament_staff_operations_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -489,11 +491,11 @@ GoRouter createAppRouter({
           // 8. Tournament Staff
           GoRoute(
             path: AppRoutes.tournamentStaffDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Tournament Match Monitoring',
-              path: AppRoutes.tournamentStaffDashboard,
-              role: UserRole.tournamentStaff,
-            ),
+            builder: (context, state) => const TournamentStaffDashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.tournamentStaffOperations,
+            builder: (context, state) => const TournamentStaffOperationsPage(),
           ),
 
           // 9. Referee

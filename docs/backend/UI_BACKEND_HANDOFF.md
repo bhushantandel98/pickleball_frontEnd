@@ -2938,3 +2938,23 @@ Enable Tournament Organizers to create, configure, publish, and operate tourname
 #### 4. Validation, Authorization & Error Handling
 - Enforce `organizerId` ownership on every endpoint (`403 Forbidden` on mismatch or cross-organizer access).
 - Return `400 Bad Request` / `422 Unprocessable Entity` for invalid date ordering, empty categories on publish, rating/age eligibility failures, missing partner/team name on non-Singles entries, or court schedule conflicts (`409 Conflict` when capacity is full or court time overlaps).
+
+### 8.2 Feature 5.2 — Tournament Staff Module
+
+#### 1. Purpose
+Enable delegated Tournament Staff to operate strictly within their assigned `tournamentId` for participant check-in, Match Day monitoring, referee assignment (only when `MANAGE_REFEREES` is explicitly delegated), and match score correction (only when `EDIT_MATCH_SCORE` is explicitly delegated).
+
+#### 2. Proposed Data Contracts
+- **Tournament Staff Profile (`TournamentStaffProfile`):** `staffId`, `tournamentId`, `tournamentName`, `venueName`, `staffName`, `staffEmail`, `roleTitle`, `permissions[]` (normalized from backend uppercase snake_case codes: `VIEW_DASHBOARD`, `MANAGE_CHECK_IN`, `MANAGE_REFEREES`, `EDIT_MATCH_SCORE`; **zero implicit permissions**), `isActive`.
+- **Check-in Record (`TournamentCheckInRecord`):** `id`, `tournamentId`, `categoryName`, `participantLabel`, `eventFormat`, `isCheckedIn`, `checkedInAt`.
+- **Referee Option (`TournamentRefereeOption`):** `refereeAssignmentId`, `tournamentId`, `userId`, `name`, `email`, `isActive`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/tournament-staff/{tournamentId}/{staffId}/workspace` — Load tournament-scoped workspace (`staffProfile`, `checkIns`, `matches`, `referees`).
+2. `PATCH /api/v1/tournament-staff/{tournamentId}/{staffId}/check-ins/{checkInId}` — Toggle participant check-in (`MANAGE_CHECK_IN` required).
+3. `PATCH /api/v1/tournament-staff/{tournamentId}/{staffId}/matches/{matchId}/referee` — Assign/reassign active tournament referee (`MANAGE_REFEREES` required).
+4. `PATCH /api/v1/tournament-staff/{tournamentId}/{staffId}/matches/{matchId}/score` — Correct match score with required `correctionReason` (`EDIT_MATCH_SCORE` required).
+
+#### 4. Authorization & Ownership Rules
+- Backend must validate `staffId` and `tournamentId` from the authenticated JWT/session context (never trusting unverified client-supplied IDs), verify `isActive == true`, enforce delegated permission codes on every endpoint (`403 Forbidden`), and block cross-tournament access.
+- Tournament Staff must never create/edit tournaments, alter scoring rules, modify categories/draws, or self-escalate permissions.

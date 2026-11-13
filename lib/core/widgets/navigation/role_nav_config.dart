@@ -207,6 +207,12 @@ class RoleNavConfig {
             icon: Icons.dashboard_outlined,
             selectedIcon: Icons.dashboard,
           ),
+          NavDestinationItem(
+            label: 'Operations',
+            routePath: AppRoutes.tournamentStaffOperations,
+            icon: Icons.assignment_turned_in_outlined,
+            selectedIcon: Icons.assignment_turned_in,
+          ),
         ];
 
       case UserRole.referee:

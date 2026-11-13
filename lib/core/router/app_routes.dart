@@ -127,6 +127,8 @@ abstract final class AppRoutes {
   static const String tournamentStaff = '/tournament-staff';
   static const String tournamentStaffDashboard =
       '/tournament-staff/dashboard';
+  static const String tournamentStaffOperations =
+      '/tournament-staff/operations';
 
   // --- Role 9: Referee ---
   static const String referee = '/referee';
