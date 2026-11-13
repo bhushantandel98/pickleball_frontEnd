@@ -50,13 +50,17 @@ class AcademyStaffProfileModel {
     );
   }
 
+  static String _normalizePermissionCode(String code) {
+    return code.trim().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
+  }
+
   AcademyStaffProfile toEntity() {
-    final mappedPermissions = <AcademyStaffPermission>{
-      AcademyStaffPermission.viewDashboard,
-    };
+    final mappedPermissions = <AcademyStaffPermission>{};
     for (final code in permissionCodes) {
+      final normalizedCode = _normalizePermissionCode(code);
+      if (normalizedCode.isEmpty) continue;
       for (final perm in AcademyStaffPermission.values) {
-        if (perm.name.toLowerCase() == code.toLowerCase()) {
+        if (_normalizePermissionCode(perm.name) == normalizedCode) {
           mappedPermissions.add(perm);
         }
       }
