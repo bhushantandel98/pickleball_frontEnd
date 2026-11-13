@@ -17,7 +17,7 @@
 | **Phase 3** | Coach, Academy & Academy Staff | **Completed (Feature 3.6 Ready for Review)** | 100% | Coach (3.1–3.4), Academy (3.5), and Academy Staff (3.6) modules implemented with strict role, branch & ownership isolation |
 | **Phase 4** | Venue Partner & Venue Staff | **Completed (Feature 3.8 Ready for Review)** | 100% | Venue Partner (3.7) and Venue Staff (3.8) implemented with strict partner, location & delegated permission isolation |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
-| **Phase 6** | Marketplace (Seller & Catalog) | Not Started | 0% | Product draft/approval & order lifecycle |
+| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.1 Ready for Review)** | 25% | Feature 6.1 Seller Registration, Profile & KYC Onboarding implemented; catalog, orders & settlements pending |
 | **Phase 7** | Platform Admin & Staff | Not Started | 0% | Sole Admin dashboard & permission gates |
 | **Phase 8** | Integration & Release Hardening | Not Started | 0% | Mock replaced with API; release ready |
 
@@ -25,9 +25,9 @@
 
 ## Active Task
 
-- **Task ID:** Feature 5.3 — Referee Module
-- **Description:** Implemented the Referee Role module (`/referee/dashboard`, `/referee/match/:id/scoring`) using Clean Architecture, `RefereeCubit`, and `MockRefereeRepository`, and resolved review findings: (1) Domain entities (`RefereeProfile`, `RefereeGameScore`, `RefereeMatchAssignment`, `RefereeStandingEntry`, `RefereeWorkspaceData`) and `RefereeRepository` in `lib/features/referee/domain/`; (2) `RefereeProfileModel` (with missing/null `isActive` defaulting to `false`) and `MockRefereeRepository` enforcing strict `tournamentId`/`refereeId`/`isActive` validation, match-assignment ownership (`match.refereeId == refereeId`), cross-tournament exclusion, organizer-defined read-only `TournamentScoringConfig` (including side-out serving/fault rules vs. rally scoring), strict final-score override validation (best-of limit, `pointsPerGame`, `winBy`, series completion, and participant/score-derived winner verification rejecting arbitrary overrides), and permanent lock after result submission (`isSubmitted`); (3) `RefereeCubit`, `RefereeState`, `RefereePageScaffold` (validating authenticated, non-suspended `UserRole.referee` session and matching `activeTournamentId`/`userId`), `RefereeDashboardPage` (assigned matches, read-only Match Day schedule, read-only standings), and `RefereeScoringPage` (read-only organizer scoring rules, side-out/rally-aware scoring pad, final-score entry dialog with derived winner, and submission lock); (4) Wired routes in `app_router.dart`, registered DI in `service_locator.dart`, and documented backend contracts in [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md) (§8.3).
-- **Validation (verified on commit `04999d1`):**
+- **Task ID:** Feature 6.1 — Seller Registration & Profile
+- **Description:** Implemented Feature 6.1 — Marketplace Seller Registration, Business Profile & KYC Onboarding (`/marketplace-seller/dashboard`, `/marketplace-seller/onboarding`) using Clean Architecture, `MarketplaceSellerCubit`, and `MockMarketplaceSellerRepository`: (1) Domain entities (`SellerVerificationStatus`, `SellerPickleballFocus`, `SellerDocumentType`, `SellerKycDocument`, `SellerProfile`) and `MarketplaceSellerRepository` in `lib/features/marketplace_seller/domain/`; (2) `SellerProfileModel` (with missing/null `isActive` defaulting to `false`) and `MockMarketplaceSellerRepository` enforcing strict `sellerId`/`ownerUserId` ownership, pickleball-only seller confirmation, KYC document upload/removal, and server-owned verification transitions (Application Staff recommends, only Application Admin grants final approval); (3) `MarketplaceSellerCubit`, `MarketplaceSellerState`, `SellerPageScaffold` (validating authenticated, non-suspended `UserRole.marketplaceSeller` session and matching `activeOrganizationId`/`userId`), `SellerDashboardPage`, and `SellerOnboardingPage`; (4) Wired routes in `app_router.dart`, registered DI in `service_locator.dart`, and documented backend contracts in [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md) (§9.1).
+- **Validation:**
   - `flutter analyze`: Passed — No issues found.
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
@@ -37,6 +37,8 @@
 ---
 
 ## Completed Tasks
+
+- [x] **Feature 6.1:** Marketplace Seller Registration & Profile (`SellerDashboardPage`, `SellerOnboardingPage`, `MarketplaceSellerCubit`, `MockMarketplaceSellerRepository`), strict `sellerId`/`userId` session ownership, pickleball-only declaration, KYC upload & Staff-recommend/Admin-approve governance, GoRouter & DI wiring, and backend handoff §9.1.
 
 - [x] **Feature 5.3:** Referee Module (`RefereeDashboardPage`, `RefereeScoringPage`, `RefereeCubit`, `MockRefereeRepository`), strict `tournamentId`/`refereeId` session & match-assignment validation, read-only organizer scoring rules, live scoring & result submission lock, GoRouter & DI wiring, and backend handoff §8.3.
 

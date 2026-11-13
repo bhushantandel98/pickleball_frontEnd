@@ -2984,3 +2984,32 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 - Backend must validate `refereeId` and `tournamentId` from the authenticated JWT/session context, verify `isActive == true`, and enforce match-level assignment ownership (`match.refereeId == refereeId && match.tournamentId == tournamentId`).
 - Organizer-defined `scoringConfig` is strictly read-only for Referees.
 - Once a match result is submitted (`submittedAt != null` / `completed`), all Referee score mutation and resubmission endpoints must return `403 Forbidden`.
+
+
+---
+
+## 9. Marketplace Seller Module (Phase 6)
+
+### 9.1 Feature 6.1 — Seller Registration & Profile
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/marketplace_seller/` (`MarketplaceSellerRepository`, `MockMarketplaceSellerRepository`, `MarketplaceSellerCubit`, `SellerPageScaffold`, `SellerDashboardPage`, `SellerOnboardingPage`).
+- **Routes:** `/marketplace-seller/dashboard`, `/marketplace-seller/onboarding`.
+- **Session Context:** Requires authenticated, non-suspended `UserRole.marketplaceSeller` session with matching `activeOrganizationId` (`sellerId`) and `userId`. Missing/null `isActive` in `SellerProfileModel.fromJson()` defaults to `false`.
+
+#### 2. Key Entities & Payloads
+- **Seller Profile (`SellerProfile`):** `sellerId`, `ownerUserId`, `businessName`, `legalEntityName`, `pickleballFocus` (`paddlesAndGear`, `apparelAndFootwear`, `courtEquipmentAndNets`, `multiCategoryPickleball`), `isPickleballOnlyConfirmed`, `contactEmail`, `contactPhone`, `businessAddress`, `city`, `state`, `postalCode`, `gstNumber`, `panNumber`, `bankAccountHolder`, `bankAccountLast4`, `ifscCode`, `documents[]`, `verificationStatus` (`draft`, `pendingReview`, `staffRecommended`, `approved`, `rejected`, `suspended`), `staffRecommendationNote`, `adminDecisionReason`, `submittedAt`, `approvedAt`, `isActive`.
+- **KYC Document (`SellerKycDocument`):** `id`, `type` (`businessRegistration`, `gstCertificate`, `panCard`, `identityProof`), `fileName`, `uploadedAt`, `isVerifiedByStaff`, `note`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/marketplace-seller/{sellerId}/profile` — Fetch authenticated seller's business profile, KYC documents, and verification status.
+2. `PUT /api/v1/marketplace-seller/{sellerId}/profile` — Save/update business details and pickleball-only declaration (server preserves `verificationStatus` and audit fields).
+3. `POST /api/v1/marketplace-seller/{sellerId}/documents` — Upload KYC document metadata/file (`type`, `fileName` / multipart file).
+4. `DELETE /api/v1/marketplace-seller/{sellerId}/documents/{documentId}` — Remove uploaded document (allowed only in `draft` / `rejected` states).
+5. `POST /api/v1/marketplace-seller/{sellerId}/submit-verification` — Submit seller profile and KYC documents for Application Staff review (`pendingReview`).
+
+#### 4. Authorization & Governance Rules
+- Only pickleball-related sellers and merchandise are permitted (`isPickleballOnlyConfirmed == true`).
+- Seller verification and product approval are strictly separate workflows.
+- Application Staff may review and recommend (`staffRecommended`), while only Application Admin can grant final `approved` / `rejected` status. Sellers cannot self-approve or modify `verificationStatus`.
+- Backend must validate `sellerId` and `ownerUserId` from the authenticated JWT/session context and return `403 Forbidden` on cross-seller access.

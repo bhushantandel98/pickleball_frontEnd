@@ -35,6 +35,8 @@ import 'package:pickleball_platform/features/tournament_staff/presentation/pages
 import 'package:pickleball_platform/features/tournament_staff/presentation/pages/tournament_staff_operations_page.dart';
 import 'package:pickleball_platform/features/referee/presentation/pages/referee_dashboard_page.dart';
 import 'package:pickleball_platform/features/referee/presentation/pages/referee_scoring_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_dashboard_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_onboarding_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -515,19 +517,11 @@ GoRouter createAppRouter({
           // 10. Marketplace Seller
           GoRoute(
             path: AppRoutes.marketplaceSellerDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Seller Dashboard',
-              path: AppRoutes.marketplaceSellerDashboard,
-              role: UserRole.marketplaceSeller,
-            ),
+            builder: (context, state) => const SellerDashboardPage(),
           ),
           GoRoute(
             path: AppRoutes.marketplaceSellerOnboarding,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Seller KYC Onboarding',
-              path: AppRoutes.marketplaceSellerOnboarding,
-              role: UserRole.marketplaceSeller,
-            ),
+            builder: (context, state) => const SellerOnboardingPage(),
           ),
           GoRoute(
             path: AppRoutes.marketplaceSellerProducts,
