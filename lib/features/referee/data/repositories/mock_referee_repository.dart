@@ -346,9 +346,9 @@ class MockRefereeRepository implements RefereeRepository {
       );
     }
 
-    final games = List<RefereeGameScore>.from(match.games);
-    final activeIdx = match.currentGameIndex.clamp(0, games.length - 1);
-    final currentGame = games[activeIdx];
+    final nextGames = List<RefereeGameScore>.from(match.games);
+    final activeIdx = match.currentGameIndex.clamp(0, nextGames.length - 1);
+    final currentGame = nextGames[activeIdx];
 
     if (currentGame.isComplete) {
       return const FailureResult(
@@ -358,15 +358,50 @@ class MockRefereeRepository implements RefereeRepository {
       );
     }
 
-    final nextScoreA = side == 'A' ? currentGame.scoreA + 1 : currentGame.scoreA;
-    final nextScoreB = side == 'B' ? currentGame.scoreB + 1 : currentGame.scoreB;
+    var nextServingSide = match.servingSide;
+    var nextServerNumber = match.serverNumber;
+    var nextScoreA = currentGame.scoreA;
+    var nextScoreB = currentGame.scoreB;
+
+    if (match.scoringConfig.method == TournamentScoringMethod.sideOutScoring) {
+      // Side-out scoring: only the serving side can score a point.
+      // When the receiving side wins the rally, no point is awarded; serve
+      // advances (server 1 -> 2 in doubles, or side-out to the other side).
+      if (side == match.servingSide) {
+        if (side == 'A') {
+          nextScoreA += 1;
+        } else {
+          nextScoreB += 1;
+        }
+      } else {
+        if (match.eventFormat == TournamentEventFormat.doubles &&
+            match.serverNumber == 1) {
+          nextServerNumber = 2;
+        } else {
+          nextServingSide = side;
+          nextServerNumber = 1;
+        }
+      }
+    } else {
+      // Rally scoring: rally winner always scores a point and takes serve.
+      if (side == 'A') {
+        nextScoreA += 1;
+      } else {
+        nextScoreB += 1;
+      }
+      if (side != match.servingSide) {
+        nextServingSide = side;
+        nextServerNumber = 1;
+      }
+    }
+
     final target = match.scoringConfig.pointsPerGame;
     final winBy = match.scoringConfig.winBy;
     final diff = (nextScoreA - nextScoreB).abs();
     final gameWon =
         (nextScoreA >= target || nextScoreB >= target) && diff >= winBy;
 
-    games[activeIdx] = currentGame.copyWith(
+    nextGames[activeIdx] = currentGame.copyWith(
       scoreA: nextScoreA,
       scoreB: nextScoreB,
       isComplete: gameWon,
@@ -375,20 +410,23 @@ class MockRefereeRepository implements RefereeRepository {
     var nextGameIndex = activeIdx;
     if (gameWon) {
       final gamesToWin = (match.scoringConfig.bestOfGames ~/ 2) + 1;
-      final wonA = games.where((g) => g.isComplete && g.scoreA > g.scoreB).length;
-      final wonB = games.where((g) => g.isComplete && g.scoreB > g.scoreA).length;
+      final wonA =
+          nextGames.where((g) => g.isComplete && g.scoreA > g.scoreB).length;
+      final wonB =
+          nextGames.where((g) => g.isComplete && g.scoreB > g.scoreA).length;
       final matchDecided = wonA >= gamesToWin || wonB >= gamesToWin;
-      if (!matchDecided && games.length < match.scoringConfig.bestOfGames) {
-        games.add(RefereeGameScore(gameNumber: games.length + 1));
-        nextGameIndex = games.length - 1;
+      if (!matchDecided && nextGames.length < match.scoringConfig.bestOfGames) {
+        nextGames.add(RefereeGameScore(gameNumber: nextGames.length + 1));
+        nextGameIndex = nextGames.length - 1;
       }
     }
 
     _matches[idx] = match.copyWith(
       status: OrganizerMatchStatus.inProgress,
-      games: games,
+      games: nextGames,
       currentGameIndex: nextGameIndex,
-      servingSide: side,
+      servingSide: nextServingSide,
+      serverNumber: nextServerNumber,
     );
     _syncScheduleStatus(matchId, OrganizerMatchStatus.inProgress);
 
@@ -474,46 +512,62 @@ class MockRefereeRepository implements RefereeRepository {
       );
     }
 
+    final cfg = match.scoringConfig;
+    final gamesToWin = (cfg.bestOfGames ~/ 2) + 1;
     final updatedGames = List<RefereeGameScore>.from(match.games);
-    String? computedWinner = winnerOverride?.trim();
 
     if (finalScoreOverride != null && finalScoreOverride.trim().isNotEmpty) {
-      final parsed = _parseScoreOverride(finalScoreOverride.trim());
-      if (parsed == null || parsed.isEmpty) {
-        return const FailureResult(
-          ValidationFailure(
-            message:
-                'Enter final scores as comma-separated pairs (e.g. 11-7, 11-9).',
-          ),
-        );
+      final parsed = _parseAndValidateScoreOverride(
+        finalScoreOverride.trim(),
+        cfg,
+      );
+      if (parsed.failure != null) {
+        return FailureResult(parsed.failure!);
       }
       updatedGames
         ..clear()
-        ..addAll(parsed);
-    } else {
-      for (var i = 0; i < updatedGames.length; i++) {
-        final g = updatedGames[i];
-        if (!g.isComplete && (g.scoreA > 0 || g.scoreB > 0)) {
-          updatedGames[i] = g.copyWith(isComplete: true);
-        }
-      }
+        ..addAll(parsed.games!);
     }
 
-    final wonA =
-        updatedGames.where((g) => g.isComplete && g.scoreA > g.scoreB).length;
-    final wonB =
-        updatedGames.where((g) => g.isComplete && g.scoreB > g.scoreA).length;
+    final completedGames = updatedGames.where((g) => g.isComplete).toList();
+    if (completedGames.length != updatedGames.length) {
+      return const FailureResult(
+        ValidationFailure(
+          message:
+              'Complete the active game or enter valid final game scores before submitting.',
+        ),
+      );
+    }
 
-    if (computedWinner == null || computedWinner.isEmpty) {
-      if (wonA > wonB) {
-        computedWinner = match.participantA;
-      } else if (wonB > wonA) {
-        computedWinner = match.participantB;
-      } else {
+    final wonA = completedGames.where((g) => g.scoreA > g.scoreB).length;
+    final wonB = completedGames.where((g) => g.scoreB > g.scoreA).length;
+    if (wonA != gamesToWin && wonB != gamesToWin) {
+      return FailureResult(
+        ValidationFailure(
+          message:
+              'Match is not yet decided under Best of ${cfg.bestOfGames} ($gamesToWin game(s) required to win).',
+        ),
+      );
+    }
+
+    final computedWinner =
+        wonA > wonB ? match.participantA : match.participantB;
+
+    if (winnerOverride != null && winnerOverride.trim().isNotEmpty) {
+      final trimmedOverride = winnerOverride.trim();
+      if (trimmedOverride != match.participantA &&
+          trimmedOverride != match.participantB) {
         return const FailureResult(
           ValidationFailure(
+            message: 'Winner must be one of the actual match participants.',
+          ),
+        );
+      }
+      if (trimmedOverride != computedWinner) {
+        return FailureResult(
+          ValidationFailure(
             message:
-                'Cannot determine match winner from tied games. Specify winner or complete the deciding game.',
+                'Selected winner ($trimmedOverride) does not match the game scores (winner: $computedWinner).',
           ),
         );
       }
@@ -537,15 +591,102 @@ class MockRefereeRepository implements RefereeRepository {
     return Success(_buildWorkspace(tournamentId, refereeId));
   }
 
-  List<RefereeGameScore>? _parseScoreOverride(String raw) {
-    final segments = raw.split(',');
+  ({List<RefereeGameScore>? games, Failure? failure})
+      _parseAndValidateScoreOverride(
+    String raw,
+    TournamentScoringConfig cfg,
+  ) {
+    final segments = raw
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (segments.isEmpty) {
+      return (
+        games: null,
+        failure: const ValidationFailure(
+          message:
+              'Enter final scores as comma-separated pairs (e.g. 11-7, 11-9).',
+        ),
+      );
+    }
+    if (segments.length > cfg.bestOfGames) {
+      return (
+        games: null,
+        failure: ValidationFailure(
+          message:
+              'Too many games (${segments.length}). Organizer rules allow Best of ${cfg.bestOfGames}.',
+        ),
+      );
+    }
+
+    final gamesToWin = (cfg.bestOfGames ~/ 2) + 1;
+    var wonA = 0;
+    var wonB = 0;
     final result = <RefereeGameScore>[];
+
     for (var i = 0; i < segments.length; i++) {
-      final parts = segments[i].trim().split('-');
-      if (parts.length != 2) return null;
+      if (wonA >= gamesToWin || wonB >= gamesToWin) {
+        return (
+          games: null,
+          failure: const ValidationFailure(
+            message:
+                'Invalid score series: extra games cannot follow a decided match.',
+          ),
+        );
+      }
+
+      final parts = segments[i].split('-');
+      if (parts.length != 2) {
+        return (
+          games: null,
+          failure: const ValidationFailure(
+            message:
+                'Enter final scores as comma-separated pairs (e.g. 11-7, 11-9).',
+          ),
+        );
+      }
+
       final a = int.tryParse(parts[0].trim());
       final b = int.tryParse(parts[1].trim());
-      if (a == null || b == null || a < 0 || b < 0 || a == b) return null;
+      if (a == null || b == null || a < 0 || b < 0 || a == b) {
+        return (
+          games: null,
+          failure: ValidationFailure(
+            message: 'Game ${i + 1} has an invalid or tied score.',
+          ),
+        );
+      }
+
+      final high = a > b ? a : b;
+      final low = a > b ? b : a;
+      final diff = high - low;
+
+      if (high < cfg.pointsPerGame || diff < cfg.winBy) {
+        return (
+          games: null,
+          failure: ValidationFailure(
+            message:
+                'Game ${i + 1} ($a-$b) does not meet organizer rules (play to ${cfg.pointsPerGame}, win by ${cfg.winBy}).',
+          ),
+        );
+      }
+      if (high > cfg.pointsPerGame && diff != cfg.winBy) {
+        return (
+          games: null,
+          failure: ValidationFailure(
+            message:
+                'Game ${i + 1} ($a-$b) exceeds ${cfg.pointsPerGame} without an exact win-by-${cfg.winBy} margin.',
+          ),
+        );
+      }
+
+      if (a > b) {
+        wonA++;
+      } else {
+        wonB++;
+      }
+
       result.add(
         RefereeGameScore(
           gameNumber: i + 1,
@@ -555,6 +696,17 @@ class MockRefereeRepository implements RefereeRepository {
         ),
       );
     }
-    return result;
+
+    if (wonA != gamesToWin && wonB != gamesToWin) {
+      return (
+        games: null,
+        failure: ValidationFailure(
+          message:
+              'Series is incomplete: $gamesToWin game win(s) required in Best of ${cfg.bestOfGames}.',
+        ),
+      );
+    }
+
+    return (games: result, failure: null);
   }
 }

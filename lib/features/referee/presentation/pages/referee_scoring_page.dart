@@ -234,8 +234,18 @@ class _ScoringBody extends StatelessWidget {
                           : () => context
                               .read<RefereeCubit>()
                               .awardPoint(match.id, 'A'),
-                      icon: const Icon(Icons.add),
-                      label: Text('+1 ${match.participantA}'),
+                      icon: Icon(
+                        cfg.method == TournamentScoringMethod.sideOutScoring &&
+                                match.servingSide != 'A'
+                            ? Icons.swap_horiz
+                            : Icons.add,
+                      ),
+                      label: Text(
+                        cfg.method == TournamentScoringMethod.sideOutScoring &&
+                                match.servingSide != 'A'
+                            ? 'Side-Out (${match.participantA} rally)'
+                            : '+1 ${match.participantA}',
+                      ),
                     ),
                     FilledButton.icon(
                       onPressed: isBusy || currentGame.isComplete
@@ -243,8 +253,18 @@ class _ScoringBody extends StatelessWidget {
                           : () => context
                               .read<RefereeCubit>()
                               .awardPoint(match.id, 'B'),
-                      icon: const Icon(Icons.add),
-                      label: Text('+1 ${match.participantB}'),
+                      icon: Icon(
+                        cfg.method == TournamentScoringMethod.sideOutScoring &&
+                                match.servingSide != 'B'
+                            ? Icons.swap_horiz
+                            : Icons.add,
+                      ),
+                      label: Text(
+                        cfg.method == TournamentScoringMethod.sideOutScoring &&
+                                match.servingSide != 'B'
+                            ? 'Side-Out (${match.participantB} rally)'
+                            : '+1 ${match.participantB}',
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: isBusy
@@ -322,55 +342,40 @@ class _ScoringBody extends StatelessWidget {
     final scoreController = TextEditingController(
       text: match.formattedScoreSummary,
     );
-    String selectedWinner = match.participantA;
+    final cfg = match.scoringConfig;
 
     final submitted = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setState) => AlertDialog(
-          title: const Text('Enter Final Match Score'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: scoreController,
-                decoration: const InputDecoration(
-                  labelText: 'Game scores (e.g. 11-7, 11-9)',
-                ),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Enter Final Match Score'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: scoreController,
+              decoration: const InputDecoration(
+                labelText: 'Game scores (e.g. 11-7, 11-9)',
               ),
-              const SizedBox(height: AppSpacing.md),
-              DropdownButtonFormField<String>(
-                initialValue: selectedWinner,
-                decoration: const InputDecoration(labelText: 'Winner'),
-                items: [
-                  DropdownMenuItem(
-                    value: match.participantA,
-                    child: Text(match.participantA),
-                  ),
-                  DropdownMenuItem(
-                    value: match.participantB,
-                    child: Text(match.participantB),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => selectedWinner = value);
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
             ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Submit & Lock'),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Winner is determined automatically from the validated scores '
+              '(Best of ${cfg.bestOfGames}, Play to ${cfg.pointsPerGame}, Win by ${cfg.winBy}).',
+              style: Theme.of(dialogContext).textTheme.bodySmall,
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Submit & Lock'),
+          ),
+        ],
       ),
     );
 
@@ -378,7 +383,6 @@ class _ScoringBody extends StatelessWidget {
       await context.read<RefereeCubit>().submitMatchResult(
             match.id,
             finalScoreOverride: scoreController.text,
-            winnerOverride: selectedWinner,
           );
     }
     scoreController.dispose();
