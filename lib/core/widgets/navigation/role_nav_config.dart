@@ -58,6 +58,12 @@ class RoleNavConfig {
             selectedIcon: Icons.calendar_month,
           ),
           NavDestinationItem(
+            label: 'Personal',
+            routePath: AppRoutes.coachPersonalCoaching,
+            icon: Icons.sports_tennis_outlined,
+            selectedIcon: Icons.sports_tennis,
+          ),
+          NavDestinationItem(
             label: 'Batches',
             routePath: AppRoutes.coachBatches,
             icon: Icons.groups_outlined,

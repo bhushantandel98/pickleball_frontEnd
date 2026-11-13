@@ -81,6 +81,7 @@ abstract final class AppRoutes {
   static const String coach = '/coach';
   static const String coachDashboard = '/coach/dashboard';
   static const String coachCalendar = '/coach/calendar';
+  static const String coachPersonalCoaching = '/coach/personal-coaching';
   static const String coachBatches = '/coach/batches';
   static const String coachProfile = '/coach/profile';
 

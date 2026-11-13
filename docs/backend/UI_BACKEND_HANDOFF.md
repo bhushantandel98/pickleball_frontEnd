@@ -2739,3 +2739,77 @@ Provide a unified Day / Week / Month calendar for coaches combining personal coa
 
 #### 4. Open Business Rules
 Tracked in [`docs/OPEN_DECISIONS.md`](../OPEN_DECISIONS.md) under `DEC-COACH-007` through `DEC-COACH-009` (recurrence & slot duration rules, booking cutoff/advance horizon, timezone & cross-branch travel buffer thresholds).
+
+---
+
+### 6.4 Feature 3.4 — Coach Personal Coaching Management
+
+#### 1. Purpose
+Allow coaches to create, inspect, edit, and cancel their personal coaching bookings independently of academy sessions and academy-owned schedules, while tracking player approval/decline status and preserving full audit history.
+
+#### 2. Booking Lifecycle & Business Rules
+1. Every newly created booking starts in `PENDING_PLAYER_APPROVAL`.
+2. Only the player can transition a booking to `CONFIRMED` (approve) or `DECLINED` (decline); the coach cannot approve on a player's behalf.
+3. No automatic booking expiry.
+4. Coach edits to a `PENDING_PLAYER_APPROVAL` booking keep status as `PENDING_PLAYER_APPROVAL`.
+5. Coach edits to a `CONFIRMED` booking invalidate the previous player approval and return status to `PENDING_PLAYER_APPROVAL`.
+6. Only the coach can cancel (`CANCELLED`) a personal coaching booking.
+7. All creation, edit, player response, and cancellation events are preserved in chronological `history` entries.
+8. Schedule overlaps with academy sessions or other bookings produce non-blocking `conflictWarning` notices only.
+
+#### 3. Proposed Data Contracts
+
+```json
+{
+  "id": "pb_002",
+  "coachId": "coach_001",
+  "playerId": "player_102",
+  "playerName": "Ananya Rao",
+  "playerContact": "+91 98204 55678",
+  "sessionTitle": "Serve & Spin Clinic",
+  "sessionType": "1-on-1 Coaching",
+  "venueName": "Dink & Smash Club, Juhu",
+  "notes": "Video review of topspin serve motion.",
+  "startTime": "2026-11-13T18:30:00Z",
+  "endTime": "2026-11-13T19:30:00Z",
+  "status": "CONFIRMED",
+  "playerResponseNote": "Approved by player — excited for the serve drills!",
+  "cancellationReason": null,
+  "conflictWarning": "Overlaps with read-only Academy session: Apex Pickleball Academy — Intermediate Doubles Batch B2 (19:00 – 20:30). Both remain active.",
+  "createdAt": "2026-11-11T00:00:00Z",
+  "updatedAt": "2026-11-12T00:00:00Z",
+  "history": [
+    {
+      "id": "h_002_1",
+      "eventType": "CREATED",
+      "title": "Booking Created",
+      "description": "Created by Coach as Pending Player Approval.",
+      "actorLabel": "Coach",
+      "timestamp": "2026-11-11T00:00:00Z"
+    },
+    {
+      "id": "h_002_2",
+      "eventType": "PLAYER_APPROVED",
+      "title": "Player Approved",
+      "description": "Ananya Rao approved the session.",
+      "actorLabel": "Ananya Rao (Player)",
+      "timestamp": "2026-11-12T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### 4. Proposed Future REST API Endpoints
+
+1. **List Coach Personal Bookings**
+   - `GET /api/v1/coach/personal-bookings?status={optionalStatus}`
+   - **Behavior:** Returns personal coaching bookings (with audit history and non-blocking conflict warnings). Never returns academy-owned schedules.
+2. **Create Personal Booking**
+   - `POST /api/v1/coach/personal-bookings`
+   - **Behavior:** Validates `endTime > startTime`, creates booking with `status = PENDING_PLAYER_APPROVAL`, appends `CREATED` history entry, and returns any non-blocking `conflictWarning`.
+3. **Edit Personal Booking**
+   - `PATCH /api/v1/coach/personal-bookings/{bookingId}`
+   - **Behavior:** Allowed only when status is `PENDING_PLAYER_APPROVAL` or `CONFIRMED`. If `CONFIRMED`, invalidates prior approval and resets status to `PENDING_PLAYER_APPROVAL`. Appends `EDITED` history entry.
+4. **Cancel Personal Booking**
+   - `POST /api/v1/coach/personal-bookings/{bookingId}/cancel`
+   - **Behavior:** Coach-only cancellation. Transitions booking to `CANCELLED` and appends `CANCELLED` history entry with optional reason.
