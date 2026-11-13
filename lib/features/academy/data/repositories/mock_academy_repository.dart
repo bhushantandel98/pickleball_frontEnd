@@ -859,7 +859,8 @@ class MockAcademyRepository implements AcademyRepository {
       updatedBatches = _data.batches
           .map((b) => b.id == batch.id
               ? b.copyWith(
-                  enrolledCount: (b.enrolledCount - 1).clamp(0, b.capacity),
+                  enrolledCount:
+                      (b.enrolledCount - 1).clamp(0, b.capacity).toInt(),
                 )
               : b)
           .toList();
