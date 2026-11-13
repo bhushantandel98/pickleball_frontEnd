@@ -38,8 +38,11 @@ import 'package:pickleball_platform/features/player/domain/repositories/match_da
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/tournament_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
+import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
 import 'package:pickleball_platform/features/coach/domain/repositories/coach_dashboard_repository.dart';
+import 'package:pickleball_platform/features/coach/domain/repositories/coach_profile_repository.dart';
 import 'package:pickleball_platform/features/coach/presentation/bloc/coach_dashboard_cubit.dart';
+import 'package:pickleball_platform/features/coach/presentation/bloc/coach_profile_cubit.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/venue_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/academy_discovery_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/academy_enrollment_cubit.dart';
@@ -267,6 +270,11 @@ Future<void> initServiceLocator() async {
   sl.registerFactory<CoachDashboardCubit>(
     () => CoachDashboardCubit(repository: sl<CoachDashboardRepository>()),
   );
+
+  // --- Coach Profile Cubit ---
+  sl.registerFactory<CoachProfileCubit>(
+    () => CoachProfileCubit(repository: sl<CoachProfileRepository>()),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -364,6 +372,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<CoachDashboardRepository>(
     () => const MockCoachDashboardRepository(),
   );
+
+  // Coach Profile Repository
+  sl.registerLazySingleton<CoachProfileRepository>(
+    () => MockCoachProfileRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -439,5 +452,10 @@ void initRemoteServiceLocator() {
   // Coach Dashboard Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<CoachDashboardRepository>(
     () => const MockCoachDashboardRepository(),
+  );
+
+  // Coach Profile Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<CoachProfileRepository>(
+    () => MockCoachProfileRepository(),
   );
 }

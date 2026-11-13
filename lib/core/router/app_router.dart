@@ -13,6 +13,7 @@ import 'package:pickleball_platform/core/widgets/state_views/permission_denied_v
 import 'package:pickleball_platform/features/identity/presentation/pages/forgot_password_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/login_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
+import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/register_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/welcome_page.dart';
 import 'package:pickleball_platform/features/notifications/presentation/pages/notification_center_page.dart';
@@ -359,6 +360,10 @@ GoRouter createAppRouter({
               path: AppRoutes.coachBatches,
               role: UserRole.coach,
             ),
+          ),
+          GoRoute(
+            path: AppRoutes.coachProfile,
+            builder: (context, state) => const CoachProfilePage(),
           ),
 
           // 3. Academy

@@ -57,6 +57,12 @@ class RoleNavConfig {
             icon: Icons.groups_outlined,
             selectedIcon: Icons.groups,
           ),
+          NavDestinationItem(
+            label: 'Profile',
+            routePath: AppRoutes.coachProfile,
+            icon: Icons.person_outline,
+            selectedIcon: Icons.person,
+          ),
         ];
 
       case UserRole.academy:
