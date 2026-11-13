@@ -129,7 +129,7 @@ class _CustomMockVenueRepository implements VenueRepository {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final baseDate = DateTime(2026, 11, 7);
+  final baseDate = CourtAvailabilityCubit.normalizeDate(DateTime.now());
 
   const testVenue = VenueItem(
     id: 'test_venue_avail_001',

@@ -69,12 +69,12 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
 
   static const _mockPhotos = [
     {
-      'label': 'Court Action',
-      'url': 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800',
+      'label': 'Grand Slam Arena',
+      'url': 'assets/images/venues/venue_grand_slam.png',
     },
     {
-      'label': 'Gear & Paddle',
-      'url': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800',
+      'label': 'Pinnacle Courts',
+      'url': 'assets/images/venues/venue_pinnacle.png',
     },
     {
       'label': 'Training Rally',
@@ -249,17 +249,29 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(6),
-                                      child: Image.network(
-                                        photo['url']!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) => Container(
-                                          color: Colors.grey.shade300,
-                                          child: const Icon(
-                                            Icons.image,
-                                            size: 24,
-                                          ),
-                                        ),
-                                      ),
+                                      child: photo['url']!.startsWith('http')
+                                          ? Image.network(
+                                              photo['url']!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) => Container(
+                                                color: Colors.grey.shade300,
+                                                child: const Icon(
+                                                  Icons.image,
+                                                  size: 24,
+                                                ),
+                                              ),
+                                            )
+                                          : Image.asset(
+                                              photo['url']!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) => Container(
+                                                color: Colors.grey.shade300,
+                                                child: const Icon(
+                                                  Icons.image,
+                                                  size: 24,
+                                                ),
+                                              ),
+                                            ),
                                     ),
                                     if (isSelected)
                                       Container(

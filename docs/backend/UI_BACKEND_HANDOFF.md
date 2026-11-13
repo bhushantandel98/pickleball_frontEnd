@@ -2476,11 +2476,11 @@ The Player Community & Matchmaking feature (`/player/community`) provides a dedi
 | `authorRating` | `double?` | DUPR rating (e.g. 3.8). |
 | `isAuthorFollowed`| `bool` | Whether logged-in player is following this author. |
 | `content` | `String` | Post text caption or game request announcement. |
-| `mediaUrl` | `String?` | Optional attached photo URL. |
+| `mediaUrl` | `String?` | Optional attached photo URL (supports local Flutter asset paths e.g. `assets/...` and remote CDN URLs `https://...` with graceful fallback). |
 | `mediaTag` | `String?` | Optional hashtag / topic tag (e.g. `MatchDay`). |
 | `pollDetails` | `GamePollDetails?` | Matchmaking poll specifications if `type == gamePoll`. |
-| `likesCount` | `int` | Total count of likes. |
-| `isLikedByMe` | `bool` | Whether the current user has liked this post. |
+| `likesCount` | `int` | Total count of unique player likes. |
+| `isLikedByMe` | `bool` | Whether the requesting user has liked this post (projected dynamically per caller). |
 | `commentsCount` | `int` | Total count of comments. |
 | `comments` | `List<PostComment>`| Inline comments list. |
 | `createdAt` | `DateTime` | Timestamp of creation. |
@@ -2590,7 +2590,7 @@ The Player Community & Matchmaking feature (`/player/community`) provides a dedi
 
 ##### 6. Toggle Post Like
 - **Endpoint:** `POST /api/v1/player/community/posts/{postId}/like`
-- **Behavior:** Toggles the user's like status. If already liked, removes like and decrements count; if unliked, adds like and increments count.
+- **Behavior & User Isolation:** Toggles the user's like status. Evaluated per requesting player ID (`_postLikedUserIds[postId]` set). Aggregate `likesCount` reflects the distinct set size. If already liked by requester, removes them and decrements count; if unliked, adds them and increments count. Returning post model sets `isLikedByMe` specifically for the calling user.
 - **Response (`200 OK`):** Updated `CommunityPost`.
 
 ##### 7. Vote on Poll Option
@@ -2601,7 +2601,7 @@ The Player Community & Matchmaking feature (`/player/community`) provides a dedi
   "optionId": "opt_001_1"
 }
 ```
-- **Behavior:** If player previously voted on a different option in this poll, decrements the old option's count and increments the new option's count. Updates `myVotedOptionId`.
+- **Behavior & User Isolation:** Tracks option choices per user using `voterUserIds` sets per option. If the player previously voted on any option in the poll, their ID is removed from that option's `voterUserIds` and count is decremented. Their ID is added to the target option's `voterUserIds` and count is incremented. The returned post derives `myVotedOptionId` strictly for the caller without exposing global state or mutating other players' views.
 - **Response (`200 OK`):** Updated `CommunityPost`.
 
 ##### 8. Add Comment

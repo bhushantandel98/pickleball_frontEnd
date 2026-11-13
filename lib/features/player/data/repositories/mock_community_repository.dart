@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:pickleball_platform/core/errors/failures.dart';
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_venue_repository.dart';
@@ -7,6 +6,14 @@ import 'package:pickleball_platform/features/player/domain/entities/venue_item.d
 import 'package:pickleball_platform/features/player/domain/repositories/community_repository.dart';
 
 /// Concrete in-memory mock implementation of [CommunityRepository].
+///
+/// Features:
+/// 1. User-specific like tracking: tracks liked status per post and user ID independently,
+///    preserving aggregate counts and preventing cross-user state leaks.
+/// 2. User-specific poll voting: derives `myVotedOptionId` independently per player based on
+///    `voterUserIds`, supporting vote casting and switching without impacting other players.
+/// 3. Validated venue references for game-request polls.
+/// 4. Strict post ownership: only authors can edit or delete their own posts.
 class MockCommunityRepository implements CommunityRepository {
   final bool shouldFail;
   final bool isEmpty;
@@ -16,13 +23,20 @@ class MockCommunityRepository implements CommunityRepository {
   final List<Map<String, dynamic>> _reports = [];
   final List<VenueItem> _venues;
 
+  /// User-specific like tracking: maps postId -> Set of userIds who liked it
+  final Map<String, Set<String>> _postLikedUserIds = {};
+
   MockCommunityRepository({
     this.shouldFail = false,
     this.isEmpty = false,
     List<CommunityPost>? initialPosts,
     List<VenueItem>? venues,
   })  : _posts = initialPosts,
-        _venues = venues ?? MockVenueRepository.defaultVenues;
+        _venues = venues ?? MockVenueRepository.defaultVenues {
+    if (_posts != null) {
+      _initializeUserSpecificState();
+    }
+  }
 
   static List<CommunityPost> createDefaultPosts() {
     final now = DateTime.now();
@@ -201,12 +215,12 @@ class MockCommunityRepository implements CommunityRepository {
         authorRating: 3.8,
         isAuthorFollowed: false,
         content:
-            'Unlocked new consistency on backhand roll dinks today. Getting prepared for next weekend city cup!',
-        mediaUrl: 'assets/images/venues/venue_dink_smash.png',
-        mediaTag: 'Personal Milestone',
-        likesCount: 18,
-        isLikedByMe: true,
-        commentsCount: 2,
+            'Great workout with Coach David this morning working on transition resets and speed-ups off the bounce. Ready for weekend action!',
+        mediaUrl: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800',
+        mediaTag: 'Training Practice',
+        likesCount: 5,
+        isLikedByMe: false,
+        commentsCount: 1,
         comments: [
           PostComment(
             id: 'c_005_1',
@@ -223,7 +237,61 @@ class MockCommunityRepository implements CommunityRepository {
   }
 
   void _ensureData() {
-    _posts ??= createDefaultPosts();
+    if (_posts == null) {
+      _posts = createDefaultPosts();
+      _initializeUserSpecificState();
+    }
+  }
+
+  void _initializeUserSpecificState() {
+    for (final post in _posts!) {
+      final likedSet = _postLikedUserIds.putIfAbsent(post.id, () => <String>{});
+      if (post.isLikedByMe) {
+        likedSet.add('user_player_001');
+      }
+      final neededSeedLikes = post.likesCount - likedSet.length;
+      for (var i = 1; i <= neededSeedLikes; i++) {
+        likedSet.add('user_seed_${post.id}_$i');
+      }
+    }
+  }
+
+  /// Resolves user-specific dynamic attributes (`isLikedByMe`, `likesCount`,
+  /// `myVotedOptionId`, `isAuthorFollowed`) for a specific player ID.
+  CommunityPost _resolvePostForUser(CommunityPost post, String? currentUserId) {
+    final likedUsers = _postLikedUserIds[post.id] ?? const <String>{};
+    final isLiked = currentUserId != null && likedUsers.contains(currentUserId);
+    final totalLikes = likedUsers.length;
+
+    GamePollDetails? resolvedPoll;
+    if (post.pollDetails != null) {
+      resolvedPoll = _resolvePollForUser(post.pollDetails!, currentUserId);
+    }
+
+    return post.copyWith(
+      isLikedByMe: isLiked,
+      likesCount: totalLikes,
+      pollDetails: resolvedPoll,
+      isAuthorFollowed: _followedAuthorIds.contains(post.authorId),
+    );
+  }
+
+  /// Derives user-specific `myVotedOptionId` for a game poll from `voterUserIds`.
+  GamePollDetails _resolvePollForUser(GamePollDetails poll, String? currentUserId) {
+    String? votedOptionId;
+    if (currentUserId != null) {
+      for (final opt in poll.options) {
+        if (opt.voterUserIds.contains(currentUserId)) {
+          votedOptionId = opt.id;
+          break;
+        }
+      }
+    }
+
+    return poll.copyWith(
+      myVotedOptionId: votedOptionId,
+      clearVote: votedOptionId == null,
+    );
   }
 
   @override
@@ -261,10 +329,8 @@ class MockCommunityRepository implements CommunityRepository {
     // Newest first
     results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    // Update follow statuses based on current set
-    results = results.map((p) {
-      return p.copyWith(isAuthorFollowed: _followedAuthorIds.contains(p.authorId));
-    }).toList();
+    // Resolve user-specific dynamic states per post
+    results = results.map((p) => _resolvePostForUser(p, currentUserId)).toList();
 
     return Success(results);
   }
@@ -304,8 +370,9 @@ class MockCommunityRepository implements CommunityRepository {
       createdAt: DateTime.now(),
     );
 
+    _postLikedUserIds[newPost.id] = <String>{};
     _posts!.insert(0, newPost);
-    return Success(newPost);
+    return Success(_resolvePostForUser(newPost, authorId));
   }
 
   @override
@@ -385,8 +452,9 @@ class MockCommunityRepository implements CommunityRepository {
       createdAt: DateTime.now(),
     );
 
+    _postLikedUserIds[newPollPost.id] = <String>{};
     _posts!.insert(0, newPollPost);
-    return Success(newPollPost);
+    return Success(_resolvePostForUser(newPollPost, authorId));
   }
 
   @override
@@ -421,7 +489,7 @@ class MockCommunityRepository implements CommunityRepository {
     );
 
     _posts![index] = updated;
-    return Success(updated);
+    return Success(_resolvePostForUser(updated, currentUserId));
   }
 
   @override
@@ -447,6 +515,7 @@ class MockCommunityRepository implements CommunityRepository {
     }
 
     _posts!.removeAt(index);
+    _postLikedUserIds.remove(postId);
     return const Success(null);
   }
 
@@ -466,16 +535,15 @@ class MockCommunityRepository implements CommunityRepository {
     }
 
     final post = _posts![index];
-    final wasLiked = post.isLikedByMe;
-    final newLikesCount = wasLiked ? max(0, post.likesCount - 1) : post.likesCount + 1;
+    final likedUsers = _postLikedUserIds.putIfAbsent(postId, () => <String>{});
+    if (likedUsers.contains(currentUserId)) {
+      likedUsers.remove(currentUserId);
+    } else {
+      likedUsers.add(currentUserId);
+    }
 
-    final updated = post.copyWith(
-      isLikedByMe: !wasLiked,
-      likesCount: newLikesCount,
-    );
-
-    _posts![index] = updated;
-    return Success(updated);
+    _posts![index] = post.copyWith(likesCount: likedUsers.length);
+    return Success(_resolvePostForUser(_posts![index], currentUserId));
   }
 
   @override
@@ -604,42 +672,47 @@ class MockCommunityRepository implements CommunityRepository {
     }
 
     final poll = post.pollDetails!;
-    final prevOptionId = poll.myVotedOptionId;
 
-    // If user tapped same option, no-op
-    if (prevOptionId == optionId) {
-      return Success(post);
+    // Find the option this current user previously voted for
+    String? previousOptionId;
+    for (final opt in poll.options) {
+      if (opt.voterUserIds.contains(currentUserId)) {
+        previousOptionId = opt.id;
+        break;
+      }
     }
 
-    // Update poll options
-    final updatedOptions = poll.options.map((opt) {
-      var voters = List<String>.from(opt.voterUserIds);
-      var count = opt.voteCount;
+    // If user tapped same option, return current resolved post
+    if (previousOptionId == optionId) {
+      return Success(_resolvePostForUser(post, currentUserId));
+    }
 
-      if (opt.id == prevOptionId) {
+    // Update poll options: remove from previous option, add to new option
+    final updatedOptions = poll.options.map((opt) {
+      final voters = List<String>.from(opt.voterUserIds);
+
+      if (opt.id == previousOptionId) {
         voters.remove(currentUserId);
-        count = max(0, count - 1);
       }
 
       if (opt.id == optionId) {
         if (!voters.contains(currentUserId)) {
           voters.add(currentUserId);
-          count++;
         }
       }
 
-      return opt.copyWith(voteCount: count, voterUserIds: voters);
+      return opt.copyWith(voteCount: voters.length, voterUserIds: voters);
     }).toList();
 
     final updatedPoll = poll.copyWith(
       options: updatedOptions,
-      myVotedOptionId: optionId,
+      clearVote: true, // Don't persist a single user's vote globally into shared post
     );
 
     final updatedPost = post.copyWith(pollDetails: updatedPoll);
     _posts![index] = updatedPost;
 
-    return Success(updatedPost);
+    return Success(_resolvePostForUser(updatedPost, currentUserId));
   }
 
   @override
@@ -664,7 +737,7 @@ class MockCommunityRepository implements CommunityRepository {
       'reporterUserId': reporterUserId,
       'reason': reason.name,
       'notes': notes,
-      'timestamp': DateTime.now().toIso8601String(),
+      'reportedAt': DateTime.now().toIso8601String(),
     });
 
     final post = _posts![index];
@@ -676,7 +749,7 @@ class MockCommunityRepository implements CommunityRepository {
   @override
   Future<Result<List<VenueItem>>> getAvailableVenues() async {
     if (shouldFail) {
-      return const FailureResult(ServerFailure(message: 'Failed to load venues.'));
+      return const FailureResult(ServerFailure(message: 'Failed to retrieve venues.'));
     }
     return Success(_venues);
   }

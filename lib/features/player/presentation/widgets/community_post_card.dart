@@ -253,31 +253,45 @@ class CommunityPostCard extends StatelessWidget {
   }
 
   Widget _buildPhotoSection(BuildContext context) {
+    final mediaUrl = post.mediaUrl!;
+    final isNetwork =
+        mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://');
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Image.network(
-          post.mediaUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => Container(
-            color: Colors.grey.shade200,
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.broken_image_outlined,
-              size: 40,
-              color: Colors.grey,
-            ),
-          ),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: Colors.grey.shade100,
-              alignment: Alignment.center,
-              child: const CircularProgressIndicator(strokeWidth: 2),
-            );
-          },
-        ),
+        child: isNetwork
+            ? Image.network(
+                mediaUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _buildFallbackImage(),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey.shade100,
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  );
+                },
+              )
+            : Image.asset(
+                mediaUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _buildFallbackImage(),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackImage() {
+    return Container(
+      color: Colors.grey.shade200,
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.broken_image_outlined,
+        size: 40,
+        color: Colors.grey,
       ),
     );
   }
