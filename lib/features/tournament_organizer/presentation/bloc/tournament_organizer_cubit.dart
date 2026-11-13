@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pickleball_platform/core/errors/failures.dart';
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/features/tournament_organizer/domain/entities/tournament_organizer_entities.dart';
 import 'package:pickleball_platform/features/tournament_organizer/domain/repositories/tournament_organizer_repository.dart';
@@ -36,7 +37,17 @@ class TournamentOrganizerCubit extends Cubit<TournamentOrganizerState> {
     final resolvedId = organizerId ??
         (current is TournamentOrganizerLoaded
             ? current.data.organizerId
-            : 'org_tourn_001');
+            : null);
+    if (resolvedId == null || resolvedId.trim().isEmpty) {
+      emit(
+        const TournamentOrganizerFailure(
+          ForbiddenFailure(
+            message: 'Missing authenticated tournament organizer context.',
+          ),
+        ),
+      );
+      return;
+    }
     final res = await repository.getWorkspace(organizerId: resolvedId);
     switch (res) {
       case Success(:final data):

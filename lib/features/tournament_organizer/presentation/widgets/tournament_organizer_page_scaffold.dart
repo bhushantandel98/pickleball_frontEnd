@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
 import 'package:pickleball_platform/core/access/session_cubit.dart';
+import 'package:pickleball_platform/core/access/user_role.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/design_system/responsive_layout.dart';
 import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
@@ -34,24 +35,38 @@ class TournamentOrganizerPageScaffold extends StatelessWidget {
     required this.bodyBuilder,
   });
 
-  String _resolveOrganizerId(BuildContext context) {
+  String? _resolveOrganizerId(BuildContext context) {
     if (organizerId != null && organizerId!.trim().isNotEmpty) {
-      return organizerId!;
+      return organizerId!.trim();
     }
     try {
       final session = context.read<SessionCubit>().state;
-      if (session.isAuthenticated) {
-        return session.activeOrganizationId ?? session.userId ?? 'org_tourn_001';
+      if (session.isAuthenticated &&
+          !session.isSuspended &&
+          session.activeRole == UserRole.tournamentOrganizer) {
+        final orgId = session.activeOrganizationId;
+        if (orgId != null && orgId.trim().isNotEmpty) {
+          return orgId.trim();
+        }
       }
     } catch (_) {
-      // SessionCubit may not be mounted in isolated widget tests.
+      // SessionCubit is not mounted in context.
     }
-    return 'org_tourn_001';
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final resolvedOrganizerId = _resolveOrganizerId(context);
+    if (resolvedOrganizerId == null) {
+      return const Scaffold(
+        body: ErrorStateView(
+          title: 'Organizer Access Required',
+          message:
+              'A valid authenticated Tournament Organizer session with an assigned organization context is required.',
+        ),
+      );
+    }
 
     if (cubit != null) {
       return BlocProvider<TournamentOrganizerCubit>.value(
