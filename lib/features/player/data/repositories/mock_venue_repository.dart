@@ -14,6 +14,8 @@ class MockVenueRepository implements VenueRepository {
     this.shouldFail = false,
   });
 
+  static List<VenueItem> get defaultVenues => _defaultVenues;
+
   static final List<VenueItem> _defaultVenues = [
     const VenueItem(
       id: 'org_venue_001',

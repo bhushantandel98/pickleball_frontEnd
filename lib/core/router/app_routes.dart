@@ -75,6 +75,7 @@ abstract final class AppRoutes {
   static const String playerMarketplaceOrders = '/player/marketplace/orders';
   static const String playerMarketplaceOrderDetails = '/player/marketplace/orders/:id';
   static String playerMarketplaceOrderDetailsPath(String id) => '/player/marketplace/orders/$id';
+  static const String playerCommunity = '/player/community';
 
   // --- Role 2: Coach ---
   static const String coach = '/coach';

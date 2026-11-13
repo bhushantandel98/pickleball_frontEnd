@@ -2452,3 +2452,193 @@ Strict PRD access and privacy boundaries:
 ```
 
 ---
+
+### 5.10 Feature 2.8 - Player Community & Matchmaking
+
+#### 1. Scope & UI Surface
+The Player Community & Matchmaking feature (`/player/community`) provides a dedicated social feed and matchmaking forum for registered players to discover games, connect with fellow athletes, share photo highlights, participate in game-request polls tied to verified venues, and interact respectfully.
+
+**Player Entry Points:**
+- Direct route: `/player/community`
+- Player Dashboard: Quick Actions card (`Community: Feed & game polls`)
+
+#### 2. Data Models & Schemas
+
+##### CommunityPost Entity
+| Field | Type | Description |
+|---|---|---|
+| `id` | `String` | Unique post identifier (e.g. `post_001`). |
+| `type` | `PostType` | Post type: `image` (Photo Update) or `gamePoll` (Game Request Poll). |
+| `authorId` | `String` | User ID of post author. |
+| `authorName` | `String` | Author's display name. |
+| `authorHandle` | `String` | Author's social handle (e.g. `@marcus_pb`). |
+| `authorAvatarUrl` | `String?` | Author profile picture URL. |
+| `authorRating` | `double?` | DUPR rating (e.g. 3.8). |
+| `isAuthorFollowed`| `bool` | Whether logged-in player is following this author. |
+| `content` | `String` | Post text caption or game request announcement. |
+| `mediaUrl` | `String?` | Optional attached photo URL. |
+| `mediaTag` | `String?` | Optional hashtag / topic tag (e.g. `MatchDay`). |
+| `pollDetails` | `GamePollDetails?` | Matchmaking poll specifications if `type == gamePoll`. |
+| `likesCount` | `int` | Total count of likes. |
+| `isLikedByMe` | `bool` | Whether the current user has liked this post. |
+| `commentsCount` | `int` | Total count of comments. |
+| `comments` | `List<PostComment>`| Inline comments list. |
+| `createdAt` | `DateTime` | Timestamp of creation. |
+| `isEdited` | `bool` | Whether the post caption has been edited. |
+| `reportCount` | `int` | Moderation report counter. |
+
+##### GamePollDetails Entity
+| Field | Type | Description |
+|---|---|---|
+| `venueId` | `String` | Must reference a verified platform venue (`VenueItem.id`). |
+| `venueName` | `String` | Venue name (e.g. `Grand Slam Pickleball Arena`). |
+| `venueAddress` | `String` | Venue street address. |
+| `playDate` | `DateTime` | Target match date. |
+| `timeSlot` | `String` | Preferred slot (e.g. `06:00 PM - 08:00 PM`). |
+| `gameFormat` | `String` | E.g. `Doubles (2v2)`, `Singles (1v1)`, `King of the Court`. |
+| `targetSkillLevel`| `String` | Skill requirement (e.g. `Intermediate (3.0 - 4.0)`). |
+| `options` | `List<PollOption>` | List of interactive poll voting choices (minimum 2). |
+| `myVotedOptionId`| `String?` | Option ID the logged-in player has voted for (if any). |
+
+##### PollOption Entity
+| Field | Type | Description |
+|---|---|---|
+| `id` | `String` | Unique option identifier (e.g. `opt_001_1`). |
+| `text` | `String` | Choice text (e.g. `I am in! (Doubles)`). |
+| `voteCount` | `int` | Count of registered votes. |
+| `voterUserIds` | `List<String>` | List of user IDs who voted for this option. |
+
+##### PostComment Entity
+| Field | Type | Description |
+|---|---|---|
+| `id` | `String` | Comment identifier (e.g. `c_001_1`). |
+| `postId` | `String` | Associated post ID. |
+| `authorId` | `String` | Comment author user ID. |
+| `authorName` | `String` | Comment author display name. |
+| `authorAvatarUrl`| `String?` | Comment author avatar URL. |
+| `content` | `String` | Comment text content. |
+| `createdAt` | `DateTime` | Timestamp of creation. |
+
+##### CommunityReportReason Enum
+- `spam` ("Spam or Commercial Solicitation")
+- `inappropriateMedia` ("Inappropriate Media or Language")
+- `harassment` ("Harassment or Abusive Conduct")
+- `falseInfo` ("Misleading Match Information")
+- `other` ("Other Community Policy Violation")
+
+#### 3. Backend Endpoints Contract
+
+##### 1. Get Community Feed
+- **Endpoint:** `GET /api/v1/player/community/feed`
+- **Query Params:**
+  - `pollsOnly`: `bool` (filters only game-request polls)
+  - `photosOnly`: `bool` (filters only photo updates)
+  - `myPostsOnly`: `bool` (filters only posts by `currentUserId`)
+- **Response (`200 OK`):** List of `CommunityPost` objects sorted by `createdAt DESC`.
+
+##### 2. Create Photo Post
+- **Endpoint:** `POST /api/v1/player/community/posts`
+- **Request Payload:**
+```json
+{
+  "content": "Great match day session at the arena!",
+  "mediaUrl": "https://example.com/court_photo.jpg",
+  "mediaTag": "MatchDay"
+}
+```
+- **Response (`201 Created`):** Created `CommunityPost` object.
+
+##### 3. Create Game-Request Poll
+- **Endpoint:** `POST /api/v1/player/community/polls`
+- **Request Payload:**
+```json
+{
+  "content": "Looking for 2 intermediate players for doubles this weekend!",
+  "venueId": "venue_grand_slam_001",
+  "venueName": "Grand Slam Pickleball Arena",
+  "venueAddress": "1200 Court Street, Downtown",
+  "playDate": "2026-11-15T00:00:00Z",
+  "timeSlot": "06:00 PM - 08:00 PM",
+  "gameFormat": "Doubles (2v2)",
+  "targetSkillLevel": "Intermediate (3.0 - 4.0)",
+  "optionTexts": [
+    "I'm in! (Doubles)",
+    "Need a partner",
+    "Can play 1 hr later"
+  ]
+}
+```
+- **Validation Rules:**
+  - `venueId` must reference a valid active venue in the system database. Returns `422 Unprocessable Entity` if unrecognized.
+  - `optionTexts` must contain at least 2 distinct non-empty strings.
+- **Response (`201 Created`):** Created `CommunityPost` object with populated `pollDetails`.
+
+##### 4. Edit Owned Post
+- **Endpoint:** `PUT /api/v1/player/community/posts/{postId}`
+- **Request Payload:**
+```json
+{
+  "content": "Updated caption text..."
+}
+```
+- **Security & Ownership Rule:** If requester's user ID does not match `post.authorId`, return `403 Forbidden` (`ForbiddenFailure`).
+
+##### 5. Delete Owned Post
+- **Endpoint:** `DELETE /api/v1/player/community/posts/{postId}`
+- **Security & Ownership Rule:** If requester's user ID does not match `post.authorId`, return `403 Forbidden` (`ForbiddenFailure`).
+- **Response (`204 No Content` / `200 OK`)**.
+
+##### 6. Toggle Post Like
+- **Endpoint:** `POST /api/v1/player/community/posts/{postId}/like`
+- **Behavior:** Toggles the user's like status. If already liked, removes like and decrements count; if unliked, adds like and increments count.
+- **Response (`200 OK`):** Updated `CommunityPost`.
+
+##### 7. Vote on Poll Option
+- **Endpoint:** `POST /api/v1/player/community/polls/{postId}/vote`
+- **Request Payload:**
+```json
+{
+  "optionId": "opt_001_1"
+}
+```
+- **Behavior:** If player previously voted on a different option in this poll, decrements the old option's count and increments the new option's count. Updates `myVotedOptionId`.
+- **Response (`200 OK`):** Updated `CommunityPost`.
+
+##### 8. Add Comment
+- **Endpoint:** `POST /api/v1/player/community/posts/{postId}/comments`
+- **Request Payload:**
+```json
+{
+  "content": "See you there on Court 2!"
+}
+```
+- **Response (`201 Created`):** Created `PostComment` object.
+
+##### 9. List Comments
+- **Endpoint:** `GET /api/v1/player/community/posts/{postId}/comments`
+- **Response (`200 OK`):** List of `PostComment` objects.
+
+##### 10. Toggle Follow Author
+- **Endpoint:** `POST /api/v1/player/community/authors/{authorId}/follow`
+- **Behavior:** Toggles following relationship between logged-in player and target author.
+- **Response (`200 OK`):** `{"isFollowing": true}`.
+
+##### 11. Report Post
+- **Endpoint:** `POST /api/v1/player/community/posts/{postId}/report`
+- **Request Payload:**
+```json
+{
+  "reason": "spam",
+  "notes": "Repeated commercial advertisements."
+}
+```
+- **Behavior:** Records report in moderation queue. Does not expose moderation actions or reporter identity in public UI.
+- **Response (`200 OK`):** `{"message": "Report received"}`.
+
+#### 4. Pending Architectural Decisions & Open Items
+1. **Poll Duration & Auto-Expiry:** The PRD does not specify how long a game-request poll remains active (e.g. 24h, until match date, or creator closure). Currently polls remain open until the play date expires. Backend should establish auto-archival policies.
+2. **Participant / Vote Caps:** PRD does not enforce hard limits on poll responses. When a matchmaking threshold is met (e.g. 4 players in doubles), the backend may optionally trigger an automatic match formation event or notification.
+3. **Moderation Review Outcomes:** Automated post takedown thresholds (e.g. after N unique reports) are not defined. Currently reports are logged for administrative review.
+4. **Push / In-App Notifications:** Real-time push notifications for new comments, poll votes, and match acceptances are postponed to Phase 3 notification triggers.
+
+---

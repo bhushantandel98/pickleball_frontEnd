@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pickleball_platform/core/access/role_preference_storage.dart';
 import 'package:pickleball_platform/core/access/session_cubit.dart';
+import 'package:pickleball_platform/core/mock/data/mock_data.dart';
 import 'package:pickleball_platform/core/mock/mock_config.dart';
 import 'package:pickleball_platform/core/mock/mock_network_harness.dart';
 import 'package:pickleball_platform/features/identity/data/datasources/mock_user_profile_data_source.dart';
@@ -23,6 +24,7 @@ import 'package:pickleball_platform/features/notifications/presentation/cubit/no
 import 'package:pickleball_platform/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_booking_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_coaching_academy_repository.dart';
+import 'package:pickleball_platform/features/player/data/repositories/mock_community_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_marketplace_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_match_day_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_player_dashboard_repository.dart';
@@ -30,6 +32,7 @@ import 'package:pickleball_platform/features/player/data/repositories/mock_tourn
 import 'package:pickleball_platform/features/player/data/repositories/mock_venue_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/booking_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/coaching_academy_repository.dart';
+import 'package:pickleball_platform/features/player/domain/repositories/community_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/marketplace_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/match_day_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
@@ -41,6 +44,9 @@ import 'package:pickleball_platform/features/player/presentation/cubit/booking_c
 import 'package:pickleball_platform/features/player/presentation/cubit/booking_details_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/coach_discovery_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/coach_inquiry_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/community_feed_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/create_game_poll_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/create_post_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_cart_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_catalogue_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/marketplace_orders_cubit.dart';
@@ -49,6 +55,7 @@ import 'package:pickleball_platform/features/player/presentation/cubit/match_day
 import 'package:pickleball_platform/features/player/presentation/cubit/my_bookings_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/my_coaching_requests_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/player_dashboard_cubit.dart';
+import 'package:pickleball_platform/features/player/presentation/cubit/post_comments_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/tournament_discovery_cubit.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/venue_discovery_cubit.dart';
 import 'package:pickleball_platform/features/profile/presentation/cubit/profile_cubit.dart';
@@ -223,6 +230,35 @@ Future<void> initServiceLocator() async {
   sl.registerFactory<MyCoachingRequestsCubit>(
     () => MyCoachingRequestsCubit(sl<CoachingAcademyRepository>()),
   );
+
+  // --- Community Feed Cubit ---
+  sl.registerFactory<CommunityFeedCubit>(
+    () => CommunityFeedCubit(
+      repository: sl<CommunityRepository>(),
+      currentUserId: sl.isRegistered<SessionCubit>() &&
+              sl<SessionCubit>().state.userId != null
+          ? sl<SessionCubit>().state.userId!
+          : MockData.playerUser.id,
+    ),
+  );
+
+  // --- Create Post Cubit ---
+  sl.registerFactory<CreatePostCubit>(
+    () => CreatePostCubit(repository: sl<CommunityRepository>()),
+  );
+
+  // --- Create Game Poll Cubit ---
+  sl.registerFactory<CreateGamePollCubit>(
+    () => CreateGamePollCubit(
+      communityRepository: sl<CommunityRepository>(),
+      venueRepository: sl<VenueRepository>(),
+    ),
+  );
+
+  // --- Post Comments Cubit ---
+  sl.registerFactory<PostCommentsCubit>(
+    () => PostCommentsCubit(repository: sl<CommunityRepository>()),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -310,6 +346,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<CoachingAcademyRepository>(
     () => MockCoachingAcademyRepository(),
   );
+
+  // Community Repository
+  sl.registerLazySingleton<CommunityRepository>(
+    () => MockCommunityRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -375,5 +416,10 @@ void initRemoteServiceLocator() {
   // Coaching & Academy Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<CoachingAcademyRepository>(
     () => MockCoachingAcademyRepository(),
+  );
+
+  // Community Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<CommunityRepository>(
+    () => MockCommunityRepository(),
   );
 }

@@ -55,6 +55,12 @@ class PlayerQuickActions extends StatelessWidget {
       route: AppRoutes.playerMarketplace,
     ),
     _QuickActionItem(
+      title: 'Community',
+      subtitle: 'Feed & game polls',
+      icon: Icons.groups_outlined,
+      route: AppRoutes.playerCommunity,
+    ),
+    _QuickActionItem(
       title: 'My Bookings',
       subtitle: 'Manage reservations',
       icon: Icons.calendar_month_outlined,

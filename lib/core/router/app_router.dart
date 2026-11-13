@@ -37,6 +37,7 @@ import 'package:pickleball_platform/features/player/presentation/pages/marketpla
 import 'package:pickleball_platform/features/player/presentation/pages/match_day_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/my_bookings_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/player_academy_coach_page.dart';
+import 'package:pickleball_platform/features/player/presentation/pages/player_community_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/player_dashboard_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/product_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
@@ -339,6 +340,10 @@ GoRouter createAppRouter({
               final id = state.pathParameters['id'] ?? '';
               return MarketplaceOrderDetailsPage(orderId: id);
             },
+          ),
+          GoRoute(
+            path: AppRoutes.playerCommunity,
+            builder: (context, state) => const PlayerCommunityPage(),
           ),
 
           // 2. Coach
