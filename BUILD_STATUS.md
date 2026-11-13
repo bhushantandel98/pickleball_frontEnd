@@ -2,7 +2,7 @@
 
 **Project:** Pickleball Multi-Role Platform (Frontend)  
 **Last Updated:** 13 November 2026  
-**Current Phase:** Phase 3 — Coach, Academy & Academy Staff  
+**Current Phase:** Phase 4 — Venue Partner & Venue Staff  
 **Branch:** dev  
 
 ---
@@ -15,7 +15,7 @@
 | **Phase 1** | Identity & Shared Services | **Completed (Phase 1.2.3 Approved)** | 100% | Welcome, Login, Register, Recovery, Role Selection, Profile & Notifications verified |
 | **Phase 2** | Player Module | **Completed (Feature 2.8 Completed)** | 100% | Dashboard, Venue Discovery, Court Availability, Booking Checkout & History, Match Day Hub, Tournaments, Marketplace, Academies & Coaches, Community & Matchmaking verified |
 | **Phase 3** | Coach, Academy & Academy Staff | **Completed (Feature 3.6 Ready for Review)** | 100% | Coach (3.1–3.4), Academy (3.5), and Academy Staff (3.6) modules implemented with strict role, branch & ownership isolation |
-| **Phase 4** | Venue Partner & Venue Staff | **In Progress (Feature 3.7 Ready for Review)** | 50% | Venue Partner (3.7) implemented; Venue Staff (3.8) pending |
+| **Phase 4** | Venue Partner & Venue Staff | **Completed (Feature 3.8 Ready for Review)** | 100% | Venue Partner (3.7) and Venue Staff (3.8) implemented with strict partner, location & delegated permission isolation |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | Not Started | 0% | Draw, live scoring UI & public views |
 | **Phase 6** | Marketplace (Seller & Catalog) | Not Started | 0% | Product draft/approval & order lifecycle |
 | **Phase 7** | Platform Admin & Staff | Not Started | 0% | Sole Admin dashboard & permission gates |
@@ -25,8 +25,8 @@
 
 ## Active Task
 
-- **Task ID:** Feature 3.7 — Venue Partner Module
-- **Description:** Implemented the Venue Partner Role module (`/venue-partner/dashboard`, `/venue-partner/locations`, `/venue-partner/calendar`, `/venue-partner/bookings`) using Clean Architecture, `VenuePartnerCubit`, and `MockVenuePartnerRepository`: (1) Domain entities (`VenuePartnerProfile`, `VenueLocation`, `VenueCourt`, `CourtAvailabilityBlock`, `VenuePartnerBooking`, `VenueStaffAssignment`, `VenueExpenseRecord`, `VenuePartnerWorkspaceData`) in `lib/features/venue_partner/domain/entities/venue_partner_entities.dart`; (2) `VenuePartnerRepository`, DTO models (`VenueLocationModel`, `VenuePartnerBookingModel`), and `MockVenuePartnerRepository` enforcing `partnerId` ownership validation, cross-record ownership checks, booking rule validation, lifecycle state guards, and V1 offline-only manual payment tracking; (3) `VenuePartnerCubit`, `VenuePartnerState`, `VenuePartnerPageScaffold`, `VenueLocationFilterBar`, and 4 pages (`VenuePartnerDashboardPage`, `VenuePartnerLocationsPage`, `VenuePartnerCalendarPage`, `VenuePartnerBookingsPage`); (4) Wired all 4 routes in `app_router.dart`, registered DI in `service_locator.dart`, and documented backend contracts in [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md) (§7.1). Validation: `flutter analyze` passed (0 issues); `flutter test` ran 566 tests (563 passed; 3 pre-existing failures in `test/core/router_test.dart`).
+- **Task ID:** Feature 3.8 — Venue Staff Module
+- **Description:** Implemented the Venue Staff Role module (`/venue-staff/dashboard`, `/venue-staff/bookings`, `/venue-staff/tasks`) using Clean Architecture, `VenueStaffCubit`, and `MockVenueStaffRepository`: (1) Domain entities (`VenueStaffPermission`, `VenueMaintenanceTaskStatus`, `VenueStaffProfile`, `VenueMaintenanceTask`, `VenuePurchaseSubmission`, `VenueStaffWorkspaceData`) in `lib/features/venue_staff/domain/entities/venue_staff_entities.dart`; (2) `VenueStaffRepository`, DTO models (`VenueStaffProfileModel` with uppercase snake_case permission normalization and zero implicit grants, `VenuePurchaseSubmissionModel`), and `MockVenueStaffRepository` enforcing `partnerId`, `staffId`, `isActive`, `assignedLocationIds` isolation, and repository-level `VenueStaffPermission` checks; (3) `VenueStaffCubit`, `VenueStaffState`, `VenueStaffPageScaffold` (resolving authenticated `partnerId`/`staffId` from `SessionCubit`), and 3 pages (`VenueStaffDashboardPage`, `VenueStaffBookingsPage`, `VenueStaffTasksPage`); (4) Wired routes in `app_routes.dart`, `app_router.dart`, and `role_nav_config.dart`, registered DI in `service_locator.dart`, and documented backend contracts in [`docs/backend/UI_BACKEND_HANDOFF.md`](file:///c:/Users/bhushan_tandel/Flutter%20Idealake/PickleBall/docs/backend/UI_BACKEND_HANDOFF.md) (§7.2). Validation: `flutter analyze` passed (0 issues); `flutter test` ran 566 tests (563 passed; 3 pre-existing failures in `test/core/router_test.dart`).
 - **Assigned To:** Lead Frontend Architect (Antigravity)
 - **Status:** Completed — Ready for User Review.
 
@@ -34,6 +34,7 @@
 
 ## Completed Tasks
 
+- [x] **Feature 3.8:** Venue Staff Module (`VenueStaffDashboardPage`, `VenueStaffBookingsPage`, `VenueStaffTasksPage`, `VenueStaffCubit`, `MockVenueStaffRepository`), strict `partnerId`/`assignedLocationIds`/delegated permission isolation, daily check-in & booking operations, offline manual payment recording, maintenance tasks & court holds, purchase receipt submissions, GoRouter & DI wiring, and backend handoff §7.2.
 - [x] **Feature 3.7:** Venue Partner Module (`VenuePartnerDashboardPage`, `VenuePartnerLocationsPage`, `VenuePartnerCalendarPage`, `VenuePartnerBookingsPage`, `VenuePartnerCubit`, `MockVenuePartnerRepository`), multi-location management, booking rules, court pricing, availability blocks, booking lifecycle & offline manual payment tracking, partner-only staff & expense controls, GoRouter & DI wiring, and backend handoff §7.1.
 - [x] **Feature 3.6:** Academy Staff Module (`AcademyStaffDashboardPage`, `AcademyStaffAttendancePage`, `AcademyStaffOperationsPage`, `AcademyStaffCubit`, `MockAcademyStaffRepository`), branch-scoped operations, repository-enforced delegated permissions, attendance marking, batch schedule updates, enrollment review & manual tuition recording, GoRouter & DI wiring, and backend handoff §6.6.
 

@@ -24,6 +24,9 @@ import 'package:pickleball_platform/features/venue_partner/presentation/pages/ve
 import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_calendar_page.dart';
 import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_dashboard_page.dart';
 import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_locations_page.dart';
+import 'package:pickleball_platform/features/venue_staff/presentation/pages/venue_staff_bookings_page.dart';
+import 'package:pickleball_platform/features/venue_staff/presentation/pages/venue_staff_dashboard_page.dart';
+import 'package:pickleball_platform/features/venue_staff/presentation/pages/venue_staff_tasks_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -445,11 +448,15 @@ GoRouter createAppRouter({
           // 6. Venue Staff
           GoRoute(
             path: AppRoutes.venueStaffDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Venue Staff Daily Operations',
-              path: AppRoutes.venueStaffDashboard,
-              role: UserRole.venueStaff,
-            ),
+            builder: (context, state) => const VenueStaffDashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.venueStaffBookings,
+            builder: (context, state) => const VenueStaffBookingsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.venueStaffTasks,
+            builder: (context, state) => const VenueStaffTasksPage(),
           ),
 
           // 7. Tournament Organizer

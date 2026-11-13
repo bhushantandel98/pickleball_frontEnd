@@ -109,6 +109,8 @@ abstract final class AppRoutes {
   // --- Role 6: Venue Staff ---
   static const String venueStaff = '/venue-staff';
   static const String venueStaffDashboard = '/venue-staff/dashboard';
+  static const String venueStaffBookings = '/venue-staff/bookings';
+  static const String venueStaffTasks = '/venue-staff/tasks';
 
   // --- Role 7: Tournament Organizer ---
   static const String tournamentOrganizer = '/tournament-organizer';

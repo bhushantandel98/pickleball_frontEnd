@@ -169,6 +169,18 @@ class RoleNavConfig {
             icon: Icons.dashboard_outlined,
             selectedIcon: Icons.dashboard,
           ),
+          NavDestinationItem(
+            label: 'Check-in',
+            routePath: AppRoutes.venueStaffBookings,
+            icon: Icons.qr_code_scanner_outlined,
+            selectedIcon: Icons.qr_code_scanner,
+          ),
+          NavDestinationItem(
+            label: 'Tasks',
+            routePath: AppRoutes.venueStaffTasks,
+            icon: Icons.assignment_outlined,
+            selectedIcon: Icons.assignment,
+          ),
         ];
 
       case UserRole.tournamentOrganizer:

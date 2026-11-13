@@ -2883,3 +2883,25 @@ Enable Venue Partners to manage their owned venue locations, courts, standard/pe
 
 #### 4. Authorization & Ownership Rules
 - Backend must enforce `partnerId` ownership against the authenticated Venue Partner context (`403 Forbidden` on mismatch) and verify every location, court, block, booking, staff assignment, and expense belongs to `partnerId`.
+
+### 7.2 Feature 3.8 — Venue Staff Module
+
+#### 1. Purpose
+Enable delegated Venue Staff to operate strictly within their assigned `partnerId` and `assignedLocationIds` for daily check-ins, operational booking status updates, offline manual payment recording (when delegated), court availability/maintenance tasks & holds, and purchase submissions with receipt references.
+
+#### 2. Proposed Data Contracts
+- **Venue Staff Profile (`VenueStaffProfile`):** `staffId`, `partnerId`, `partnerName`, `staffName`, `staffEmail`, `roleTitle`, `assignedLocationIds`, `assignedLocationNames`, `permissions` (normalized from backend uppercase snake_case codes: `VIEW_DASHBOARD`, `MANAGE_CHECK_IN`, `MANAGE_MAINTENANCE`, `SUBMIT_PURCHASES`, `RECORD_OFFLINE_PAYMENTS`, `VIEW_REPORTS`; no implicit permissions granted), `isActive`.
+- **Maintenance Task (`VenueMaintenanceTask`):** `id`, `partnerId`, `locationId`, `locationName`, `courtId`, `courtName`, `title`, `description`, `status` ∈ `OPEN | IN_PROGRESS | COMPLETED`, `assignedToStaffId`, `updatedAt`.
+- **Purchase Submission (`VenuePurchaseSubmission`):** `id`, `partnerId`, `locationId`, `locationName`, `title`, `category`, `amountInr`, `receiptReference`, `submittedByStaffId`, `submittedByName`, `submittedAt`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/venue-staff/{partnerId}/{staffId}/workspace` — Load assigned-location workspace (`staffProfile`, `assignedLocations`, `courts`, `availabilityBlocks`, `bookings`, `maintenanceTasks`, `purchaseSubmissions`).
+2. `PATCH /api/v1/venue-staff/{partnerId}/{staffId}/bookings/{bookingId}/status` — Update operational booking status (`CONFIRMED`, `CHECKED_IN`, `COMPLETED`, `DECLINED`) within assigned locations (`MANAGE_CHECK_IN` required).
+3. `PATCH /api/v1/venue-staff/{partnerId}/{staffId}/bookings/{bookingId}/payment` — Record offline manual payment status (`RECORD_OFFLINE_PAYMENTS` required).
+4. `PATCH /api/v1/venue-staff/{partnerId}/{staffId}/maintenance-tasks/{taskId}` — Update assigned maintenance task status (`MANAGE_MAINTENANCE` required).
+5. `POST /api/v1/venue-staff/{partnerId}/{staffId}/availability-blocks` — Create court maintenance hold within assigned locations (`MANAGE_MAINTENANCE` required).
+6. `POST /api/v1/venue-staff/{partnerId}/{staffId}/purchases` — Submit purchase with required receipt reference (`SUBMIT_PURCHASES` required).
+
+#### 4. Authorization & Ownership Rules
+- Backend must verify `staffId` belongs to `partnerId` and `isActive == true`, enforce delegated permission codes on every endpoint, and reject (`403 Forbidden`) any access or mutation targeting an unassigned `locationId` or another `partnerId`.
+- Venue Staff must never be permitted to create/modify venue locations, court pricing, booking rules, or staff permissions.
