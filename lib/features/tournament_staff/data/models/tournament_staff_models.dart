@@ -36,7 +36,7 @@ class TournamentStaffProfileModel {
       permissionCodes: (json['permissions'] as List<dynamic>? ?? const [])
           .map((e) => e.toString())
           .toList(),
-      isActive: json['isActive'] as bool? ?? true,
+      isActive: json['isActive'] as bool? ?? false,
     );
   }
 
