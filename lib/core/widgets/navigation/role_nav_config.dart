@@ -119,6 +119,18 @@ class RoleNavConfig {
             icon: Icons.dashboard_outlined,
             selectedIcon: Icons.dashboard,
           ),
+          NavDestinationItem(
+            label: 'Attendance',
+            routePath: AppRoutes.academyStaffAttendance,
+            icon: Icons.fact_check_outlined,
+            selectedIcon: Icons.fact_check,
+          ),
+          NavDestinationItem(
+            label: 'Operations',
+            routePath: AppRoutes.academyStaffOperations,
+            icon: Icons.tune_outlined,
+            selectedIcon: Icons.tune,
+          ),
         ];
 
       case UserRole.venuePartner:

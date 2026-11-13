@@ -2837,3 +2837,26 @@ Enable Academy owners/administrators to manage multi-branch academy facilities, 
 
 #### 4. Open Business Rules
 Tracked in [`docs/OPEN_DECISIONS.md`](../OPEN_DECISIONS.md) under `DEC-ACADEMY-001` through `DEC-ACADEMY-003`.
+
+---
+
+### 6.6 Feature 3.6 — Academy Staff Module
+
+#### 1. Purpose
+Enable delegated Academy Staff members to execute daily branch-scoped operations (session attendance, batch schedule updates, student enrollment review, manual tuition recording, and read-only coach/student visibility) strictly within their assigned Academy, assigned branches, and delegated permissions, without owner-only privileges or access to Coach personal coaching records.
+
+#### 2. Proposed Data Contracts
+- **Staff Profile (`AcademyStaffProfile`):** `staffId`, `academyId`, `academyName`, `staffName`, `staffEmail`, `roleTitle`, `assignedBranchIds[]`, `assignedBranchNames[]`, `permissions[]` ∈ `VIEW_DASHBOARD | MANAGE_ATTENDANCE | MANAGE_BATCHES | MANAGE_ENROLLMENTS | VIEW_STUDENTS | VIEW_COACHES | RECORD_TUITION`, `isActive` (`boolean`).
+- **Session Attendance (`StaffSessionAttendance`):** `id`, `academyId`, `branchId`, `batchId`, `studentId`, `studentName`, `sessionDate`, `status` ∈ `PRESENT | ABSENT | LATE | EXCUSED`, `notes`, `markedByStaffId`, `updatedAt`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/academy/{academyId}/staff/{staffId}/workspace` — Returns staff profile, assigned branches, scoped programs/batches, today's sessions, and permission-filtered attendance/enrollments/coaches.
+2. `PATCH /api/v1/academy/{academyId}/staff/{staffId}/attendance/{attendanceId}` — Mark/update attendance (`status`, `notes`). Requires `MANAGE_ATTENDANCE` and branch membership.
+3. `PATCH /api/v1/academy/{academyId}/staff/{staffId}/batches/{batchId}/schedule` — Update batch timing label. Requires `MANAGE_BATCHES` and branch membership.
+4. `PATCH /api/v1/academy/{academyId}/staff/{staffId}/enrollments/{enrollmentId}/status` — Approve/waitlist/decline enrollment (idempotent on repeated status; enforces batch seat accounting). Requires `MANAGE_ENROLLMENTS` and branch membership.
+5. `PATCH /api/v1/academy/{academyId}/staff/{staffId}/enrollments/{enrollmentId}/tuition` — Record manual tuition payment status. Requires `RECORD_TUITION` and branch membership.
+
+#### 4. Authorization & Security Rules
+- Backend must validate `academyId` and `staffId` from the authenticated session (`403 Forbidden` on mismatch or inactive staff).
+- Every read and mutation must enforce `branchId ∈ staffProfile.assignedBranchIds` and required permission (`403 Forbidden` if missing).
+- Academy Staff endpoints must **never** expose branch creation/deletion, coach invitation/revocation, staff permission self-escalation, or Coach personal coaching data.

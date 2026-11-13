@@ -17,6 +17,9 @@ import 'package:pickleball_platform/features/academy/presentation/pages/academy_
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_dashboard_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_enrollments_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_programs_page.dart';
+import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_attendance_page.dart';
+import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_dashboard_page.dart';
+import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_operations_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_calendar_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_dashboard_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
@@ -406,11 +409,15 @@ GoRouter createAppRouter({
           // 4. Academy Staff
           GoRoute(
             path: AppRoutes.academyStaffDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Academy Staff Operations',
-              path: AppRoutes.academyStaffDashboard,
-              role: UserRole.academyStaff,
-            ),
+            builder: (context, state) => const AcademyStaffDashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStaffAttendance,
+            builder: (context, state) => const AcademyStaffAttendancePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStaffOperations,
+            builder: (context, state) => const AcademyStaffOperationsPage(),
           ),
 
           // 5. Venue Partner

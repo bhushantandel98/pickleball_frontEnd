@@ -40,6 +40,9 @@ import 'package:pickleball_platform/features/player/domain/repositories/tourname
 import 'package:pickleball_platform/features/academy/data/repositories/mock_academy_repository.dart';
 import 'package:pickleball_platform/features/academy/domain/repositories/academy_repository.dart';
 import 'package:pickleball_platform/features/academy/presentation/bloc/academy_cubit.dart';
+import 'package:pickleball_platform/features/academy_staff/data/repositories/mock_academy_staff_repository.dart';
+import 'package:pickleball_platform/features/academy_staff/domain/repositories/academy_staff_repository.dart';
+import 'package:pickleball_platform/features/academy_staff/presentation/cubit/academy_staff_cubit.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
@@ -299,6 +302,11 @@ Future<void> initServiceLocator() async {
   sl.registerFactory<AcademyCubit>(
     () => AcademyCubit(repository: sl<AcademyRepository>()),
   );
+
+  // --- Academy Staff Cubit ---
+  sl.registerFactory<AcademyStaffCubit>(
+    () => AcademyStaffCubit(repository: sl<AcademyStaffRepository>()),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -416,6 +424,11 @@ void initMockServiceLocator() {
   sl.registerLazySingleton<AcademyRepository>(
     () => MockAcademyRepository(),
   );
+
+  // Academy Staff Repository
+  sl.registerLazySingleton<AcademyStaffRepository>(
+    () => MockAcademyStaffRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -511,5 +524,10 @@ void initRemoteServiceLocator() {
   // Academy Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<AcademyRepository>(
     () => MockAcademyRepository(),
+  );
+
+  // Academy Staff Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<AcademyStaffRepository>(
+    () => MockAcademyStaffRepository(),
   );
 }

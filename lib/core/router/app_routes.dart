@@ -96,6 +96,8 @@ abstract final class AppRoutes {
   // --- Role 4: Academy Staff ---
   static const String academyStaff = '/academy-staff';
   static const String academyStaffDashboard = '/academy-staff/dashboard';
+  static const String academyStaffAttendance = '/academy-staff/attendance';
+  static const String academyStaffOperations = '/academy-staff/operations';
 
   // --- Role 5: Venue Partner ---
   static const String venuePartner = '/venue-partner';
