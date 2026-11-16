@@ -56,21 +56,27 @@ class SellerSettlementsPage extends StatelessWidget {
             .whereType<SellerOrderSettlementSnapshot>()
             .toList();
 
+        final configuredSnapshots = activeSnapshots
+            .where((s) => s.isCommissionConfigured)
+            .toList();
+        final allConfigured = activeSnapshots.isNotEmpty &&
+            configuredSnapshots.length == activeSnapshots.length;
+
         final totalGross = activeSnapshots.fold<double>(
           0.0,
           (sum, s) => sum + s.grossAmount,
         );
-        final totalCommission = activeSnapshots.fold<double>(
+        final totalCommission = configuredSnapshots.fold<double>(
           0.0,
-          (sum, s) => sum + s.commissionAmount,
+          (sum, s) => sum + (s.commissionAmount ?? 0.0),
         );
         final totalDeductions = activeSnapshots.fold<double>(
           0.0,
           (sum, s) => sum + s.otherDeductionsAmount,
         );
-        final totalEstimatedNet = activeSnapshots.fold<double>(
+        final totalEstimatedNet = configuredSnapshots.fold<double>(
           0.0,
-          (sum, s) => sum + s.estimatedNetSettlement,
+          (sum, s) => sum + (s.estimatedNetSettlement ?? 0.0),
         );
 
         return Column(
@@ -110,7 +116,9 @@ class SellerSettlementsPage extends StatelessWidget {
                       ),
                       _SummaryBox(
                         label: 'Snapshotted Commission',
-                        value: '-${_fmt(totalCommission)}',
+                        value: allConfigured
+                            ? '-${_fmt(totalCommission)}'
+                            : 'Not configured',
                       ),
                       _SummaryBox(
                         label: 'Other Deductions',
@@ -118,8 +126,11 @@ class SellerSettlementsPage extends StatelessWidget {
                       ),
                       _SummaryBox(
                         label: 'Estimated Net Settlement',
-                        value: _fmt(totalEstimatedNet),
-                        highlight: AppColors.success,
+                        value: allConfigured
+                            ? _fmt(totalEstimatedNet)
+                            : 'Unavailable',
+                        highlight:
+                            allConfigured ? AppColors.success : AppColors.warning,
                       ),
                     ],
                   ),
@@ -191,7 +202,9 @@ class SellerSettlementsPage extends StatelessWidget {
                                 'Gross: ${settlement.formattedGrossAmount}',
                               ),
                               Text(
-                                'Commission (${settlement.snapshottedCommissionRatePercent.toStringAsFixed(0)}%): -${settlement.formattedCommissionAmount}',
+                                settlement.isCommissionConfigured
+                                    ? 'Commission (${settlement.snapshottedCommissionRatePercent!.toStringAsFixed(0)}%): -${settlement.formattedCommissionAmount}'
+                                    : 'Commission: Not configured',
                               ),
                               Text(
                                 'Deductions: -${settlement.formattedOtherDeductions}',
@@ -200,7 +213,9 @@ class SellerSettlementsPage extends StatelessWidget {
                                 'Est. Net: ${settlement.formattedEstimatedNetSettlement}',
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.success,
+                                  color: settlement.isCommissionConfigured
+                                      ? AppColors.success
+                                      : AppColors.warning,
                                 ),
                               ),
                             ],

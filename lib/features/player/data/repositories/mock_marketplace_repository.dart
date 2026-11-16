@@ -12,6 +12,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
   List<MarketplaceCartItem>? customCart;
   Set<String>? customWishlistIds;
   List<MarketplaceOrder>? customOrders;
+  final double? configuredCommissionRatePercent;
+  final String? configuredCommissionRuleLabel;
 
   MockMarketplaceRepository({
     this.shouldFail = false,
@@ -20,6 +22,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
     this.customCart,
     this.customWishlistIds,
     this.customOrders,
+    this.configuredCommissionRatePercent,
+    this.configuredCommissionRuleLabel,
   });
 
   static List<MarketplaceProduct> createDefaultProducts() {
@@ -760,10 +764,19 @@ class MockMarketplaceRepository implements MarketplaceRepository {
     final now = DateTime.now();
     final estimatedDelivery = now.add(const Duration(days: 4));
 
+    final snapshottedItems = items
+        .map(
+          (item) => item.copyWith(
+            returnPolicyDaysSnapshot:
+                item.returnPolicyDaysSnapshot ?? item.product.returnPolicyDays,
+          ),
+        )
+        .toList();
+
     final order = MarketplaceOrder(
       id: generateOrderReference(),
       orderDate: now,
-      items: List<MarketplaceCartItem>.from(items),
+      items: snapshottedItems,
       subtotal: subtotal,
       deliveryFee: deliveryFee,
       discount: discount,
@@ -773,6 +786,8 @@ class MockMarketplaceRepository implements MarketplaceRepository {
       paymentStatus: 'Pending Delivery',
       status: MarketplaceOrderStatus.placed,
       estimatedDeliveryDate: estimatedDelivery,
+      commissionRatePercentSnapshot: configuredCommissionRatePercent,
+      commissionRuleLabelSnapshot: configuredCommissionRuleLabel,
       trackingTimeline: [
         OrderStatusStep(
           title: 'Order Placed',

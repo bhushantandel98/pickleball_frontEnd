@@ -285,12 +285,16 @@ class MarketplaceCartItem extends Equatable {
   final String? selectedSize;
   final String? selectedColor;
 
+  /// Immutable return window (days) snapshotted at order placement.
+  final int? returnPolicyDaysSnapshot;
+
   const MarketplaceCartItem({
     required this.id,
     required this.product,
     this.quantity = 1,
     this.selectedSize,
     this.selectedColor,
+    this.returnPolicyDaysSnapshot,
   });
 
   double get itemTotal => product.price * quantity;
@@ -308,6 +312,7 @@ class MarketplaceCartItem extends Equatable {
     int? quantity,
     String? selectedSize,
     String? selectedColor,
+    int? returnPolicyDaysSnapshot,
   }) {
     return MarketplaceCartItem(
       id: id ?? this.id,
@@ -315,6 +320,8 @@ class MarketplaceCartItem extends Equatable {
       quantity: quantity ?? this.quantity,
       selectedSize: selectedSize ?? this.selectedSize,
       selectedColor: selectedColor ?? this.selectedColor,
+      returnPolicyDaysSnapshot:
+          returnPolicyDaysSnapshot ?? this.returnPolicyDaysSnapshot,
     );
   }
 
@@ -325,6 +332,7 @@ class MarketplaceCartItem extends Equatable {
         quantity,
         selectedSize,
         selectedColor,
+        returnPolicyDaysSnapshot,
       ];
 }
 
@@ -430,6 +438,11 @@ class MarketplaceOrder extends Equatable {
   final List<OrderStatusStep> trackingTimeline;
   final String? cancellationReason;
 
+  /// Configurable platform commission rate snapshotted at order placement
+  /// (`null` when no approved commission rule is configured).
+  final double? commissionRatePercentSnapshot;
+  final String? commissionRuleLabelSnapshot;
+
   const MarketplaceOrder({
     required this.id,
     required this.orderDate,
@@ -447,6 +460,8 @@ class MarketplaceOrder extends Equatable {
     this.estimatedDeliveryDate,
     this.trackingTimeline = const [],
     this.cancellationReason,
+    this.commissionRatePercentSnapshot,
+    this.commissionRuleLabelSnapshot,
   });
 
   DateTime get placedAt => orderDate;
@@ -502,6 +517,8 @@ class MarketplaceOrder extends Equatable {
     DateTime? estimatedDeliveryDate,
     List<OrderStatusStep>? trackingTimeline,
     String? cancellationReason,
+    double? commissionRatePercentSnapshot,
+    String? commissionRuleLabelSnapshot,
   }) {
     return MarketplaceOrder(
       id: id ?? this.id,
@@ -520,6 +537,10 @@ class MarketplaceOrder extends Equatable {
       estimatedDeliveryDate: estimatedDeliveryDate ?? this.estimatedDeliveryDate,
       trackingTimeline: trackingTimeline ?? this.trackingTimeline,
       cancellationReason: cancellationReason ?? this.cancellationReason,
+      commissionRatePercentSnapshot:
+          commissionRatePercentSnapshot ?? this.commissionRatePercentSnapshot,
+      commissionRuleLabelSnapshot:
+          commissionRuleLabelSnapshot ?? this.commissionRuleLabelSnapshot,
     );
   }
 
@@ -541,5 +562,7 @@ class MarketplaceOrder extends Equatable {
         estimatedDeliveryDate,
         trackingTimeline,
         cancellationReason,
+        commissionRatePercentSnapshot,
+        commissionRuleLabelSnapshot,
       ];
 }

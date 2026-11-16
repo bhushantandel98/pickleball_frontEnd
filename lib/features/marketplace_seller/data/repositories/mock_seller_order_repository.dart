@@ -33,14 +33,7 @@ class MockSellerOrderRepository implements SellerOrderRepository {
   /// accepting or cancelling in a multi-seller order affects ONLY the acting
   /// seller's items without mutating another seller's items or status.
   final Map<String, _SellerOrderSliceState> _sellerSliceOverrides = {};
-
-  /// Immutable order-placement snapshots keyed by `'$orderId::$sellerId'`
-  /// preserving return windows and commission terms so historical orders are
-  /// unaffected by later product policy edits.
-  final Map<String, _OrderPolicySnapshot> _orderPolicySnapshots = {};
   final List<MarketplaceOrder> _supplementarySellerOrders = _buildMockOrders();
-
-  static const double _defaultCommissionRatePercent = 10.0;
 
   static String _sliceKey(String orderId, String sellerId) =>
       '$orderId::$sellerId';
@@ -127,11 +120,13 @@ class MockSellerOrderRepository implements SellerOrderRepository {
             quantity: 1,
             selectedSize: 'Standard 16mm',
             selectedColor: 'Matte Carbon',
+            returnPolicyDaysSnapshot: 14,
           ),
           MarketplaceCartItem(
             id: 'ms_item_2',
             product: apexBag,
             quantity: 1,
+            returnPolicyDaysSnapshot: 14,
           ),
         ],
         subtotal: 14498,
@@ -160,6 +155,7 @@ class MockSellerOrderRepository implements SellerOrderRepository {
             product: dinkBalls,
             quantity: 2,
             selectedColor: 'Optic Yellow',
+            returnPolicyDaysSnapshot: 7,
           ),
         ],
         subtotal: 4998,
@@ -195,6 +191,7 @@ class MockSellerOrderRepository implements SellerOrderRepository {
             quantity: 1,
             selectedSize: 'Elongated 16mm',
             selectedColor: 'Court Blue',
+            returnPolicyDaysSnapshot: 14,
           ),
         ],
         subtotal: 10999,
@@ -355,22 +352,6 @@ class MockSellerOrderRepository implements SellerOrderRepository {
       final sellerSubtotal =
           ownedItems.fold<double>(0.0, (sum, item) => sum + item.itemTotal);
 
-      final key = _sliceKey(order.id, seller.sellerId);
-      final snapshot = _orderPolicySnapshots.putIfAbsent(
-        key,
-        () => _OrderPolicySnapshot(
-          itemReturnWindowDays: {
-            for (final item in ownedItems)
-              item.id: item.product.returnPolicyDays,
-          },
-          commissionRatePercent: _defaultCommissionRatePercent,
-          otherDeductionsAmount: 0.0,
-          commissionRuleLabel:
-              'Configurable Platform Rate (${_defaultCommissionRatePercent.toStringAsFixed(0)}% snapshot at order placement)',
-          snapshottedAt: order.orderDate,
-        ),
-      );
-
       final deliveredAt = _resolveDeliveredAt(
         effectiveStatus: effectiveStatus,
         effectiveFulfilment: effectiveFulfilment,
@@ -378,10 +359,13 @@ class MockSellerOrderRepository implements SellerOrderRepository {
       );
 
       final now = DateTime.now();
+      // Read ONLY the persisted order-placement return window snapshot.
+      // Do NOT fall back to mutable product.returnPolicyDays for legacy orders.
       final itemReturnSnapshots = ownedItems.map((item) {
-        final windowDays =
-            snapshot.itemReturnWindowDays[item.id] ?? item.product.returnPolicyDays;
-        final endsAt = (deliveredAt != null && windowDays > 0)
+        final windowDays = item.returnPolicyDaysSnapshot;
+        final endsAt = (deliveredAt != null &&
+                windowDays != null &&
+                windowDays > 0)
             ? deliveredAt.add(Duration(days: windowDays))
             : null;
         final eligibility = _computeReturnEligibility(
@@ -398,7 +382,7 @@ class MockSellerOrderRepository implements SellerOrderRepository {
           quantity: item.quantity,
           lineGrossAmount: item.itemTotal,
           snapshottedReturnWindowDays: windowDays,
-          snapshottedAt: snapshot.snapshottedAt,
+          snapshottedAt: order.orderDate,
           deliveredAt: deliveredAt,
           eligibilityStatus: eligibility,
           returnWindowEndsAt: endsAt,
@@ -406,11 +390,10 @@ class MockSellerOrderRepository implements SellerOrderRepository {
       }).toList();
 
       final settlementSnapshot = _computeSettlementSnapshot(
-        orderId: order.id,
+        order: order,
         sellerId: seller.sellerId,
         orderStatus: effectiveStatus,
         grossAmount: sellerSubtotal,
-        policy: snapshot,
         itemReturns: itemReturnSnapshots,
       );
 
@@ -462,13 +445,16 @@ class MockSellerOrderRepository implements SellerOrderRepository {
 
   SellerReturnEligibilityStatus _computeReturnEligibility({
     required MarketplaceOrderStatus orderStatus,
-    required int windowDays,
+    required int? windowDays,
     required DateTime? deliveredAt,
     required DateTime? endsAt,
     required DateTime now,
   }) {
     if (orderStatus == MarketplaceOrderStatus.cancelled) {
       return SellerReturnEligibilityStatus.cancelledOrder;
+    }
+    if (windowDays == null) {
+      return SellerReturnEligibilityStatus.snapshotUnavailable;
     }
     if (windowDays <= 0) {
       return SellerReturnEligibilityStatus.nonReturnable;
@@ -484,33 +470,50 @@ class MockSellerOrderRepository implements SellerOrderRepository {
   }
 
   SellerOrderSettlementSnapshot _computeSettlementSnapshot({
-    required String orderId,
+    required MarketplaceOrder order,
     required String sellerId,
     required MarketplaceOrderStatus orderStatus,
     required double grossAmount,
-    required _OrderPolicySnapshot policy,
     required List<SellerOrderItemReturnSnapshot> itemReturns,
   }) {
+    final rate = order.commissionRatePercentSnapshot;
+    final ruleLabel = order.commissionRuleLabelSnapshot ??
+        'Commission rate not configured at order placement';
+
     if (orderStatus == MarketplaceOrderStatus.cancelled) {
       return SellerOrderSettlementSnapshot(
-        orderId: orderId,
+        orderId: order.id,
         sellerId: sellerId,
         grossAmount: grossAmount,
-        snapshottedCommissionRatePercent: policy.commissionRatePercent,
-        commissionAmount: 0.0,
+        snapshottedCommissionRatePercent: rate,
+        commissionAmount: rate != null ? 0.0 : null,
         otherDeductionsAmount: 0.0,
-        estimatedNetSettlement: 0.0,
+        estimatedNetSettlement: rate != null ? 0.0 : null,
         payoutStatus: SellerPayoutStatus.notApplicableCancelled,
-        commissionRuleLabel: policy.commissionRuleLabel,
-        snapshottedAt: policy.snapshottedAt,
+        commissionRuleLabel: ruleLabel,
+        snapshottedAt: order.orderDate,
         isReadOnly: true,
       );
     }
 
-    final commission =
-        (grossAmount * policy.commissionRatePercent / 100.0).roundToDouble();
-    final deductions = policy.otherDeductionsAmount;
-    final net = (grossAmount - commission - deductions);
+    if (rate == null) {
+      return SellerOrderSettlementSnapshot(
+        orderId: order.id,
+        sellerId: sellerId,
+        grossAmount: grossAmount,
+        snapshottedCommissionRatePercent: null,
+        commissionAmount: null,
+        otherDeductionsAmount: 0.0,
+        estimatedNetSettlement: null,
+        payoutStatus: SellerPayoutStatus.commissionNotConfigured,
+        commissionRuleLabel: ruleLabel,
+        snapshottedAt: order.orderDate,
+        isReadOnly: true,
+      );
+    }
+
+    final commission = (grossAmount * rate / 100.0).roundToDouble();
+    final net = grossAmount - commission;
     final safeNet = net < 0 ? 0.0 : net;
 
     final SellerPayoutStatus payoutStatus;
@@ -525,16 +528,16 @@ class MockSellerOrderRepository implements SellerOrderRepository {
     }
 
     return SellerOrderSettlementSnapshot(
-      orderId: orderId,
+      orderId: order.id,
       sellerId: sellerId,
       grossAmount: grossAmount,
-      snapshottedCommissionRatePercent: policy.commissionRatePercent,
+      snapshottedCommissionRatePercent: rate,
       commissionAmount: commission,
-      otherDeductionsAmount: deductions,
+      otherDeductionsAmount: 0.0,
       estimatedNetSettlement: safeNet,
       payoutStatus: payoutStatus,
-      commissionRuleLabel: policy.commissionRuleLabel,
-      snapshottedAt: policy.snapshottedAt,
+      commissionRuleLabel: ruleLabel,
+      snapshottedAt: order.orderDate,
       isReadOnly: true,
     );
   }
@@ -1069,21 +1072,5 @@ class _SellerOrderSliceState {
     required this.timeline,
     this.cancellationReason,
     this.fulfilment,
-  });
-}
-
-class _OrderPolicySnapshot {
-  final Map<String, int> itemReturnWindowDays;
-  final double commissionRatePercent;
-  final double otherDeductionsAmount;
-  final String commissionRuleLabel;
-  final DateTime snapshottedAt;
-
-  const _OrderPolicySnapshot({
-    required this.itemReturnWindowDays,
-    required this.commissionRatePercent,
-    required this.otherDeductionsAmount,
-    required this.commissionRuleLabel,
-    required this.snapshottedAt,
   });
 }

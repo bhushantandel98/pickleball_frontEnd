@@ -457,9 +457,12 @@ class _OrderDetailContent extends StatelessWidget {
                   value: order.settlementSnapshot!.formattedGrossAmount,
                 ),
                 _SettlementRow(
-                  label:
-                      'Platform Commission (${order.settlementSnapshot!.snapshottedCommissionRatePercent.toStringAsFixed(0)}%)',
-                  value: '-${order.settlementSnapshot!.formattedCommissionAmount}',
+                  label: order.settlementSnapshot!.isCommissionConfigured
+                      ? 'Platform Commission (${order.settlementSnapshot!.snapshottedCommissionRatePercent!.toStringAsFixed(0)}%)'
+                      : 'Platform Commission',
+                  value: order.settlementSnapshot!.isCommissionConfigured
+                      ? '-${order.settlementSnapshot!.formattedCommissionAmount}'
+                      : 'Not configured',
                 ),
                 _SettlementRow(
                   label: 'Other Deductions',

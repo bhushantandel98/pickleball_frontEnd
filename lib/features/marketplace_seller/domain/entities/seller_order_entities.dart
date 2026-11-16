@@ -175,6 +175,7 @@ class SellerOrderFulfilmentDetails extends Equatable {
 /// Return eligibility state for an order item computed from its order-placement
 /// return window snapshot and delivery timestamp (Feature 6.6).
 enum SellerReturnEligibilityStatus {
+  snapshotUnavailable('Return Policy Snapshot Unavailable (Legacy Order)'),
   nonReturnable('Non-Returnable (0-day policy)'),
   cancelledOrder('Order Cancelled'),
   pendingDelivery('Starts Upon Delivery'),
@@ -188,14 +189,15 @@ enum SellerReturnEligibilityStatus {
 /// Immutable snapshot of a product's return policy captured at order placement.
 ///
 /// Subsequent edits to `SellerProduct.returnPolicyDays` must NEVER alter
-/// [snapshottedReturnWindowDays] for historical orders.
+/// [snapshottedReturnWindowDays] for historical orders. When `null`, the order
+/// predates snapshot persistence and must be surfaced explicitly as unavailable.
 class SellerOrderItemReturnSnapshot extends Equatable {
   final String orderItemId;
   final String productId;
   final String productTitle;
   final int quantity;
   final double lineGrossAmount;
-  final int snapshottedReturnWindowDays;
+  final int? snapshottedReturnWindowDays;
   final DateTime snapshottedAt;
   final DateTime? deliveredAt;
   final SellerReturnEligibilityStatus eligibilityStatus;
@@ -214,9 +216,14 @@ class SellerOrderItemReturnSnapshot extends Equatable {
     this.returnWindowEndsAt,
   });
 
-  String get policyLabel => snapshottedReturnWindowDays == 0
-      ? 'Non-returnable (0 days)'
-      : '$snapshottedReturnWindowDays-day return window';
+  String get policyLabel {
+    if (snapshottedReturnWindowDays == null) {
+      return 'Return policy snapshot unavailable (legacy order)';
+    }
+    return snapshottedReturnWindowDays == 0
+        ? 'Non-returnable (0 days)'
+        : '$snapshottedReturnWindowDays-day return window';
+  }
 
   @override
   List<Object?> get props => [
@@ -237,6 +244,7 @@ class SellerOrderItemReturnSnapshot extends Equatable {
 /// verified backend/payment-provider transfers.
 enum SellerPayoutStatus {
   notApplicableCancelled('Cancelled — Not Eligible'),
+  commissionNotConfigured('Commission Not Configured — Net Unavailable'),
   pendingFulfilment('Pending Delivery & Return Window'),
   inReturnWindowHold('Held During Return Window'),
   awaitingProviderPayout('Eligible — Awaiting Backend/Provider Payout');
@@ -248,17 +256,17 @@ enum SellerPayoutStatus {
 /// Read-only order-level settlement snapshot for a single seller's slice of an
 /// order (Feature 6.6).
 ///
-/// Clearly separates [grossAmount], [commissionAmount], [otherDeductionsAmount],
-/// [estimatedNetSettlement], and [payoutStatus]. Never triggers or promises
-/// automated transfers.
+/// When [snapshottedCommissionRatePercent] is `null` (no approved commission
+/// rule configured at order placement), [commissionAmount] and
+/// [estimatedNetSettlement] remain `null` instead of assuming a rate.
 class SellerOrderSettlementSnapshot extends Equatable {
   final String orderId;
   final String sellerId;
   final double grossAmount;
-  final double snapshottedCommissionRatePercent;
-  final double commissionAmount;
+  final double? snapshottedCommissionRatePercent;
+  final double? commissionAmount;
   final double otherDeductionsAmount;
-  final double estimatedNetSettlement;
+  final double? estimatedNetSettlement;
   final SellerPayoutStatus payoutStatus;
   final String commissionRuleLabel;
   final DateTime snapshottedAt;
@@ -278,6 +286,8 @@ class SellerOrderSettlementSnapshot extends Equatable {
     this.isReadOnly = true,
   });
 
+  bool get isCommissionConfigured => snapshottedCommissionRatePercent != null;
+
   static String _fmt(double amount) => NumberFormat.currency(
         symbol: '₹',
         decimalDigits: 0,
@@ -285,9 +295,12 @@ class SellerOrderSettlementSnapshot extends Equatable {
       ).format(amount);
 
   String get formattedGrossAmount => _fmt(grossAmount);
-  String get formattedCommissionAmount => _fmt(commissionAmount);
+  String get formattedCommissionAmount =>
+      commissionAmount != null ? _fmt(commissionAmount!) : 'Not configured';
   String get formattedOtherDeductions => _fmt(otherDeductionsAmount);
-  String get formattedEstimatedNetSettlement => _fmt(estimatedNetSettlement);
+  String get formattedEstimatedNetSettlement => estimatedNetSettlement != null
+      ? _fmt(estimatedNetSettlement!)
+      : 'Unavailable (commission not configured)';
 
   @override
   List<Object?> get props => [
