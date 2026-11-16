@@ -67,6 +67,9 @@ import 'package:pickleball_platform/features/marketplace_seller/domain/repositor
 import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/marketplace_seller_cubit.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/seller_catalog_cubit.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/seller_order_cubit.dart';
+import 'package:pickleball_platform/features/application_staff/data/repositories/mock_application_staff_repository.dart';
+import 'package:pickleball_platform/features/application_staff/domain/repositories/application_staff_repository.dart';
+import 'package:pickleball_platform/features/application_staff/presentation/cubit/application_staff_cubit.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
@@ -384,6 +387,13 @@ Future<void> initServiceLocator() async {
       repository: sl<SellerOrderRepository>(),
     ),
   );
+
+  // --- Application Staff Cubit (Feature 7.1) ---
+  sl.registerFactory<ApplicationStaffCubit>(
+    () => ApplicationStaffCubit(
+      repository: sl<ApplicationStaffRepository>(),
+    ),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -552,6 +562,11 @@ void initMockServiceLocator() {
       catalogRepository: sl<SellerCatalogRepository>(),
     ),
   );
+
+  // Application Staff Repository (Feature 7.1)
+  sl.registerLazySingleton<ApplicationStaffRepository>(
+    () => MockApplicationStaffRepository(),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -698,5 +713,10 @@ void initRemoteServiceLocator() {
       sellerRepository: sl<MarketplaceSellerRepository>(),
       catalogRepository: sl<SellerCatalogRepository>(),
     ),
+  );
+
+  // Application Staff Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<ApplicationStaffRepository>(
+    () => MockApplicationStaffRepository(),
   );
 }

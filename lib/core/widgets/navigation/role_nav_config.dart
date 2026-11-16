@@ -267,6 +267,12 @@ class RoleNavConfig {
             icon: Icons.dashboard_outlined,
             selectedIcon: Icons.dashboard,
           ),
+          NavDestinationItem(
+            label: 'Operations',
+            routePath: AppRoutes.applicationStaffOperations,
+            icon: Icons.fact_check_outlined,
+            selectedIcon: Icons.fact_check,
+          ),
         ];
 
       case UserRole.applicationAdmin:

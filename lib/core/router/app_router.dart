@@ -72,6 +72,8 @@ import 'package:pickleball_platform/features/player/presentation/pages/product_d
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_discovery_page.dart';
+import 'package:pickleball_platform/features/application_staff/presentation/pages/application_staff_dashboard_page.dart';
+import 'package:pickleball_platform/features/application_staff/presentation/pages/application_staff_operations_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_order_details_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_orders_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_editor_page.dart';
@@ -567,11 +569,11 @@ GoRouter createAppRouter({
           // 11. Application Staff
           GoRoute(
             path: AppRoutes.applicationStaffDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Application Staff Review Queue',
-              path: AppRoutes.applicationStaffDashboard,
-              role: UserRole.applicationStaff,
-            ),
+            builder: (context, state) => const ApplicationStaffDashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.applicationStaffOperations,
+            builder: (context, state) => const ApplicationStaffOperationsPage(),
           ),
 
           // 12. Application Admin

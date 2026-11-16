@@ -17,18 +17,18 @@
 | **Phase 3** | Coach, Academy & Academy Staff | **Completed (Feature 3.6 Ready for Review)** | 100% | Coach (3.1–3.4), Academy (3.5), and Academy Staff (3.6) modules implemented with strict role, branch & ownership isolation |
 | **Phase 4** | Venue Partner & Venue Staff | **Completed (Feature 3.8 Ready for Review)** | 100% | Venue Partner (3.7) and Venue Staff (3.8) implemented with strict partner, location & delegated permission isolation |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
-| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.6 Ready for Review)** | 100% | Features 6.1–6.6 implemented (Registration/KYC, Product Catalog, Submission/Publishing, Dashboard & Orders, Fulfilment Updates, Return Windows & Settlement Visibility); awaiting user review |
-| **Phase 7** | Platform Admin & Staff | Not Started | 0% | Sole Admin dashboard & permission gates |
+| **Phase 6** | Marketplace (Seller & Catalog) | **Completed — Ready for Review** | 100% | Features 6.1–6.6 implemented (Registration/KYC, Product Catalog, Submission/Publishing, Dashboard & Orders, Fulfilment Updates, Return Windows & Settlement Visibility) |
+| **Phase 7** | Platform Admin & Staff | **In Progress (Feature 7.1 Ready for Review)** | 35% | Feature 7.1 Application Staff Dashboard & Operations implemented with permission gates; Feature 7.2 & Application Admin pending |
 | **Phase 8** | Integration & Release Hardening | Not Started | 0% | Mock replaced with API; release ready |
 
 ---
 
 ## Active Task
 
-- **Task ID:** Feature 6.6 — Product-specific Return Windows & Order-level Settlement Visibility
-- **Description:** Implemented Feature 6.6 — Product-specific Return Windows & Order-level Settlement Visibility (`/marketplace-seller/settlements` via `SellerSettlementsPage`, `SellerOrderItemReturnSnapshot`, `SellerOrderSettlementSnapshot`, `SellerReturnEligibilityStatus`, `SellerPayoutStatus`, `MarketplaceCartItem.returnPolicyDaysSnapshot`, `MarketplaceOrder.commissionRatePercentSnapshot`, and `SellerOrderDetailsPage`). `MockMarketplaceRepository.placeOrder()` captures each item's `returnPolicyDaysSnapshot` and any configured `commissionRatePercentSnapshot` at order creation; `MockSellerOrderRepository` reads those saved snapshots directly without inventing historical snapshots from current product settings on load (legacy orders without snapshots explicitly display `Return Policy Snapshot Unavailable (Legacy Order)` and cannot transition to `Eligible — Awaiting Backend/Provider Payout`, showing `Return Policy Snapshot Unavailable — Payout Eligibility Unverified` instead). Because no approved platform commission rate is configured yet in the codebase, commission is displayed as `Not configured` and estimated net settlement is marked `Unavailable` rather than assuming `10%`. All settlement views remain strictly read-only and multi-seller isolated.
+- **Task ID:** Feature 7.1 — Application Staff Dashboard & Operations
+- **Description:** Implemented Feature 7.1 — Application Staff Dashboard & Operations (`/application-staff/dashboard`, `/application-staff/operations`) using Clean Architecture (`ApplicationStaffRepository`, `MockApplicationStaffRepository`, `ApplicationStaffCubit`, `ApplicationStaffScaffold`, `ApplicationStaffDashboardPage`, `ApplicationStaffOperationsPage`). Enforces active staff membership (`isActive == true`), delegated `ApplicationStaffPermission` checks (`viewDashboard`, `reviewSellers`, `reviewProducts`, `handleSupportTickets`, `monitorPlatformHealth`) at both repository and UI layers, organization-level queue item scoping (`organizationId`), and strict governance boundaries keeping Application Admin-only final approvals, policies, staff management, and payouts inaccessible to Application Staff.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 4.6s).
+  - `flutter analyze`: Passed — No issues found! (ran in 6.7s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)

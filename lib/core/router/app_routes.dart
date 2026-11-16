@@ -166,6 +166,8 @@ abstract final class AppRoutes {
   static const String applicationStaff = '/application-staff';
   static const String applicationStaffDashboard =
       '/application-staff/dashboard';
+  static const String applicationStaffOperations =
+      '/application-staff/operations';
 
   // --- Role 12: Application Admin ---
   static const String applicationAdmin = '/application-admin';
