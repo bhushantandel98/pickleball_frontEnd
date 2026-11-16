@@ -45,4 +45,34 @@ abstract class SellerOrderRepository {
     required String orderId,
     required String reason,
   });
+
+  /// Marks the seller's order slice as dispatched (`processing` -> `inTransit`)
+  /// with carrier & tracking details (Feature 6.5).
+  Future<Result<SellerOrderView>> markOrderDispatched({
+    required String sellerId,
+    required String userId,
+    required String orderId,
+    required String carrierName,
+    required String trackingNumber,
+    String? trackingUrl,
+    String? note,
+  });
+
+  /// Marks the seller's order slice as out for delivery (`inTransit` ->
+  /// `outForDelivery`) (Feature 6.5).
+  Future<Result<SellerOrderView>> markOrderOutForDelivery({
+    required String sellerId,
+    required String userId,
+    required String orderId,
+    String? note,
+  });
+
+  /// Confirms delivery for the seller's order slice (`outForDelivery` ->
+  /// `delivered`) (Feature 6.5).
+  Future<Result<SellerOrderView>> markOrderDelivered({
+    required String sellerId,
+    required String userId,
+    required String orderId,
+    String? note,
+  });
 }

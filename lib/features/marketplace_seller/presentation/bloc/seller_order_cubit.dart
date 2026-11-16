@@ -140,6 +140,108 @@ class SellerOrderCubit extends Cubit<SellerOrderState> {
     );
   }
 
+  Future<void> markDispatched({
+    required String orderId,
+    required String carrierName,
+    required String trackingNumber,
+    String? trackingUrl,
+    String? note,
+  }) async {
+    final current = state;
+    final userId = _userId;
+    final sellerId = _sellerId;
+    if (current is! SellerOrderLoaded || userId == null || sellerId == null) {
+      return;
+    }
+
+    emit(current.copyWith(isMutating: true, clearFeedback: true, clearError: true));
+    final result = await _repository.markOrderDispatched(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+      carrierName: carrierName,
+      trackingNumber: trackingNumber,
+      trackingUrl: trackingUrl,
+      note: note,
+    );
+
+    await result.when(
+      success: (updated) async {
+        await _refreshLoaded(
+          feedbackMessage:
+              'Order ${updated.orderId} marked Dispatched (In Transit).',
+        );
+      },
+      failure: (f) async {
+        emit(current.copyWith(isMutating: false, errorMessage: f.message));
+      },
+    );
+  }
+
+  Future<void> markOutForDelivery({
+    required String orderId,
+    String? note,
+  }) async {
+    final current = state;
+    final userId = _userId;
+    final sellerId = _sellerId;
+    if (current is! SellerOrderLoaded || userId == null || sellerId == null) {
+      return;
+    }
+
+    emit(current.copyWith(isMutating: true, clearFeedback: true, clearError: true));
+    final result = await _repository.markOrderOutForDelivery(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+      note: note,
+    );
+
+    await result.when(
+      success: (updated) async {
+        await _refreshLoaded(
+          feedbackMessage:
+              'Order ${updated.orderId} marked Out for Delivery.',
+        );
+      },
+      failure: (f) async {
+        emit(current.copyWith(isMutating: false, errorMessage: f.message));
+      },
+    );
+  }
+
+  Future<void> markDelivered({
+    required String orderId,
+    String? note,
+  }) async {
+    final current = state;
+    final userId = _userId;
+    final sellerId = _sellerId;
+    if (current is! SellerOrderLoaded || userId == null || sellerId == null) {
+      return;
+    }
+
+    emit(current.copyWith(isMutating: true, clearFeedback: true, clearError: true));
+    final result = await _repository.markOrderDelivered(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+      note: note,
+    );
+
+    await result.when(
+      success: (updated) async {
+        await _refreshLoaded(
+          feedbackMessage:
+              'Order ${updated.orderId} confirmed Delivered.',
+        );
+      },
+      failure: (f) async {
+        emit(current.copyWith(isMutating: false, errorMessage: f.message));
+      },
+    );
+  }
+
   void clearFeedback() {
     final current = state;
     if (current is SellerOrderLoaded) {

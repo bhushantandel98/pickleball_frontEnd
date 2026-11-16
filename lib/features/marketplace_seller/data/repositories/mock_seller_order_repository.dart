@@ -336,6 +336,14 @@ class MockSellerOrderRepository implements SellerOrderRepository {
       final effectiveTimeline = slice?.timeline ?? order.trackingTimeline;
       final effectiveCancellationReason =
           slice?.cancellationReason ?? order.cancellationReason;
+      final effectiveFulfilment = slice?.fulfilment ??
+          (order.trackingNumber != null &&
+                  order.trackingNumber!.trim().isNotEmpty
+              ? SellerOrderFulfilmentDetails(
+                  trackingNumber: order.trackingNumber,
+                  isManualSellerEntry: true,
+                )
+              : null);
 
       final sellerSubtotal =
           ownedItems.fold<double>(0.0, (sum, item) => sum + item.itemTotal);
@@ -357,6 +365,7 @@ class MockSellerOrderRepository implements SellerOrderRepository {
           paymentStatus: order.paymentStatus,
           timeline: effectiveTimeline,
           cancellationReason: effectiveCancellationReason,
+          fulfilment: effectiveFulfilment,
         ),
       );
     }
@@ -650,16 +659,250 @@ class MockSellerOrderRepository implements SellerOrderRepository {
       orderId: orderId,
     );
   }
+
+  @override
+  Future<Result<SellerOrderView>> markOrderDispatched({
+    required String sellerId,
+    required String userId,
+    required String orderId,
+    required String carrierName,
+    required String trackingNumber,
+    String? trackingUrl,
+    String? note,
+  }) async {
+    final trimmedCarrier = carrierName.trim();
+    final trimmedTracking = trackingNumber.trim();
+    final trimmedUrl = trackingUrl?.trim() ?? '';
+
+    if (trimmedCarrier.isEmpty) {
+      return const FailureResult(
+        ValidationFailure(message: 'Carrier / courier name is required.'),
+      );
+    }
+    if (trimmedTracking.isEmpty) {
+      return const FailureResult(
+        ValidationFailure(message: 'Tracking reference number is required.'),
+      );
+    }
+    if (trimmedUrl.isNotEmpty) {
+      final uri = Uri.tryParse(trimmedUrl);
+      if (uri == null ||
+          !uri.hasScheme ||
+          uri.host.isEmpty ||
+          (uri.scheme != 'http' && uri.scheme != 'https')) {
+        return const FailureResult(
+          ValidationFailure(
+            message: 'Tracking URL must be a valid http or https link.',
+          ),
+        );
+      }
+    }
+
+    final existingResult = await getSellerOrderById(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+    );
+    if (existingResult is FailureResult<SellerOrderView>) {
+      return existingResult;
+    }
+    final currentView = (existingResult as Success<SellerOrderView>).data;
+    if (!currentView.canMarkDispatched) {
+      return FailureResult(
+        ValidationFailure(
+          message:
+              'Only Processing orders can be marked Dispatched (In Transit). Current status: ${currentView.status.displayName}.',
+        ),
+      );
+    }
+
+    final now = DateTime.now();
+    final trimmedNote = note?.trim() ?? '';
+    final stepDescription =
+        'Carrier: $trimmedCarrier • Tracking: $trimmedTracking'
+        '${trimmedNote.isNotEmpty ? ' • $trimmedNote' : ''}';
+
+    _sellerSliceOverrides[_sliceKey(orderId, sellerId)] = _SellerOrderSliceState(
+      status: MarketplaceOrderStatus.inTransit,
+      fulfilment: SellerOrderFulfilmentDetails(
+        carrierName: trimmedCarrier,
+        trackingNumber: trimmedTracking,
+        trackingUrl: trimmedUrl.isEmpty ? null : trimmedUrl,
+        dispatchedAt: now,
+        fulfilmentNote: trimmedNote.isEmpty ? null : trimmedNote,
+        isManualSellerEntry: true,
+      ),
+      timeline: [
+        OrderStatusStep(
+          title: 'Dispatched (In Transit)',
+          description: stepDescription,
+          timestamp: now,
+          isCompleted: true,
+          isCurrent: true,
+        ),
+        ...currentView.timeline.map(
+          (s) => OrderStatusStep(
+            title: s.title,
+            description: s.description,
+            timestamp: s.timestamp,
+            isCompleted: s.isCompleted,
+            isCurrent: false,
+          ),
+        ),
+      ],
+    );
+
+    return getSellerOrderById(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+    );
+  }
+
+  @override
+  Future<Result<SellerOrderView>> markOrderOutForDelivery({
+    required String sellerId,
+    required String userId,
+    required String orderId,
+    String? note,
+  }) async {
+    final existingResult = await getSellerOrderById(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+    );
+    if (existingResult is FailureResult<SellerOrderView>) {
+      return existingResult;
+    }
+    final currentView = (existingResult as Success<SellerOrderView>).data;
+    if (!currentView.canMarkOutForDelivery) {
+      return FailureResult(
+        ValidationFailure(
+          message:
+              'Only In Transit orders can be marked Out for Delivery. Current status: ${currentView.status.displayName}.',
+        ),
+      );
+    }
+
+    final now = DateTime.now();
+    final trimmedNote = note?.trim() ?? '';
+    final prevFulfilment = currentView.fulfilment;
+
+    _sellerSliceOverrides[_sliceKey(orderId, sellerId)] = _SellerOrderSliceState(
+      status: MarketplaceOrderStatus.outForDelivery,
+      fulfilment: (prevFulfilment ?? const SellerOrderFulfilmentDetails())
+          .copyWith(
+        fulfilmentNote: trimmedNote.isNotEmpty
+            ? trimmedNote
+            : prevFulfilment?.fulfilmentNote,
+      ),
+      timeline: [
+        OrderStatusStep(
+          title: 'Out for Delivery',
+          description: trimmedNote.isNotEmpty
+              ? trimmedNote
+              : 'Seller marked shipment as out for delivery.',
+          timestamp: now,
+          isCompleted: true,
+          isCurrent: true,
+        ),
+        ...currentView.timeline.map(
+          (s) => OrderStatusStep(
+            title: s.title,
+            description: s.description,
+            timestamp: s.timestamp,
+            isCompleted: s.isCompleted,
+            isCurrent: false,
+          ),
+        ),
+      ],
+    );
+
+    return getSellerOrderById(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+    );
+  }
+
+  @override
+  Future<Result<SellerOrderView>> markOrderDelivered({
+    required String sellerId,
+    required String userId,
+    required String orderId,
+    String? note,
+  }) async {
+    final existingResult = await getSellerOrderById(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+    );
+    if (existingResult is FailureResult<SellerOrderView>) {
+      return existingResult;
+    }
+    final currentView = (existingResult as Success<SellerOrderView>).data;
+    if (!currentView.canMarkDelivered) {
+      return FailureResult(
+        ValidationFailure(
+          message:
+              'Only Out for Delivery orders can be confirmed Delivered. Current status: ${currentView.status.displayName}.',
+        ),
+      );
+    }
+
+    final now = DateTime.now();
+    final trimmedNote = note?.trim() ?? '';
+    final prevFulfilment = currentView.fulfilment;
+
+    _sellerSliceOverrides[_sliceKey(orderId, sellerId)] = _SellerOrderSliceState(
+      status: MarketplaceOrderStatus.delivered,
+      fulfilment: (prevFulfilment ?? const SellerOrderFulfilmentDetails())
+          .copyWith(
+        deliveredAt: now,
+        fulfilmentNote: trimmedNote.isNotEmpty
+            ? trimmedNote
+            : prevFulfilment?.fulfilmentNote,
+      ),
+      timeline: [
+        OrderStatusStep(
+          title: 'Order Delivered',
+          description: trimmedNote.isNotEmpty
+              ? trimmedNote
+              : 'Seller confirmed delivery of their order items.',
+          timestamp: now,
+          isCompleted: true,
+          isCurrent: true,
+        ),
+        ...currentView.timeline.map(
+          (s) => OrderStatusStep(
+            title: s.title,
+            description: s.description,
+            timestamp: s.timestamp,
+            isCompleted: s.isCompleted,
+            isCurrent: false,
+          ),
+        ),
+      ],
+    );
+
+    return getSellerOrderById(
+      sellerId: sellerId,
+      userId: userId,
+      orderId: orderId,
+    );
+  }
 }
 
 class _SellerOrderSliceState {
   final MarketplaceOrderStatus status;
   final List<OrderStatusStep> timeline;
   final String? cancellationReason;
+  final SellerOrderFulfilmentDetails? fulfilment;
 
   const _SellerOrderSliceState({
     required this.status,
     required this.timeline,
     this.cancellationReason,
+    this.fulfilment,
   });
 }

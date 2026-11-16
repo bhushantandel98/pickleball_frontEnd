@@ -116,6 +116,62 @@ class SellerOrderFulfilmentAddress extends Equatable {
       ];
 }
 
+/// Seller-entered dispatch & delivery metadata for a seller's order slice
+/// (Feature 6.5).
+///
+/// [isManualSellerEntry] is `true` when no live carrier tracking API is
+/// connected; tracking references are manually provided by the seller.
+class SellerOrderFulfilmentDetails extends Equatable {
+  final String? carrierName;
+  final String? trackingNumber;
+  final String? trackingUrl;
+  final DateTime? dispatchedAt;
+  final DateTime? deliveredAt;
+  final String? fulfilmentNote;
+  final bool isManualSellerEntry;
+
+  const SellerOrderFulfilmentDetails({
+    this.carrierName,
+    this.trackingNumber,
+    this.trackingUrl,
+    this.dispatchedAt,
+    this.deliveredAt,
+    this.fulfilmentNote,
+    this.isManualSellerEntry = true,
+  });
+
+  SellerOrderFulfilmentDetails copyWith({
+    String? carrierName,
+    String? trackingNumber,
+    String? trackingUrl,
+    DateTime? dispatchedAt,
+    DateTime? deliveredAt,
+    String? fulfilmentNote,
+    bool? isManualSellerEntry,
+  }) {
+    return SellerOrderFulfilmentDetails(
+      carrierName: carrierName ?? this.carrierName,
+      trackingNumber: trackingNumber ?? this.trackingNumber,
+      trackingUrl: trackingUrl ?? this.trackingUrl,
+      dispatchedAt: dispatchedAt ?? this.dispatchedAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      fulfilmentNote: fulfilmentNote ?? this.fulfilmentNote,
+      isManualSellerEntry: isManualSellerEntry ?? this.isManualSellerEntry,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        carrierName,
+        trackingNumber,
+        trackingUrl,
+        dispatchedAt,
+        deliveredAt,
+        fulfilmentNote,
+        isManualSellerEntry,
+      ];
+}
+
 /// Seller-scoped projection of [MarketplaceOrder].
 ///
 /// For multi-seller orders, [sellerItems] and [sellerSubtotal] include ONLY the
@@ -133,6 +189,7 @@ class SellerOrderView extends Equatable {
   final String paymentStatus;
   final List<OrderStatusStep> timeline;
   final String? cancellationReason;
+  final SellerOrderFulfilmentDetails? fulfilment;
 
   const SellerOrderView({
     required this.orderId,
@@ -147,6 +204,7 @@ class SellerOrderView extends Equatable {
     required this.paymentStatus,
     this.timeline = const [],
     this.cancellationReason,
+    this.fulfilment,
   });
 
   int get totalUnits =>
@@ -157,6 +215,12 @@ class SellerOrderView extends Equatable {
   bool get canCancelOrder =>
       status == MarketplaceOrderStatus.placed ||
       status == MarketplaceOrderStatus.processing;
+
+  bool get canMarkDispatched => status == MarketplaceOrderStatus.processing;
+
+  bool get canMarkOutForDelivery => status == MarketplaceOrderStatus.inTransit;
+
+  bool get canMarkDelivered => status == MarketplaceOrderStatus.outForDelivery;
 
   String get formattedOrderDate =>
       DateFormat('dd MMM yyyy, hh:mm a').format(orderDate);
@@ -181,6 +245,7 @@ class SellerOrderView extends Equatable {
         paymentStatus,
         timeline,
         cancellationReason,
+        fulfilment,
       ];
 }
 

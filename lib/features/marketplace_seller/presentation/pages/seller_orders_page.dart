@@ -370,6 +370,13 @@ class _SellerOrderCard extends StatelessWidget {
                 'Payment: ${order.paymentStatus} (${order.paymentMethod})',
                 style: theme.textTheme.bodySmall,
               ),
+              if (order.fulfilment?.trackingNumber != null)
+                Text(
+                  'Tracking: ${order.fulfilment!.carrierName ?? 'Carrier'} (${order.fulfilment!.trackingNumber})',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.info,
+                  ),
+                ),
             ],
           ),
           const Divider(height: AppSpacing.lg),

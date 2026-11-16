@@ -3096,3 +3096,28 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 - Backend must filter order items by `sellerId` on every query and store item-level / seller-slice fulfillment status (`order_id + seller_id`) so multi-seller orders never leak or mutate another seller's products, status, pricing, or totals.
 - Sellers cannot modify `paymentMethod`, `paymentStatus`, or execute refunds/payouts.
 - Delivery/shipment tracking (Feature 6.5) and settlement statements (Feature 6.6) are separate workflows.
+
+---
+
+### 9.5 Feature 6.5 — Seller Fulfilment & Delivery Updates
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/marketplace_seller/` (`SellerOrderFulfilmentDetails`, `SellerOrderRepository.markOrderDispatched` / `markOrderOutForDelivery` / `markOrderDelivered`, `MockSellerOrderRepository`, `SellerOrderCubit`, `SellerOrderDetailsPage`, `SellerOrdersPage`).
+- **Seller-Slice Isolation:** All fulfilment transitions operate strictly on `{orderId, sellerId}` (`order_id + seller_id`), never mutating another seller's items in a multi-seller order or altering buyer payment records.
+
+#### 2. Fulfilment Fields & Status Transitions
+- **Fulfilment Details (`SellerOrderFulfilmentDetails`):** `carrierName`, `trackingNumber`, `trackingUrl` (optional `http`/`https`), `dispatchedAt`, `deliveredAt`, `fulfilmentNote`, `isManualSellerEntry` (`true` until a real carrier webhook/API is integrated).
+- **Valid Transitions (strictly matching `MarketplaceOrderStatus`):**
+  1. `processing` -> `inTransit` (`markOrderDispatched`, requires `carrierName` + `trackingNumber`)
+  2. `inTransit` -> `outForDelivery` (`markOrderOutForDelivery`, optional `note`)
+  3. `outForDelivery` -> `delivered` (`markOrderDelivered`, records `deliveredAt`, triggers customer street/phone masking)
+
+#### 3. Proposed Future REST API Endpoints
+1. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/dispatch` — Body `{ "carrierName": "...", "trackingNumber": "...", "trackingUrl": "...", "note": "..." }`. Transitions `{sellerId}`'s slice `processing` -> `inTransit`.
+2. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/out-for-delivery` — Body `{ "note": "..." }`. Transitions `{sellerId}`'s slice `inTransit` -> `outForDelivery`.
+3. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/deliver` — Body `{ "note": "..." }`. Transitions `{sellerId}`'s slice `outForDelivery` -> `delivered`.
+
+#### 4. Authorization & Governance Rules
+- Enforce `{sellerId}` ownership and valid source-state transitions (`409 Conflict` / `422` on invalid transition).
+- Payment records, refunds, and settlements remain read-only / out of scope (Feature 6.6).
+- Do not expose live carrier tracking claims unless a real courier API integration is connected.

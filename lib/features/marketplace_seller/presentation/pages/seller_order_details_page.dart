@@ -155,6 +155,48 @@ class _OrderDetailContent extends StatelessWidget {
                       icon: const Icon(Icons.check_circle_outline),
                       label: const Text('Accept Order (Move to Processing)'),
                     ),
+                  if (order.canMarkDispatched)
+                    FilledButton.icon(
+                      onPressed: isMutating
+                          ? null
+                          : () => _showDispatchDialog(context, cubit, order.orderId),
+                      icon: const Icon(Icons.local_shipping_outlined),
+                      label: const Text('Mark Dispatched (In Transit)'),
+                    ),
+                  if (order.canMarkOutForDelivery)
+                    FilledButton.icon(
+                      onPressed: isMutating
+                          ? null
+                          : () => _showFulfilmentNoteDialog(
+                                context,
+                                title: 'Mark Out for Delivery',
+                                confirmLabel: 'Mark Out for Delivery',
+                                onConfirm: (note) => cubit.markOutForDelivery(
+                                  orderId: order.orderId,
+                                  note: note,
+                                ),
+                              ),
+                      icon: const Icon(Icons.delivery_dining_outlined),
+                      label: const Text('Mark Out for Delivery'),
+                    ),
+                  if (order.canMarkDelivered)
+                    FilledButton.icon(
+                      onPressed: isMutating
+                          ? null
+                          : () => _showFulfilmentNoteDialog(
+                                context,
+                                title: 'Confirm Delivery',
+                                confirmLabel: 'Confirm Delivered',
+                                helperText:
+                                    'Sensitive customer street/phone details will be masked once delivered.',
+                                onConfirm: (note) => cubit.markDelivered(
+                                  orderId: order.orderId,
+                                  note: note,
+                                ),
+                              ),
+                      icon: const Icon(Icons.verified_outlined),
+                      label: const Text('Confirm Delivered'),
+                    ),
                   if (order.canCancelOrder)
                     OutlinedButton.icon(
                       onPressed: isMutating
@@ -167,11 +209,60 @@ class _OrderDetailContent extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Dispatch/delivery tracking (Feature 6.5) and settlement statements (Feature 6.6) are managed separately.',
+                'Settlement & commission statements (Feature 6.6) are managed separately. Payment records are read-only.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // 1b. Fulfilment & Dispatch Details (Feature 6.5)
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Fulfilment & Dispatch Details',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              if (order.fulfilment == null)
+                Text(
+                  'No dispatch details recorded yet. Once Processing, enter carrier & tracking reference to mark Dispatched.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                )
+              else ...[
+                if (order.fulfilment!.carrierName != null)
+                  Text('Carrier: ${order.fulfilment!.carrierName}'),
+                if (order.fulfilment!.trackingNumber != null)
+                  Text('Tracking Ref: ${order.fulfilment!.trackingNumber}'),
+                if (order.fulfilment!.trackingUrl != null)
+                  Text('Tracking Link: ${order.fulfilment!.trackingUrl}'),
+                if (order.fulfilment!.dispatchedAt != null)
+                  Text(
+                    'Dispatched At: ${DateFormat('dd MMM yyyy, HH:mm').format(order.fulfilment!.dispatchedAt!)}',
+                  ),
+                if (order.fulfilment!.deliveredAt != null)
+                  Text(
+                    'Delivered At: ${DateFormat('dd MMM yyyy, HH:mm').format(order.fulfilment!.deliveredAt!)}',
+                  ),
+                if (order.fulfilment!.fulfilmentNote != null)
+                  Text('Note: ${order.fulfilment!.fulfilmentNote}'),
+                const SizedBox(height: 4),
+                Text(
+                  'Seller-entered manual tracking details (no live courier API integration).',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -392,5 +483,135 @@ class _OrderDetailContent extends StatelessWidget {
       await cubit.cancelOrder(orderId: orderId, reason: reasonCtrl.text);
     }
     reasonCtrl.dispose();
+  }
+
+  Future<void> _showDispatchDialog(
+    BuildContext context,
+    SellerOrderCubit cubit,
+    String orderId,
+  ) async {
+    final carrierCtrl = TextEditingController();
+    final trackingCtrl = TextEditingController();
+    final urlCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Dispatch Order $orderId'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: carrierCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Carrier / Courier Name *',
+                  hintText: 'e.g. Delhivery, BlueDart, DTDC',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: trackingCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Tracking Reference *',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: urlCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Tracking URL (optional https://...)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: noteCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Dispatch Note (optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Mark Dispatched'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await cubit.markDispatched(
+        orderId: orderId,
+        carrierName: carrierCtrl.text,
+        trackingNumber: trackingCtrl.text,
+        trackingUrl: urlCtrl.text,
+        note: noteCtrl.text,
+      );
+    }
+    carrierCtrl.dispose();
+    trackingCtrl.dispose();
+    urlCtrl.dispose();
+    noteCtrl.dispose();
+  }
+
+  Future<void> _showFulfilmentNoteDialog(
+    BuildContext context, {
+    required String title,
+    required String confirmLabel,
+    String? helperText,
+    required Future<void> Function(String? note) onConfirm,
+  }) async {
+    final noteCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (helperText != null) ...[
+              Text(helperText),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+            TextField(
+              controller: noteCtrl,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Fulfilment Note (optional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await onConfirm(noteCtrl.text);
+    }
+    noteCtrl.dispose();
   }
 }
