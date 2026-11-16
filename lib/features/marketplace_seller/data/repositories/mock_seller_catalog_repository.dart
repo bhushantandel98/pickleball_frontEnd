@@ -291,6 +291,120 @@ class MockSellerCatalogRepository implements SellerCatalogRepository {
       createdAt: DateTime(2026, 11, 12, 10, 0),
       updatedAt: DateTime(2026, 11, 12, 10, 0),
     ),
+    'sp_006': SellerProductModel(
+      productId: 'sp_006',
+      sellerId: 'org_seller_002',
+      sellerName: 'Dink & Smash Pro Shop',
+      name: 'CourtGrip Pro Non-Marking Pickleball Shoes',
+      description:
+          'Lateral-support outdoor pickleball court shoes with reinforced toe drag guard and herringbone outsole.',
+      category: ProductCategory.footwear,
+      subcategory: 'Outdoor Court Shoes',
+      brand: 'Dink & Smash',
+      isPickleballOnlyConfirmed: true,
+      specifications: const {
+        'Outsole': 'Non-Marking High-Abrasion Rubber',
+        'Support': 'Lateral TPU Shank',
+      },
+      images: [
+        SellerProductImageModel(
+          id: 'img_sp_006_1',
+          fileName: 'courtgrip_shoes.jpg',
+          mimeType: 'image/jpeg',
+          fileSizeBytes: 245000,
+          localFileRef: 'local://catalog/org_seller_002/courtgrip_shoes.jpg',
+          isLocalMockOnly: true,
+          isPrimary: true,
+          addedAt: DateTime(2026, 11, 12, 11, 0),
+        ),
+      ],
+      variants: const [
+        SellerProductVariantModel(
+          id: 'var_sp_006_1',
+          sku: 'DS-SHOE-UK9',
+          size: 'UK 9',
+          color: 'Court White / Green',
+          sellingPrice: 6499,
+          stockCount: 14,
+        ),
+      ],
+      baseSku: 'DS-SHOE-PRO',
+      sellingPrice: 6499,
+      stockCount: 14,
+      returnPolicyDays: 14,
+      status: SellerProductStatus.staffRecommended,
+      isPublished: false,
+      reviewHistory: [
+        SellerProductReviewRecordModel(
+          timestamp: DateTime(2026, 11, 12, 11, 30),
+          status: SellerProductStatus.submittedForReview,
+          actorRole: 'Seller',
+          note: 'Submitted for pickleball catalog review.',
+        ),
+        SellerProductReviewRecordModel(
+          timestamp: DateTime(2026, 11, 13, 10, 15),
+          status: SellerProductStatus.staffRecommended,
+          actorRole: 'Application Staff',
+          note:
+              'Pickleball suitability and SKU metadata verified. Recommended to Application Admin for final approval.',
+        ),
+      ],
+      createdAt: DateTime(2026, 11, 12, 11, 0),
+      updatedAt: DateTime(2026, 11, 13, 10, 15),
+    ),
+    'sp_007': SellerProductModel(
+      productId: 'sp_007',
+      sellerId: 'org_seller_002',
+      sellerName: 'Dink & Smash Pro Shop',
+      name: 'All-Sport Court Backpack',
+      description:
+          'Multi-sport court bag with padded compartment and side bottle pockets.',
+      category: ProductCategory.bags,
+      subcategory: 'Tournament Backpacks',
+      brand: 'Dink & Smash',
+      isPickleballOnlyConfirmed: true,
+      specifications: const {
+        'Capacity': '24 Liters',
+      },
+      images: [
+        SellerProductImageModel(
+          id: 'img_sp_007_1',
+          fileName: 'allsport_bag.jpg',
+          mimeType: 'image/jpeg',
+          fileSizeBytes: 175000,
+          localFileRef: 'local://catalog/org_seller_002/allsport_bag.jpg',
+          isLocalMockOnly: true,
+          isPrimary: true,
+          addedAt: DateTime(2026, 11, 9, 9, 0),
+        ),
+      ],
+      variants: const [],
+      baseSku: 'DS-BAG-AS01',
+      sellingPrice: 2899,
+      stockCount: 20,
+      returnPolicyDays: 7,
+      status: SellerProductStatus.rejected,
+      isPublished: false,
+      reviewFeedback:
+          'Application Admin Decision: Description lists generic multi-sport use; clarify dedicated pickleball paddle compartment details and resubmit.',
+      reviewHistory: [
+        SellerProductReviewRecordModel(
+          timestamp: DateTime(2026, 11, 9, 9, 30),
+          status: SellerProductStatus.submittedForReview,
+          actorRole: 'Seller',
+          note: 'Submitted for catalog review.',
+        ),
+        SellerProductReviewRecordModel(
+          timestamp: DateTime(2026, 11, 10, 16, 40),
+          status: SellerProductStatus.rejected,
+          actorRole: 'Application Admin',
+          note:
+              'Description lists generic multi-sport use; clarify dedicated pickleball paddle compartment details and resubmit.',
+        ),
+      ],
+      createdAt: DateTime(2026, 11, 9, 9, 0),
+      updatedAt: DateTime(2026, 11, 10, 16, 40),
+    ),
   };
 
   Future<Result<SellerProfile>> _requireOwnedSeller({
@@ -563,6 +677,7 @@ class MockSellerCatalogRepository implements SellerCatalogRepository {
     required String sellerId,
     required String userId,
     required String productId,
+    String? submissionNote,
   }) async {
     final sellerCheck = await _requireOwnedSeller(
       sellerId: sellerId,
@@ -597,10 +712,19 @@ class MockSellerCatalogRepository implements SellerCatalogRepository {
       );
     }
 
-    final validationError = _validateForSubmission(existing);
-    if (validationError != null) {
-      return FailureResult(ValidationFailure(message: validationError));
+    final issues = existing.submissionReadinessIssues;
+    if (issues.isNotEmpty) {
+      return FailureResult(ValidationFailure(message: issues.first));
     }
+
+    final isResubmission = existing.status == SellerProductStatus.needsInformation ||
+        existing.status == SellerProductStatus.rejected;
+    final trimmedNote = submissionNote?.trim() ?? '';
+    final historyNote = trimmedNote.isNotEmpty
+        ? trimmedNote
+        : isResubmission
+            ? 'Updated and resubmitted for Application Staff review & Application Admin approval.'
+            : 'Submitted for Application Staff review & Application Admin approval.';
 
     final now = DateTime.now();
     final updated = SellerProductModel.fromEntity(
@@ -616,63 +740,13 @@ class MockSellerCatalogRepository implements SellerCatalogRepository {
             timestamp: now,
             status: SellerProductStatus.submittedForReview,
             actorRole: 'Seller',
-            note:
-                'Submitted for Application Staff review & Application Admin approval.',
+            note: historyNote,
           ),
         ],
       ),
     );
     _products[productId] = updated;
     return Success(updated);
-  }
-
-  String? _validateForSubmission(SellerProduct product) {
-    if (!product.isPickleballOnlyConfirmed) {
-      return 'Confirm that this product is 100% pickleball-related before submitting.';
-    }
-    if (!PickleballCatalogCategories.allowedCategories.contains(product.category)) {
-      return 'Select a valid pickleball product category.';
-    }
-    if (product.name.trim().length < 3) {
-      return 'Product name must be at least 3 characters.';
-    }
-    if (product.description.trim().length < 15) {
-      return 'Product description must be at least 15 characters.';
-    }
-    if (product.brand.trim().isEmpty) {
-      return 'Brand name is required.';
-    }
-    if (product.subcategory.trim().isEmpty) {
-      return 'Pickleball subcategory is required.';
-    }
-    if (product.baseSku.trim().isEmpty) {
-      return 'Base SKU is required.';
-    }
-    if (product.images.isEmpty) {
-      return 'Attach at least one product image from your device before submitting.';
-    }
-    if (product.sellingPrice <= 0) {
-      return 'Selling price must be greater than zero.';
-    }
-    if (product.variants.isNotEmpty) {
-      final seenSkus = <String>{};
-      for (final variant in product.variants) {
-        final sku = variant.sku.trim().toUpperCase();
-        if (sku.isEmpty) {
-          return 'Every product variant must have a SKU.';
-        }
-        if (!seenSkus.add(sku)) {
-          return 'Duplicate variant SKU found: ${variant.sku}.';
-        }
-        if (variant.sellingPrice <= 0) {
-          return 'Variant ${variant.sku} must have a price greater than zero.';
-        }
-        if (variant.stockCount < 0) {
-          return 'Variant ${variant.sku} stock cannot be negative.';
-        }
-      }
-    }
-    return null;
   }
 
   @override

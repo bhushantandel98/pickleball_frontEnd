@@ -73,6 +73,7 @@ import 'package:pickleball_platform/features/player/presentation/pages/tournamen
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_discovery_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_editor_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_review_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_products_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_registration_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_details_page.dart';
@@ -536,6 +537,12 @@ GoRouter createAppRouter({
           GoRoute(
             path: AppRoutes.marketplaceSellerProductEdit,
             builder: (context, state) => SellerProductEditorPage(
+              productId: state.pathParameters['id'],
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.marketplaceSellerProductReview,
+            builder: (context, state) => SellerProductReviewPage(
               productId: state.pathParameters['id'],
             ),
           ),

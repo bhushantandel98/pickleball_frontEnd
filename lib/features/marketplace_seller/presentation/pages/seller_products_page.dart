@@ -562,6 +562,15 @@ class _SellerProductCard extends StatelessWidget {
                     ),
                   ),
                   OutlinedButton.icon(
+                    onPressed: () => context.go(
+                      AppRoutes.marketplaceSellerProductReviewPath(
+                        product.productId,
+                      ),
+                    ),
+                    icon: const Icon(Icons.fact_check_outlined, size: 18),
+                    label: const Text('Review & History'),
+                  ),
+                  OutlinedButton.icon(
                     onPressed: isMutating ? null : onUpdateInventory,
                     icon: const Icon(Icons.inventory_2_outlined, size: 18),
                     label: const Text('Stock'),
@@ -614,6 +623,8 @@ class _SellerProductCard extends StatelessWidget {
         return AppColors.textSecondaryLight;
       case SellerProductStatus.submittedForReview:
         return AppColors.info;
+      case SellerProductStatus.staffRecommended:
+        return AppColors.secondary;
       case SellerProductStatus.needsInformation:
         return AppColors.warning;
       case SellerProductStatus.approved:

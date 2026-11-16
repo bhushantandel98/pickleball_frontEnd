@@ -18,7 +18,11 @@ enum SellerProductStatus {
   ),
   submittedForReview(
     'Submitted for Review',
-    'Under Application Staff / Admin review. Product details are locked; inventory can still be adjusted.',
+    'Under Application Staff review. Product details are locked; inventory can still be adjusted.',
+  ),
+  staffRecommended(
+    'Recommended by Staff',
+    'Application Staff recommended approval. Awaiting final Application Admin decision; editing & publishing remain locked.',
   ),
   needsInformation(
     'Needs Information',
@@ -383,6 +387,86 @@ class SellerProduct extends Equatable {
 
   bool get isLiveInBuyerCatalog =>
       status == SellerProductStatus.approved && isPublished;
+
+  /// Returns a list of missing or invalid fields preventing submission for review.
+  List<String> get submissionReadinessIssues {
+    final issues = <String>[];
+    if (!isPickleballOnlyConfirmed) {
+      issues.add('Confirm that this product is 100% pickleball-related.');
+    }
+    if (!PickleballCatalogCategories.allowedCategories.contains(category)) {
+      issues.add('Select a valid pickleball product category.');
+    }
+    if (name.trim().length < 3) {
+      issues.add('Product name must be at least 3 characters.');
+    }
+    if (description.trim().length < 15) {
+      issues.add('Product description must be at least 15 characters.');
+    }
+    if (brand.trim().isEmpty) {
+      issues.add('Brand name is required.');
+    }
+    if (subcategory.trim().isEmpty) {
+      issues.add('Pickleball subcategory is required.');
+    }
+    if (baseSku.trim().isEmpty) {
+      issues.add('Base SKU is required.');
+    }
+    if (images.isEmpty) {
+      issues.add(
+        'Attach at least one product image from your device before submitting.',
+      );
+    }
+    if (sellingPrice <= 0) {
+      issues.add('Selling price must be greater than zero.');
+    }
+    if (variants.isNotEmpty) {
+      final seenSkus = <String>{};
+      for (final variant in variants) {
+        final sku = variant.sku.trim().toUpperCase();
+        if (sku.isEmpty) {
+          issues.add('Every product variant must have a SKU.');
+          break;
+        }
+        if (!seenSkus.add(sku)) {
+          issues.add('Duplicate variant SKU found: ${variant.sku}.');
+          break;
+        }
+        if (variant.sellingPrice <= 0) {
+          issues.add(
+            'Variant ${variant.sku} must have a price greater than zero.',
+          );
+          break;
+        }
+        if (variant.stockCount < 0) {
+          issues.add('Variant ${variant.sku} stock cannot be negative.');
+          break;
+        }
+      }
+    }
+    return List<String>.unmodifiable(issues);
+  }
+
+  bool get isReadyForSubmission => submissionReadinessIssues.isEmpty;
+
+  String get actionAvailabilitySummary {
+    switch (status) {
+      case SellerProductStatus.draft:
+        return 'Editable • Can be submitted once verified & ready • Can be deleted';
+      case SellerProductStatus.submittedForReview:
+        return 'Details locked for Staff review • Inventory editable • Publishing locked';
+      case SellerProductStatus.staffRecommended:
+        return 'Details locked awaiting Admin decision • Inventory editable • Publishing locked';
+      case SellerProductStatus.needsInformation:
+        return 'Editable to address Staff feedback • Ready to resubmit • Publishing locked';
+      case SellerProductStatus.rejected:
+        return 'Editable to address rejection reason • Can resubmit • Publishing locked';
+      case SellerProductStatus.approved:
+        return isPublished
+            ? 'Details locked • Inventory editable • Published in Player Marketplace'
+            : 'Details locked • Inventory editable • Approved & ready to Publish manually';
+    }
+  }
 
   /// Converts an approved, published product into a [MarketplaceProduct]
   /// compatible with the existing Player Marketplace catalog, cart & checkout.

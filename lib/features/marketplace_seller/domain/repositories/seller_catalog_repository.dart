@@ -54,6 +54,7 @@ abstract class SellerCatalogRepository {
     required String sellerId,
     required String userId,
     required String productId,
+    String? submissionNote,
   });
 
   /// Explicitly publishes or unpublishes an `approved` product.

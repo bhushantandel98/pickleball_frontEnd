@@ -135,7 +135,10 @@ class SellerCatalogCubit extends Cubit<SellerCatalogState> {
     return saved;
   }
 
-  Future<bool> submitProductForReview(String productId) async {
+  Future<bool> submitProductForReview(
+    String productId, {
+    String? submissionNote,
+  }) async {
     final current = state;
     final userId = _userId;
     final sellerId = _sellerId;
@@ -148,6 +151,7 @@ class SellerCatalogCubit extends Cubit<SellerCatalogState> {
       sellerId: sellerId,
       userId: userId,
       productId: productId,
+      submissionNote: submissionNote,
     );
 
     var ok = false;

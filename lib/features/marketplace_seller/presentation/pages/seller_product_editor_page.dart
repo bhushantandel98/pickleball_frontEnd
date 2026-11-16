@@ -39,6 +39,15 @@ class SellerProductEditorPage extends StatelessWidget {
       subtitle:
           'Configure pickleball catalog metadata, device images, variants & stock.',
       actionsBuilder: (context, _) => [
+        if (!isCreate)
+          OutlinedButton.icon(
+            onPressed: () => context.go(
+              AppRoutes.marketplaceSellerProductReviewPath(productId!),
+            ),
+            icon: const Icon(Icons.fact_check_outlined),
+            label: const Text('Review & History'),
+          ),
+        if (!isCreate) const SizedBox(width: AppSpacing.xs),
         OutlinedButton.icon(
           onPressed: () => context.go(AppRoutes.marketplaceSellerProducts),
           icon: const Icon(Icons.arrow_back),
@@ -436,6 +445,19 @@ class _ProductEditorFormState extends State<_ProductEditorForm> {
     final saved = await cubit.saveProductDraft(product);
     if (saved != null && mounted) {
       context.go(AppRoutes.marketplaceSellerProducts);
+    }
+  }
+
+  Future<void> _saveAndReview() async {
+    final product = _buildProductFromForm();
+    if (product == null) return;
+
+    final cubit = context.read<SellerCatalogCubit>();
+    final saved = await cubit.saveProductDraft(product);
+    if (saved != null && mounted) {
+      context.go(
+        AppRoutes.marketplaceSellerProductReviewPath(saved.productId),
+      );
     }
   }
 
@@ -980,6 +1002,11 @@ class _ProductEditorFormState extends State<_ProductEditorForm> {
                   onPressed: isMutating ? null : _saveDraft,
                   icon: const Icon(Icons.save_outlined),
                   label: const Text('Save Draft'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: isMutating ? null : _saveAndReview,
+                  icon: const Icon(Icons.fact_check_outlined),
+                  label: const Text('Save & Review'),
                 ),
                 FilledButton.icon(
                   onPressed:

@@ -149,6 +149,10 @@ abstract final class AppRoutes {
       '/marketplace-seller/products/:id/edit';
   static String marketplaceSellerProductEditPath(String productId) =>
       '/marketplace-seller/products/$productId/edit';
+  static const String marketplaceSellerProductReview =
+      '/marketplace-seller/products/:id/review';
+  static String marketplaceSellerProductReviewPath(String productId) =>
+      '/marketplace-seller/products/$productId/review';
   static const String marketplaceSellerOrders =
       '/marketplace-seller/orders';
   static const String marketplaceSellerSettlements =

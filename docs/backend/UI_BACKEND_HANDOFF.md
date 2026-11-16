@@ -3045,3 +3045,29 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 - Application Staff (Phase 7) can review & recommend or request `needsInformation`; only Application Admin (Phase 7) grants final `approved` or `rejected` decision.
 - Admin approval **must NOT** auto-publish (`isPublished` remains `false`); the seller explicitly controls publishing.
 - Order management, fulfilment, returns execution, and Razorpay split/settlement workflows remain out of scope for Feature 6.2.
+
+---
+
+### 9.3 Feature 6.3 — Product Submission, Review Feedback & Publishing Workflow
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/marketplace_seller/` (`SellerProductReviewPage`, `SellerProductStatus.staffRecommended`, `SellerProduct.submissionReadinessIssues`, `SellerProduct.actionAvailabilitySummary`, `SellerCatalogCubit.submitProductForReview(..., submissionNote: ...)`).
+- **Route:** `/marketplace-seller/products/:id/review` (`AppRoutes.marketplaceSellerProductReview`, requires `UserRole.marketplaceSeller` + `activeOrganizationId`).
+
+#### 2. Lifecycle State Machine & Permissions
+- `draft` -> Seller edits details, checks `submissionReadinessIssues`, submits (`POST .../submit-review`) -> `submittedForReview` (requires `SellerVerificationStatus.approved`).
+- `submittedForReview` -> Locked for Seller detail edits & publishing; inventory remains adjustable. Application Staff (Phase 7) may transition to `staffRecommended` or `needsInformation`.
+- `staffRecommended` -> Application Staff recommended approval to Application Admin; details & publishing remain locked for Seller. Only the single Application Admin (Phase 7) may transition to `approved` or `rejected`.
+- `needsInformation` / `rejected` -> Seller sees highlighted `reviewFeedback` and full `reviewHistory`, edits details (`PUT .../products/{productId}`), and resubmits with optional `submissionNote` (`POST .../submit-review`) -> `submittedForReview`.
+- `approved` -> `isPublished` defaults to `false` (approval **never** auto-publishes). Seller explicitly toggles visibility (`PATCH .../publish`) between `Published` and `Unpublished`.
+- **Buyer Catalog Visibility:** Only products where `status == approved && isPublished == true` are eligible for Player Marketplace listing.
+
+#### 3. Submission & Publishing Request/Response Expectations
+- **Submit / Resubmit for Review:** `POST /api/v1/marketplace-seller/{sellerId}/products/{productId}/submit-review`
+  - **Request Body (optional):** `{ "submissionNote": "Updated grip length in specifications." }`
+  - **Response (`200 OK`):** Updated `SellerProduct` with `status: "submittedForReview"`, `isPublished: false`, `reviewFeedback: null`, and appended `SellerProductReviewRecord` (`actorRole: "Seller"`).
+  - **Errors:** `403 Forbidden` if seller is not `approved` or does not own `{productId}`; `422 Unprocessable Entity` if any `submissionReadinessIssues` exist or `status` is not in `{draft, needsInformation, rejected}`.
+- **Manual Publish / Unpublish:** `PATCH /api/v1/marketplace-seller/{sellerId}/products/{productId}/publish`
+  - **Request Body:** `{ "isPublished": true | false }`
+  - **Response (`200 OK`):** Updated `SellerProduct` with `isPublished` and `publishedAt` (set when `true`, cleared when `false`).
+  - **Errors:** `403 Forbidden` if seller is not `approved` or not owner; `409 Conflict` / `422` if `product.status != "approved"`.
