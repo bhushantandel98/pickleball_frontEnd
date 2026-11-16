@@ -389,6 +389,109 @@ class _OrderDetailContent extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
 
+        // 3b. Product-Specific Return Windows (Feature 6.6)
+        if (order.itemReturnSnapshots.isNotEmpty) ...[
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Product Return Windows (Order-Placement Snapshot)',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Return windows are locked to the policy active when this order was placed.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                ...order.itemReturnSnapshots.map((ret) {
+                  final df = DateFormat('dd MMM yyyy');
+                  final endLabel = ret.returnWindowEndsAt != null
+                      ? ' • Eligible until ${df.format(ret.returnWindowEndsAt!)}'
+                      : '';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${ret.productTitle} (${ret.quantity}x)',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '${ret.policyLabel} • ${ret.eligibilityStatus.label}$endLabel',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+
+        // 3c. Order-Level Settlement Breakdown (Feature 6.6, Read-Only)
+        if (order.settlementSnapshot != null) ...[
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Order-Level Settlement Breakdown (Read-Only)',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                _SettlementRow(
+                  label: 'Seller Order Value (Gross)',
+                  value: order.settlementSnapshot!.formattedGrossAmount,
+                ),
+                _SettlementRow(
+                  label:
+                      'Platform Commission (${order.settlementSnapshot!.snapshottedCommissionRatePercent.toStringAsFixed(0)}%)',
+                  value: '-${order.settlementSnapshot!.formattedCommissionAmount}',
+                ),
+                _SettlementRow(
+                  label: 'Other Deductions',
+                  value: '-${order.settlementSnapshot!.formattedOtherDeductions}',
+                ),
+                const Divider(),
+                _SettlementRow(
+                  label: 'Estimated Net Settlement',
+                  value: order.settlementSnapshot!.formattedEstimatedNetSettlement,
+                  isBold: true,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Actual Payout Status: ${order.settlementSnapshot!.payoutStatus.label}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.info,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${order.settlementSnapshot!.commissionRuleLabel}. Actual payout dates & transfers require verified backend/payment-provider settlement.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+
         // 4. Order Status Timeline
         AppCard(
           child: Column(
@@ -613,5 +716,37 @@ class _OrderDetailContent extends StatelessWidget {
       await onConfirm(noteCtrl.text);
     }
     noteCtrl.dispose();
+  }
+}
+
+class _SettlementRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isBold;
+
+  const _SettlementRow({
+    required this.label,
+    required this.value,
+    this.isBold = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = isBold
+        ? Theme.of(context)
+            .textTheme
+            .titleSmall
+            ?.copyWith(fontWeight: FontWeight.w700)
+        : Theme.of(context).textTheme.bodyMedium;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: style),
+          Text(value, style: style),
+        ],
+      ),
+    );
   }
 }

@@ -172,6 +172,139 @@ class SellerOrderFulfilmentDetails extends Equatable {
       ];
 }
 
+/// Return eligibility state for an order item computed from its order-placement
+/// return window snapshot and delivery timestamp (Feature 6.6).
+enum SellerReturnEligibilityStatus {
+  nonReturnable('Non-Returnable (0-day policy)'),
+  cancelledOrder('Order Cancelled'),
+  pendingDelivery('Starts Upon Delivery'),
+  withinWindow('Within Return Window'),
+  windowExpired('Return Window Closed');
+
+  final String label;
+  const SellerReturnEligibilityStatus(this.label);
+}
+
+/// Immutable snapshot of a product's return policy captured at order placement.
+///
+/// Subsequent edits to `SellerProduct.returnPolicyDays` must NEVER alter
+/// [snapshottedReturnWindowDays] for historical orders.
+class SellerOrderItemReturnSnapshot extends Equatable {
+  final String orderItemId;
+  final String productId;
+  final String productTitle;
+  final int quantity;
+  final double lineGrossAmount;
+  final int snapshottedReturnWindowDays;
+  final DateTime snapshottedAt;
+  final DateTime? deliveredAt;
+  final SellerReturnEligibilityStatus eligibilityStatus;
+  final DateTime? returnWindowEndsAt;
+
+  const SellerOrderItemReturnSnapshot({
+    required this.orderItemId,
+    required this.productId,
+    required this.productTitle,
+    required this.quantity,
+    required this.lineGrossAmount,
+    required this.snapshottedReturnWindowDays,
+    required this.snapshottedAt,
+    this.deliveredAt,
+    required this.eligibilityStatus,
+    this.returnWindowEndsAt,
+  });
+
+  String get policyLabel => snapshottedReturnWindowDays == 0
+      ? 'Non-returnable (0 days)'
+      : '$snapshottedReturnWindowDays-day return window';
+
+  @override
+  List<Object?> get props => [
+        orderItemId,
+        productId,
+        productTitle,
+        quantity,
+        lineGrossAmount,
+        snapshottedReturnWindowDays,
+        snapshottedAt,
+        deliveredAt,
+        eligibilityStatus,
+        returnWindowEndsAt,
+      ];
+}
+
+/// Read-only payout status distinguishing estimated net settlement from
+/// verified backend/payment-provider transfers.
+enum SellerPayoutStatus {
+  notApplicableCancelled('Cancelled — Not Eligible'),
+  pendingFulfilment('Pending Delivery & Return Window'),
+  inReturnWindowHold('Held During Return Window'),
+  awaitingProviderPayout('Eligible — Awaiting Backend/Provider Payout');
+
+  final String label;
+  const SellerPayoutStatus(this.label);
+}
+
+/// Read-only order-level settlement snapshot for a single seller's slice of an
+/// order (Feature 6.6).
+///
+/// Clearly separates [grossAmount], [commissionAmount], [otherDeductionsAmount],
+/// [estimatedNetSettlement], and [payoutStatus]. Never triggers or promises
+/// automated transfers.
+class SellerOrderSettlementSnapshot extends Equatable {
+  final String orderId;
+  final String sellerId;
+  final double grossAmount;
+  final double snapshottedCommissionRatePercent;
+  final double commissionAmount;
+  final double otherDeductionsAmount;
+  final double estimatedNetSettlement;
+  final SellerPayoutStatus payoutStatus;
+  final String commissionRuleLabel;
+  final DateTime snapshottedAt;
+  final bool isReadOnly;
+
+  const SellerOrderSettlementSnapshot({
+    required this.orderId,
+    required this.sellerId,
+    required this.grossAmount,
+    required this.snapshottedCommissionRatePercent,
+    required this.commissionAmount,
+    this.otherDeductionsAmount = 0.0,
+    required this.estimatedNetSettlement,
+    required this.payoutStatus,
+    required this.commissionRuleLabel,
+    required this.snapshottedAt,
+    this.isReadOnly = true,
+  });
+
+  static String _fmt(double amount) => NumberFormat.currency(
+        symbol: '₹',
+        decimalDigits: 0,
+        locale: 'en_IN',
+      ).format(amount);
+
+  String get formattedGrossAmount => _fmt(grossAmount);
+  String get formattedCommissionAmount => _fmt(commissionAmount);
+  String get formattedOtherDeductions => _fmt(otherDeductionsAmount);
+  String get formattedEstimatedNetSettlement => _fmt(estimatedNetSettlement);
+
+  @override
+  List<Object?> get props => [
+        orderId,
+        sellerId,
+        grossAmount,
+        snapshottedCommissionRatePercent,
+        commissionAmount,
+        otherDeductionsAmount,
+        estimatedNetSettlement,
+        payoutStatus,
+        commissionRuleLabel,
+        snapshottedAt,
+        isReadOnly,
+      ];
+}
+
 /// Seller-scoped projection of [MarketplaceOrder].
 ///
 /// For multi-seller orders, [sellerItems] and [sellerSubtotal] include ONLY the
@@ -190,6 +323,8 @@ class SellerOrderView extends Equatable {
   final List<OrderStatusStep> timeline;
   final String? cancellationReason;
   final SellerOrderFulfilmentDetails? fulfilment;
+  final List<SellerOrderItemReturnSnapshot> itemReturnSnapshots;
+  final SellerOrderSettlementSnapshot? settlementSnapshot;
 
   const SellerOrderView({
     required this.orderId,
@@ -205,6 +340,8 @@ class SellerOrderView extends Equatable {
     this.timeline = const [],
     this.cancellationReason,
     this.fulfilment,
+    this.itemReturnSnapshots = const [],
+    this.settlementSnapshot,
   });
 
   int get totalUnits =>
@@ -246,6 +383,8 @@ class SellerOrderView extends Equatable {
         timeline,
         cancellationReason,
         fulfilment,
+        itemReturnSnapshots,
+        settlementSnapshot,
       ];
 }
 

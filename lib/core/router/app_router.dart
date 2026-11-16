@@ -77,6 +77,7 @@ import 'package:pickleball_platform/features/marketplace_seller/presentation/pag
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_editor_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_review_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_products_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_settlements_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_registration_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_discovery_page.dart';
@@ -560,11 +561,7 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.marketplaceSellerSettlements,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Settlements & Commission Statements',
-              path: AppRoutes.marketplaceSellerSettlements,
-              role: UserRole.marketplaceSeller,
-            ),
+            builder: (context, state) => const SellerSettlementsPage(),
           ),
 
           // 11. Application Staff

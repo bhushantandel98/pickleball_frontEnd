@@ -17,7 +17,7 @@
 | **Phase 3** | Coach, Academy & Academy Staff | **Completed (Feature 3.6 Ready for Review)** | 100% | Coach (3.1–3.4), Academy (3.5), and Academy Staff (3.6) modules implemented with strict role, branch & ownership isolation |
 | **Phase 4** | Venue Partner & Venue Staff | **Completed (Feature 3.8 Ready for Review)** | 100% | Venue Partner (3.7) and Venue Staff (3.8) implemented with strict partner, location & delegated permission isolation |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
-| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.5 Ready for Review)** | 95% | Features 6.1 (Registration/KYC), 6.2 (Product Catalog), 6.3 (Submission/Publishing), 6.4 (Dashboard & Orders) & 6.5 (Fulfilment & Delivery Updates) implemented; settlements pending |
+| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.6 Ready for Review)** | 100% | Features 6.1–6.6 implemented (Registration/KYC, Product Catalog, Submission/Publishing, Dashboard & Orders, Fulfilment Updates, Return Windows & Settlement Visibility); awaiting user review |
 | **Phase 7** | Platform Admin & Staff | Not Started | 0% | Sole Admin dashboard & permission gates |
 | **Phase 8** | Integration & Release Hardening | Not Started | 0% | Mock replaced with API; release ready |
 
@@ -25,10 +25,10 @@
 
 ## Active Task
 
-- **Task ID:** Feature 6.5 — Seller Fulfilment & Delivery Updates
-- **Description:** Implemented Feature 6.5 — Seller Fulfilment & Delivery Updates on the existing seller-slice order architecture (`SellerOrderFulfilmentDetails`, `SellerOrderRepository.markOrderDispatched` / `markOrderOutForDelivery` / `markOrderDelivered`, `MockSellerOrderRepository` `_SellerOrderSliceState` keyed by `orderId::sellerId`, `SellerOrderCubit`, `SellerOrderDetailsPage`, and `SellerOrdersPage`). Supports strict seller-slice transitions (`processing -> inTransit -> outForDelivery -> delivered`), manual carrier/tracking reference/URL/timestamp/note capture (explicitly marked as seller-entered manual tracking with no live courier API), audit `timeline` entries, post-delivery address/phone masking, and read-only payment records without mutating shared `MarketplaceOrder` or other sellers' items.
+- **Task ID:** Feature 6.6 — Product-specific Return Windows & Order-level Settlement Visibility
+- **Description:** Implemented Feature 6.6 — Product-specific Return Windows & Order-level Settlement Visibility (`/marketplace-seller/settlements` via `SellerSettlementsPage`, `SellerOrderItemReturnSnapshot`, `SellerOrderSettlementSnapshot`, `SellerReturnEligibilityStatus`, `SellerPayoutStatus`, and order-level snapshot preservation in `MockSellerOrderRepository`, plus return-window & settlement breakdown cards in `SellerOrderDetailsPage`). Captures and preserves immutable order-placement snapshots of each item's `returnPolicyDays` and configurable commission rate (`10%` mock baseline) so later product policy edits do not affect historical orders; computes return eligibility and end dates from delivery timestamp; displays gross order value, commission, deductions, estimated net settlement, and read-only payout status (`Pending Fulfilment`, `Held During Return Window`, `Eligible — Awaiting Backend/Provider Payout`) strictly scoped to each seller's items in multi-seller orders; and does not execute transfers, refunds, or promise payout dates.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 48.8s).
+  - `flutter analyze`: Passed — No issues found! (ran in 4.6s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)

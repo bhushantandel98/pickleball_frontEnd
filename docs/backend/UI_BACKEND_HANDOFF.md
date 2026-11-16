@@ -3121,3 +3121,24 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 - Enforce `{sellerId}` ownership and valid source-state transitions (`409 Conflict` / `422` on invalid transition).
 - Payment records, refunds, and settlements remain read-only / out of scope (Feature 6.6).
 - Do not expose live carrier tracking claims unless a real courier API integration is connected.
+
+---
+
+### 9.6 Feature 6.6 — Product-Specific Return Windows & Order-Level Settlement Visibility
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/marketplace_seller/` (`SellerSettlementsPage`, `SellerOrderItemReturnSnapshot`, `SellerOrderSettlementSnapshot`, `SellerReturnEligibilityStatus`, `SellerPayoutStatus`, `MockSellerOrderRepository`, `SellerOrderDetailsPage`).
+- **Route:** `/marketplace-seller/settlements` (`AppRoutes.marketplaceSellerSettlements`, requires `UserRole.marketplaceSeller` + `activeOrganizationId`).
+
+#### 2. Order-Placement Snapshots & Calculations
+- **Return Window Snapshot (`SellerOrderItemReturnSnapshot`):** `orderItemId`, `productId`, `productTitle`, `quantity`, `lineGrossAmount`, `snapshottedReturnWindowDays` (captured at order placement; immutable even if `SellerProduct.returnPolicyDays` is later changed), `snapshottedAt`, `deliveredAt`, `eligibilityStatus` (`nonReturnable`, `cancelledOrder`, `pendingDelivery`, `withinWindow`, `windowExpired`), `returnWindowEndsAt` (`deliveredAt + snapshottedReturnWindowDays`).
+- **Settlement Snapshot (`SellerOrderSettlementSnapshot`):** `orderId`, `sellerId`, `grossAmount` (seller's items only), `snapshottedCommissionRatePercent` (configurable platform rate snapshotted at order placement), `commissionAmount` (`grossAmount * rate / 100`), `otherDeductionsAmount`, `estimatedNetSettlement` (`grossAmount - commissionAmount - otherDeductionsAmount`), `payoutStatus` (`notApplicableCancelled`, `pendingFulfilment`, `inReturnWindowHold`, `awaitingProviderPayout`), `commissionRuleLabel`, `snapshottedAt`, `isReadOnly: true`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/marketplace-seller/{sellerId}/settlements` — List read-only order-level settlement & return-window snapshots strictly for `{sellerId}`'s items.
+2. `GET /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/settlement` — Fetch detailed snapshotted commission, deductions, item return windows, and verified payout status for `{orderId}` + `{sellerId}`.
+
+#### 4. Persistence, Authorization & Boundary Rules
+- Backend must persist `return_window_days_snapshot` per `order_item` and `commission_rate_snapshot` per `order_seller_slice` at order placement (`POST /api/v1/player/marketplace/orders`), never recalculating historical orders from mutable catalog policies.
+- Multi-seller orders must isolate gross, commission, deductions, and net settlement per `sellerId`.
+- All settlement endpoints are strictly read-only for sellers; actual payouts and Razorpay/provider split settlements require verified backend/payment-provider confirmation and are not promised or triggered from the frontend.

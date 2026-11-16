@@ -74,6 +74,12 @@ class SellerDashboardPage extends StatelessWidget {
                   icon: const Icon(Icons.local_shipping_outlined),
                   label: const Text('Manage Orders'),
                 ),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.go(AppRoutes.marketplaceSellerSettlements),
+                  icon: const Icon(Icons.account_balance_wallet_outlined),
+                  label: const Text('Settlements & Statements'),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
