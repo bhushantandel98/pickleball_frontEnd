@@ -240,6 +240,12 @@ class RoleNavConfig {
             selectedIcon: Icons.verified_user,
           ),
           NavDestinationItem(
+            label: 'Products',
+            routePath: AppRoutes.marketplaceSellerProducts,
+            icon: Icons.inventory_2_outlined,
+            selectedIcon: Icons.inventory_2,
+          ),
+          NavDestinationItem(
             label: 'Orders',
             routePath: AppRoutes.marketplaceSellerOrders,
             icon: Icons.local_shipping_outlined,

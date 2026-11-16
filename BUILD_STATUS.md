@@ -17,7 +17,7 @@
 | **Phase 3** | Coach, Academy & Academy Staff | **Completed (Feature 3.6 Ready for Review)** | 100% | Coach (3.1–3.4), Academy (3.5), and Academy Staff (3.6) modules implemented with strict role, branch & ownership isolation |
 | **Phase 4** | Venue Partner & Venue Staff | **Completed (Feature 3.8 Ready for Review)** | 100% | Venue Partner (3.7) and Venue Staff (3.8) implemented with strict partner, location & delegated permission isolation |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
-| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.1 Ready for Review)** | 25% | Feature 6.1 Seller Registration, Profile & KYC Onboarding implemented; catalog, orders & settlements pending |
+| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.2 Ready for Review)** | 50% | Feature 6.1 (Seller Registration/KYC) & Feature 6.2 (Product Creation & Catalog Management) implemented; orders & settlements pending |
 | **Phase 7** | Platform Admin & Staff | Not Started | 0% | Sole Admin dashboard & permission gates |
 | **Phase 8** | Integration & Release Hardening | Not Started | 0% | Mock replaced with API; release ready |
 
@@ -25,10 +25,10 @@
 
 ## Active Task
 
-- **Task ID:** Feature 6.1 — Seller Registration & Profile
-- **Description:** Implemented Feature 6.1 — Marketplace Seller Registration, Business Profile & KYC Onboarding (`/marketplace-seller/dashboard`, `/marketplace-seller/onboarding`) using Clean Architecture, `MarketplaceSellerCubit`, and `MockMarketplaceSellerRepository`, resolved all 4 review findings, and integrated `file_picker: ^13.3.3` (`KycDeviceFilePicker`) to open the actual device file browser for PDF, JPG, and PNG KYC documents up to 5 MB—capturing filename, MIME type, file size, local file reference, and bytes (`Uint8List?`) while handling cancellation, unsupported formats, and oversized files gracefully without claiming remote upload.
+- **Task ID:** Feature 6.2 — Marketplace Seller Product Creation & Catalog Management
+- **Description:** Implemented Feature 6.2 — Marketplace Seller Product Creation & Catalog Management (`/marketplace-seller/products`, `/marketplace-seller/products/create`, `/marketplace-seller/products/:id/edit`) using Clean Architecture (`SellerCatalogRepository`, `MockSellerCatalogRepository`, `SellerCatalogCubit`, `SellerCatalogScaffold`, `SellerProductsPage`, `SellerProductEditorPage`, `ProductImageDevicePicker`). Enforces strict `sellerId`/`userId` multi-tenant ownership, verified-seller gating (`SellerVerificationStatus.approved`) before product submission or publishing, pickleball-only categories/subcategories & confirmation, device file selection for product images (`file_picker` JPG/PNG/WEBP up to 5 MB, local mock preview without claiming server upload), size/color/weight variants with per-variant SKUs & stock, product-level & variant-level inventory updates, seller-chosen return window, buyer-catalog compatibility (`toMarketplaceProduct()`), and strict separation between Application Admin approval and Seller publish/unpublish control.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 8.4s).
+  - `flutter analyze`: Passed — No issues found! (ran in 9.9s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)

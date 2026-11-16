@@ -72,6 +72,8 @@ import 'package:pickleball_platform/features/player/presentation/pages/product_d
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_discovery_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_editor_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_products_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_registration_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/venue_discovery_page.dart';
@@ -525,10 +527,16 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.marketplaceSellerProducts,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Product Creator',
-              path: AppRoutes.marketplaceSellerProducts,
-              role: UserRole.marketplaceSeller,
+            builder: (context, state) => const SellerProductsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.marketplaceSellerProductCreate,
+            builder: (context, state) => const SellerProductEditorPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.marketplaceSellerProductEdit,
+            builder: (context, state) => SellerProductEditorPage(
+              productId: state.pathParameters['id'],
             ),
           ),
           GoRoute(

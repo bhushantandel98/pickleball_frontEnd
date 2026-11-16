@@ -40,6 +40,25 @@ class SellerDashboardPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _VerificationStatusCard(profile: profile),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                FilledButton.icon(
+                  onPressed: () =>
+                      context.go(AppRoutes.marketplaceSellerProducts),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Manage Product Catalog'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.go(AppRoutes.marketplaceSellerProductCreate),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Pickleball Product'),
+                ),
+              ],
+            ),
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: [

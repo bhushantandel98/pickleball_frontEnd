@@ -3015,3 +3015,33 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 - Seller verification and product approval are strictly separate workflows.
 - Application Staff may review, recommend (`staffRecommended`), or request additional details (`needsInformation`), while only Application Admin can grant final `approved` / `rejected` status.
 - Profile & KYC mutations are locked in `pendingReview`, `staffRecommended`, `approved`, and `suspended` states (`403 Forbidden`); editing re-opens only in `needsInformation` or `rejected`.
+
+---
+
+### 9.2 Feature 6.2 — Seller Product Creation & Catalog Management
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/marketplace_seller/` (`SellerCatalogRepository`, `MockSellerCatalogRepository`, `SellerCatalogCubit`, `SellerCatalogScaffold`, `SellerProductsPage`, `SellerProductEditorPage`, `ProductImageDevicePicker`).
+- **Routes:** `/marketplace-seller/products`, `/marketplace-seller/products/create`, `/marketplace-seller/products/:id/edit` (all require `UserRole.marketplaceSeller` + `activeOrganizationId`).
+- **Buyer Catalog Compatibility:** `SellerProduct.toMarketplaceProduct()` maps approved & published seller items to `MarketplaceProduct` (reusing `ProductCategory`, `returnPolicyDays`, `specifications`, `availableSizes`, `availableColors`, `stockCount`, `price`, `originalPrice`).
+
+#### 2. Key Entities & Payloads
+- **Seller Product (`SellerProduct`):** `productId`, `sellerId`, `sellerName`, `name`, `description`, `category` (`ProductCategory` excluding `all`), `subcategory`, `brand`, `isPickleballOnlyConfirmed`, `specifications` (`Map<String, String>`), `images[]`, `variants[]`, `baseSku`, `sellingPrice`, `originalPrice`, `stockCount`, `returnPolicyDays` (`0..60`), `status` (`draft`, `submittedForReview`, `needsInformation`, `approved`, `rejected`), `isPublished` (always `false` unless `status == approved`), `reviewFeedback`, `reviewHistory[]`, `createdAt`, `updatedAt`, `approvedAt`, `publishedAt`.
+- **Product Image (`SellerProductImage`):** `id`, `fileName`, `mimeType` (`image/jpeg`, `image/png`, `image/webp`), `fileSizeBytes`, `localFileRef`, `isLocalMockOnly`, `isPrimary`, `addedAt`.
+- **Product Variant (`SellerProductVariant`):** `id`, `sku`, `size`, `color`, `weight`, `sellingPrice`, `originalPrice`, `stockCount`, `isActive`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/marketplace-seller/{sellerId}/products?q=&category=&status=&publishedOnly=` — List products owned by `{sellerId}` with search & status/category filters.
+2. `GET /api/v1/marketplace-seller/{sellerId}/products/{productId}` — Fetch single seller-owned product (`403`/`404` if not owned by `{sellerId}`).
+3. `POST /api/v1/marketplace-seller/{sellerId}/products` & `PUT /api/v1/marketplace-seller/{sellerId}/products/{productId}` — Create or update product in `draft`, `needsInformation`, or `rejected` (`403` when `submittedForReview` or `approved`; `isPublished` forced `false`).
+4. `POST /api/v1/marketplace-seller/{sellerId}/products/{productId}/images` — Multipart upload of product images (`JPG`/`PNG`/`WEBP`, max 5 MB) returning persistent CDN URLs.
+5. `PATCH /api/v1/marketplace-seller/{sellerId}/products/{productId}/inventory` — Update `stockCount` and/or `variantStockCounts` (`Map<variantId, int>`) without altering approval status.
+6. `POST /api/v1/marketplace-seller/{sellerId}/products/{productId}/submit-review` — Validate verified seller (`SellerVerificationStatus.approved`), pickleball-only confirmation, >=1 image, valid SKUs/pricing, and transition to `submittedForReview`.
+7. `PATCH /api/v1/marketplace-seller/{sellerId}/products/{productId}/publish` — Body `{ "isPublished": true|false }`. Allowed **only** when seller is `approved` and `product.status == approved`.
+8. `DELETE /api/v1/marketplace-seller/{sellerId}/products/{productId}` — Delete product only when `status == draft`.
+
+#### 4. Authorization, Governance & Phase 7 Dependencies
+- Only `SellerVerificationStatus.approved` sellers can submit products for review or publish products (`403 Forbidden` otherwise).
+- Application Staff (Phase 7) can review & recommend or request `needsInformation`; only Application Admin (Phase 7) grants final `approved` or `rejected` decision.
+- Admin approval **must NOT** auto-publish (`isPublished` remains `false`); the seller explicitly controls publishing.
+- Order management, fulfilment, returns execution, and Razorpay split/settlement workflows remain out of scope for Feature 6.2.

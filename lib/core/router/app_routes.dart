@@ -142,7 +142,13 @@ abstract final class AppRoutes {
   static const String marketplaceSellerOnboarding =
       '/marketplace-seller/onboarding';
   static const String marketplaceSellerProducts =
+      '/marketplace-seller/products';
+  static const String marketplaceSellerProductCreate =
       '/marketplace-seller/products/create';
+  static const String marketplaceSellerProductEdit =
+      '/marketplace-seller/products/:id/edit';
+  static String marketplaceSellerProductEditPath(String productId) =>
+      '/marketplace-seller/products/$productId/edit';
   static const String marketplaceSellerOrders =
       '/marketplace-seller/orders';
   static const String marketplaceSellerSettlements =
