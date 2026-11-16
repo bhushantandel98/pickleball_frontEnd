@@ -17,11 +17,13 @@ enum ApplicationStaffPermission {
   const ApplicationStaffPermission(this.label);
 }
 
-/// Authenticated Application Staff profile and delegated permission scope.
+/// Authenticated Application Staff profile, delegated permission scope, and
+/// authorized organization scope.
 class ApplicationStaffProfile extends Equatable {
   final String staffId;
   final String userId;
   final String organizationScopeId;
+  final Set<String> authorizedOrganizationIds;
   final String staffName;
   final String staffEmail;
   final String roleTitle;
@@ -33,6 +35,7 @@ class ApplicationStaffProfile extends Equatable {
     required this.staffId,
     required this.userId,
     required this.organizationScopeId,
+    this.authorizedOrganizationIds = const {},
     required this.staffName,
     required this.staffEmail,
     required this.roleTitle,
@@ -44,11 +47,18 @@ class ApplicationStaffProfile extends Equatable {
   bool hasPermission(ApplicationStaffPermission permission) =>
       isActive && permissions.contains(permission);
 
+  bool isAuthorizedForOrganization(String organizationId) {
+    final trimmed = organizationId.trim();
+    if (!isActive || trimmed.isEmpty) return false;
+    return authorizedOrganizationIds.contains(trimmed);
+  }
+
   @override
   List<Object?> get props => [
         staffId,
         userId,
         organizationScopeId,
+        authorizedOrganizationIds,
         staffName,
         staffEmail,
         roleTitle,

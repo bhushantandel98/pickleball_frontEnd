@@ -3157,13 +3157,13 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 
 #### 2. Key Entities & Delegated Permissions
 - **Staff Permissions (`ApplicationStaffPermission`):** `viewDashboard`, `reviewSellers`, `reviewProducts`, `handleSupportTickets`, `monitorPlatformHealth` (delegated by the single Application Admin; staff cannot self-escalate).
-- **Staff Profile (`ApplicationStaffProfile`):** `staffId`, `userId`, `organizationScopeId`, `staffName`, `staffEmail`, `roleTitle`, `permissions[]`, `isActive`, `assignedAt`.
+- **Staff Profile (`ApplicationStaffProfile`):** `staffId`, `userId`, `organizationScopeId`, `authorizedOrganizationIds[]` (authoritative set of organization IDs derived from the authenticated staff profile on the backend—never trusted from UI parameters), `staffName`, `staffEmail`, `roleTitle`, `permissions[]`, `isActive`, `assignedAt`.
 - **Operational Queue Item (`StaffOperationalQueueItem`):** `id`, `organizationId`, `organizationName`, `category` (`sellerVerification`, `productCatalog`, `supportTriage`, `complianceFlag`), `title`, `summary`, `submittedAt`, `status` (`pendingReview`, `needsInformation`, `recommendedToAdmin`, `escalatedToAdmin`, `resolved`), `staffNote`, `updatedByStaffId`, `updatedAt`.
 
 #### 3. Proposed Future REST API Endpoints
-1. `GET /api/v1/application-staff/me/dashboard` — Return active staff profile, delegated permissions, permission-scoped KPI counts, and recent queue items.
-2. `GET /api/v1/application-staff/queue?category=&status=&q=` — List queue items filtered strictly by the staff member's delegated permissions and organization boundaries.
-3. `PATCH /api/v1/application-staff/queue/{itemId}` — Body `{ "nextStatus": "needsInformation" | "recommendedToAdmin" | "escalatedToAdmin" | "resolved", "note": "..." }`. Enforces category permission (`403 Forbidden` if missing) and restricts `resolved` to `supportTriage` items only.
+1. `GET /api/v1/application-staff/me/dashboard` — Return active staff profile, delegated permissions, `authorizedOrganizationIds`, permission- and org-scope-filtered KPI counts, and recent queue items.
+2. `GET /api/v1/application-staff/queue?category=&status=&q=` — List queue items filtered strictly by **both** the staff member's delegated permissions AND `authorizedOrganizationIds` derived from the authenticated token/profile (ignoring any client-supplied org filter outside authorized scope).
+3. `PATCH /api/v1/application-staff/queue/{itemId}` — Body `{ "nextStatus": "needsInformation" | "recommendedToAdmin" | "escalatedToAdmin" | "resolved", "note": "..." }`. Enforces `authorizedOrganizationIds` membership (`403 Forbidden` if out-of-scope), category permission (`403 Forbidden` if missing), and restricts `resolved` to `supportTriage` items only.
 
 #### 4. Authorization & Admin-Only Boundaries
 - Application Staff can review, request information (`needsInformation`), triage support, and recommend/escalate (`recommendedToAdmin` / `escalatedToAdmin`) to Application Admin.

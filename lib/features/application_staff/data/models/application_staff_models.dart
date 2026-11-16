@@ -5,6 +5,7 @@ class ApplicationStaffProfileModel extends ApplicationStaffProfile {
     required super.staffId,
     required super.userId,
     required super.organizationScopeId,
+    super.authorizedOrganizationIds,
     required super.staffName,
     required super.staffEmail,
     required super.roleTitle,
@@ -19,11 +20,18 @@ class ApplicationStaffProfileModel extends ApplicationStaffProfile {
         .map((p) => ApplicationStaffPermission.values.where((e) => e.name == p))
         .expand((e) => e)
         .toSet();
+    final rawOrgs =
+        (json['authorizedOrganizationIds'] as List<dynamic>? ?? const [])
+            .whereType<String>()
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toSet();
 
     return ApplicationStaffProfileModel(
       staffId: json['staffId'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
       organizationScopeId: json['organizationScopeId'] as String? ?? '',
+      authorizedOrganizationIds: rawOrgs,
       staffName: json['staffName'] as String? ?? '',
       staffEmail: json['staffEmail'] as String? ?? '',
       roleTitle: json['roleTitle'] as String? ?? 'Platform Operations Staff',
@@ -39,6 +47,7 @@ class ApplicationStaffProfileModel extends ApplicationStaffProfile {
         'staffId': staffId,
         'userId': userId,
         'organizationScopeId': organizationScopeId,
+        'authorizedOrganizationIds': authorizedOrganizationIds.toList(),
         'staffName': staffName,
         'staffEmail': staffEmail,
         'roleTitle': roleTitle,

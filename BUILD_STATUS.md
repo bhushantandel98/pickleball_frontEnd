@@ -26,9 +26,9 @@
 ## Active Task
 
 - **Task ID:** Feature 7.1 — Application Staff Dashboard & Operations
-- **Description:** Implemented Feature 7.1 — Application Staff Dashboard & Operations (`/application-staff/dashboard`, `/application-staff/operations`) using Clean Architecture (`ApplicationStaffRepository`, `MockApplicationStaffRepository`, `ApplicationStaffCubit`, `ApplicationStaffScaffold`, `ApplicationStaffDashboardPage`, `ApplicationStaffOperationsPage`). Enforces active staff membership (`isActive == true`), delegated `ApplicationStaffPermission` checks (`viewDashboard`, `reviewSellers`, `reviewProducts`, `handleSupportTickets`, `monitorPlatformHealth`) at both repository and UI layers, organization-level queue item scoping (`organizationId`), and strict governance boundaries keeping Application Admin-only final approvals, policies, staff management, and payouts inaccessible to Application Staff.
+- **Description:** Implemented Feature 7.1 — Application Staff Dashboard & Operations (`/application-staff/dashboard`, `/application-staff/operations`) using Clean Architecture (`ApplicationStaffRepository`, `MockApplicationStaffRepository`, `ApplicationStaffCubit`, `ApplicationStaffScaffold`, `ApplicationStaffDashboardPage`, `ApplicationStaffOperationsPage`). Enforces active staff membership (`isActive == true`), delegated `ApplicationStaffPermission` checks (`viewDashboard`, `reviewSellers`, `reviewProducts`, `handleSupportTickets`, `monitorPlatformHealth`), and server/profile-derived organization-scope authorization (`ApplicationStaffProfile.authorizedOrganizationIds` / `isAuthorizedForOrganization`) across `getStaffDashboard`, `getOperationalQueue`, and `updateQueueItemStatus` so out-of-scope queue items (such as `sq_006` in `org_external_tenant_999`) cannot be viewed, searched, counted, or updated. Application Admin-only final approvals, policies, staff management, and payouts remain strictly inaccessible.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 6.7s).
+  - `flutter analyze`: Passed — No issues found! (ran in 19.3s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)

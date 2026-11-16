@@ -17,6 +17,12 @@ class MockApplicationStaffRepository implements ApplicationStaffRepository {
       staffId: 'app_staff_001',
       userId: 'user_app_staff_001',
       organizationScopeId: 'platform_ops_in',
+      authorizedOrganizationIds: const {
+        'org_seller_001',
+        'org_seller_002',
+        'org_venue_001',
+        'org_acad_001',
+      },
       staffName: 'Elena Rostova',
       staffEmail: 'elena.rostova@platform-staff.com',
       roleTitle: 'Senior Marketplace & Operations Reviewer',
@@ -30,11 +36,12 @@ class MockApplicationStaffRepository implements ApplicationStaffRepository {
       isActive: true,
       assignedAt: DateTime(2024, 11, 1),
     ),
-    // Restricted staff profile for verifying permission-based filtering.
+    // Restricted staff profile for verifying permission & org-scope filtering.
     'user_app_staff_002': ApplicationStaffProfileModel(
       staffId: 'app_staff_002',
       userId: 'user_app_staff_002',
       organizationScopeId: 'platform_ops_in',
+      authorizedOrganizationIds: const {'org_venue_001'},
       staffName: 'Karan Mehta',
       staffEmail: 'karan.mehta@platform-staff.com',
       roleTitle: 'Support Triage Specialist',
@@ -109,6 +116,18 @@ class MockApplicationStaffRepository implements ApplicationStaffRepository {
       updatedByStaffId: 'app_staff_001',
       updatedAt: DateTime(2026, 11, 15, 17, 0),
     ),
+    // Out-of-scope organization item to verify staff organization-scope isolation.
+    StaffOperationalQueueItemModel(
+      id: 'sq_006',
+      organizationId: 'org_external_tenant_999',
+      organizationName: 'External Region Pickleball Co.',
+      category: StaffQueueCategory.sellerVerification,
+      title: 'Seller KYC Review — External Region Pickleball Co.',
+      summary:
+          'Belongs to an organization outside app_staff_001 authorized scope and must remain hidden and unmodifiable.',
+      submittedAt: DateTime(2026, 11, 15, 18, 0),
+      status: StaffQueueItemStatus.pendingReview,
+    ),
   ];
 
   Result<ApplicationStaffProfileModel> _requireActiveStaff({
@@ -155,7 +174,11 @@ class MockApplicationStaffRepository implements ApplicationStaffRepository {
     ApplicationStaffProfile profile,
   ) {
     return _queue
-        .where((item) => profile.hasPermission(item.category.requiredPermission))
+        .where(
+          (item) =>
+              profile.hasPermission(item.category.requiredPermission) &&
+              profile.isAuthorizedForOrganization(item.organizationId),
+        )
         .toList()
       ..sort((a, b) => b.submittedAt.compareTo(a.submittedAt));
   }
@@ -279,6 +302,14 @@ class MockApplicationStaffRepository implements ApplicationStaffRepository {
     }
 
     final item = _queue[index];
+    if (!profile.isAuthorizedForOrganization(item.organizationId)) {
+      return const FailureResult(
+        ForbiddenFailure(
+          message:
+              'Forbidden: Item belongs to an organization outside your authorized staff scope.',
+        ),
+      );
+    }
     if (!profile.hasPermission(item.category.requiredPermission)) {
       return FailureResult(
         ForbiddenFailure(
