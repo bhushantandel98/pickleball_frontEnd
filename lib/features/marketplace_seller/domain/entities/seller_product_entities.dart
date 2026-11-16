@@ -118,16 +118,22 @@ class PickleballCatalogCategories {
   }
 }
 
-/// Product image selected from the seller's device.
+/// Product image selected from the seller's device or hosted on the backend.
 ///
-/// In mock mode, [isLocalMockOnly] is `true` and [localFileRef] / [fileBytes]
-/// are stored in memory pending secure multipart upload to the backend.
+/// Distinguishes between:
+/// - Local preview images ([isLocalMockOnly] == `true`, [localFileRef] +
+///   [fileBytes] for preview and future multipart upload).
+/// - Backend-hosted image URLs ([hostedUrl] with `http`/`https` scheme and
+///   [isLocalMockOnly] == `false`).
+///
+/// Local device references are never treated as remote image URLs.
 class SellerProductImage extends Equatable {
   final String id;
   final String fileName;
   final String mimeType;
   final int fileSizeBytes;
   final String localFileRef;
+  final String? hostedUrl;
   final Uint8List? fileBytes;
   final bool isLocalMockOnly;
   final bool isPrimary;
@@ -139,11 +145,26 @@ class SellerProductImage extends Equatable {
     required this.mimeType,
     required this.fileSizeBytes,
     this.localFileRef = '',
+    this.hostedUrl,
     this.fileBytes,
     this.isLocalMockOnly = true,
     this.isPrimary = false,
     required this.addedAt,
   });
+
+  /// Returns [hostedUrl] only when this image is backend-hosted (not local mock)
+  /// and uses a valid `http` or `https` URL.
+  String? get validHostedUrl {
+    if (isLocalMockOnly) return null;
+    final raw = hostedUrl?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final uri = Uri.tryParse(raw);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
+    if (uri.scheme != 'http' && uri.scheme != 'https') return null;
+    return raw;
+  }
+
+  bool get isHosted => validHostedUrl != null;
 
   SellerProductImage copyWith({
     String? id,
@@ -151,6 +172,7 @@ class SellerProductImage extends Equatable {
     String? mimeType,
     int? fileSizeBytes,
     String? localFileRef,
+    String? hostedUrl,
     Uint8List? fileBytes,
     bool? isLocalMockOnly,
     bool? isPrimary,
@@ -162,6 +184,7 @@ class SellerProductImage extends Equatable {
       mimeType: mimeType ?? this.mimeType,
       fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
       localFileRef: localFileRef ?? this.localFileRef,
+      hostedUrl: hostedUrl ?? this.hostedUrl,
       fileBytes: fileBytes ?? this.fileBytes,
       isLocalMockOnly: isLocalMockOnly ?? this.isLocalMockOnly,
       isPrimary: isPrimary ?? this.isPrimary,
@@ -176,6 +199,7 @@ class SellerProductImage extends Equatable {
         mimeType,
         fileSizeBytes,
         localFileRef,
+        hostedUrl,
         fileBytes,
         isLocalMockOnly,
         isPrimary,
@@ -362,8 +386,17 @@ class SellerProduct extends Equatable {
 
   /// Converts an approved, published product into a [MarketplaceProduct]
   /// compatible with the existing Player Marketplace catalog, cart & checkout.
+  ///
+  /// Only valid backend-hosted `http`/`https` URLs are exposed in [imageUrl]
+  /// and [galleryImages]; local mock/device file references are never treated
+  /// as remote URLs, allowing the buyer catalog to render its existing
+  /// fallback when no hosted URL exists.
   MarketplaceProduct toMarketplaceProduct() {
     final primary = primaryImage;
+    final hostedGallery =
+        images.map((i) => i.validHostedUrl).whereType<String>().toList();
+    final primaryHostedUrl = primary?.validHostedUrl ??
+        (hostedGallery.isNotEmpty ? hostedGallery.first : '');
     final sizes = variants
         .where((v) => v.isActive && v.size != null && v.size!.trim().isNotEmpty)
         .map((v) => v.size!.trim())
@@ -392,8 +425,8 @@ class SellerProduct extends Equatable {
       rating: 0.0,
       reviewCount: 0,
       category: category,
-      imageUrl: primary?.localFileRef ?? '',
-      galleryImages: images.map((i) => i.localFileRef).toList(),
+      imageUrl: primaryHostedUrl,
+      galleryImages: hostedGallery,
       inStock: totalStock > 0,
       stockCount: totalStock,
       returnPolicyDays: returnPolicyDays,

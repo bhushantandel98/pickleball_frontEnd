@@ -3023,11 +3023,11 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 #### 1. Overview & Architecture
 - **Frontend Layer:** `lib/features/marketplace_seller/` (`SellerCatalogRepository`, `MockSellerCatalogRepository`, `SellerCatalogCubit`, `SellerCatalogScaffold`, `SellerProductsPage`, `SellerProductEditorPage`, `ProductImageDevicePicker`).
 - **Routes:** `/marketplace-seller/products`, `/marketplace-seller/products/create`, `/marketplace-seller/products/:id/edit` (all require `UserRole.marketplaceSeller` + `activeOrganizationId`).
-- **Buyer Catalog Compatibility:** `SellerProduct.toMarketplaceProduct()` maps approved & published seller items to `MarketplaceProduct` (reusing `ProductCategory`, `returnPolicyDays`, `specifications`, `availableSizes`, `availableColors`, `stockCount`, `price`, `originalPrice`).
+- **Buyer Catalog Compatibility:** `SellerProduct.toMarketplaceProduct()` maps approved & published seller items to `MarketplaceProduct` (reusing `ProductCategory`, `returnPolicyDays`, `specifications`, `availableSizes`, `availableColors`, `stockCount`, `price`, `originalPrice`). Only validated `http`/`https` `hostedUrl` entries (`!isLocalMockOnly`) are mapped to `MarketplaceProduct.imageUrl` and `galleryImages`; local device/mock references (`localFileRef`, `fileBytes`) are never treated as remote URLs, so the buyer catalog falls back to its existing placeholder when no hosted URL exists.
 
 #### 2. Key Entities & Payloads
 - **Seller Product (`SellerProduct`):** `productId`, `sellerId`, `sellerName`, `name`, `description`, `category` (`ProductCategory` excluding `all`), `subcategory`, `brand`, `isPickleballOnlyConfirmed`, `specifications` (`Map<String, String>`), `images[]`, `variants[]`, `baseSku`, `sellingPrice`, `originalPrice`, `stockCount`, `returnPolicyDays` (`0..60`), `status` (`draft`, `submittedForReview`, `needsInformation`, `approved`, `rejected`), `isPublished` (always `false` unless `status == approved`), `reviewFeedback`, `reviewHistory[]`, `createdAt`, `updatedAt`, `approvedAt`, `publishedAt`.
-- **Product Image (`SellerProductImage`):** `id`, `fileName`, `mimeType` (`image/jpeg`, `image/png`, `image/webp`), `fileSizeBytes`, `localFileRef`, `isLocalMockOnly`, `isPrimary`, `addedAt`.
+- **Product Image (`SellerProductImage`):** `id`, `fileName`, `mimeType` (`image/jpeg`, `image/png`, `image/webp`), `fileSizeBytes`, `localFileRef`, `hostedUrl` (nullable backend-hosted `http`/`https` URL), `isLocalMockOnly`, `isPrimary`, `addedAt`.
 - **Product Variant (`SellerProductVariant`):** `id`, `sku`, `size`, `color`, `weight`, `sellingPrice`, `originalPrice`, `stockCount`, `isActive`.
 
 #### 3. Proposed Future REST API Endpoints

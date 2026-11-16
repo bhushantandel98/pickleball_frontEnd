@@ -8,6 +8,7 @@ class SellerProductImageModel extends SellerProductImage {
     required super.mimeType,
     required super.fileSizeBytes,
     super.localFileRef,
+    super.hostedUrl,
     super.fileBytes,
     super.isLocalMockOnly,
     super.isPrimary,
@@ -21,6 +22,7 @@ class SellerProductImageModel extends SellerProductImage {
       mimeType: entity.mimeType,
       fileSizeBytes: entity.fileSizeBytes,
       localFileRef: entity.localFileRef,
+      hostedUrl: entity.hostedUrl,
       fileBytes: entity.fileBytes,
       isLocalMockOnly: entity.isLocalMockOnly,
       isPrimary: entity.isPrimary,
@@ -29,13 +31,16 @@ class SellerProductImageModel extends SellerProductImage {
   }
 
   factory SellerProductImageModel.fromJson(Map<String, dynamic> json) {
+    final hosted = json['hostedUrl'] as String?;
+    final hasHosted = hosted != null && hosted.trim().isNotEmpty;
     return SellerProductImageModel(
       id: json['id'] as String? ?? '',
       fileName: json['fileName'] as String? ?? '',
       mimeType: json['mimeType'] as String? ?? 'image/jpeg',
       fileSizeBytes: (json['fileSizeBytes'] as num?)?.toInt() ?? 0,
       localFileRef: json['localFileRef'] as String? ?? '',
-      isLocalMockOnly: json['isLocalMockOnly'] as bool? ?? true,
+      hostedUrl: hosted,
+      isLocalMockOnly: json['isLocalMockOnly'] as bool? ?? !hasHosted,
       isPrimary: json['isPrimary'] as bool? ?? false,
       addedAt: DateTime.tryParse(json['addedAt'] as String? ?? '') ??
           DateTime.now(),
@@ -48,6 +53,7 @@ class SellerProductImageModel extends SellerProductImage {
         'mimeType': mimeType,
         'fileSizeBytes': fileSizeBytes,
         'localFileRef': localFileRef,
+        'hostedUrl': hostedUrl,
         'isLocalMockOnly': isLocalMockOnly,
         'isPrimary': isPrimary,
         'addedAt': addedAt.toIso8601String(),

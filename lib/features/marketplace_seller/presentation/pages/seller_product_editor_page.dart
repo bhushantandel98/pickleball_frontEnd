@@ -730,7 +730,7 @@ class _ProductEditorFormState extends State<_ProductEditorForm> {
                               style: theme.textTheme.labelMedium,
                             ),
                             Text(
-                              '${(img.fileSizeBytes / 1024).toStringAsFixed(0)} KB • Local mock',
+                              '${(img.fileSizeBytes / 1024).toStringAsFixed(0)} KB • ${img.isHosted ? 'Hosted URL' : 'Local preview'}',
                               style: theme.textTheme.labelSmall,
                             ),
                             if (_isEditable)
