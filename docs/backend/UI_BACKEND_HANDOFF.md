@@ -3089,10 +3089,10 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 1. `GET /api/v1/marketplace-seller/{sellerId}/dashboard/orders` — Compute seller-scoped order counts, gross order value, and recent orders.
 2. `GET /api/v1/marketplace-seller/{sellerId}/orders?q=&status=&fromDate=&toDate=` — List orders containing at least one item owned by `{sellerId}`, returning only that seller's items and subtotal.
 3. `GET /api/v1/marketplace-seller/{sellerId}/orders/{orderId}` — Fetch single seller-scoped order (`403`/`404` if `{sellerId}` has no items in the order).
-4. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/accept` — Transition seller's order items from `placed` -> `processing`.
-5. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/cancel` — Body `{ "reason": "..." }`. Transition from `placed` or `processing` -> `cancelled`.
+4. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/accept` — Transition **only `{sellerId}`'s items / seller-order slice** from `placed` -> `processing` (other sellers' items in a multi-seller order remain unchanged).
+5. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/cancel` — Body `{ "reason": "..." }`. Transition **only `{sellerId}`'s items / seller-order slice** from `placed` or `processing` -> `cancelled`, leaving other sellers' items and buyer payment records untouched.
 
 #### 4. Authorization & Governance Rules
-- Backend must filter order items by `sellerId` on every query so multi-seller orders never leak another seller's products, pricing, or totals.
+- Backend must filter order items by `sellerId` on every query and store item-level / seller-slice fulfillment status (`order_id + seller_id`) so multi-seller orders never leak or mutate another seller's products, status, pricing, or totals.
 - Sellers cannot modify `paymentMethod`, `paymentStatus`, or execute refunds/payouts.
 - Delivery/shipment tracking (Feature 6.5) and settlement statements (Feature 6.6) are separate workflows.

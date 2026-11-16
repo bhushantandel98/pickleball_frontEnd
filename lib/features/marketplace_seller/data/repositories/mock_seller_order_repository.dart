@@ -29,8 +29,14 @@ class MockSellerOrderRepository implements SellerOrderRepository {
         _sellerRepository = sellerRepository, // ignore: prefer_initializing_formals
         _catalogRepository = catalogRepository; // ignore: prefer_initializing_formals
 
-  final Map<String, MarketplaceOrder> _sellerScopedOverrides = {};
+  /// Per-seller slice overrides keyed by `'$orderId::$sellerId'` so that
+  /// accepting or cancelling in a multi-seller order affects ONLY the acting
+  /// seller's items without mutating another seller's items or status.
+  final Map<String, _SellerOrderSliceState> _sellerSliceOverrides = {};
   final List<MarketplaceOrder> _supplementarySellerOrders = _buildMockOrders();
+
+  static String _sliceKey(String orderId, String sellerId) =>
+      '$orderId::$sellerId';
 
   static List<MarketplaceOrder> _buildMockOrders() {
     const buyerA = MarketplaceDeliveryAddress(
@@ -312,10 +318,10 @@ class MockSellerOrderRepository implements SellerOrderRepository {
     final merged = <String, MarketplaceOrder>{};
     for (final o
         in (playerOrdersResult as Success<List<MarketplaceOrder>>).data) {
-      merged[o.id] = _sellerScopedOverrides[o.id] ?? o;
+      merged[o.id] = o;
     }
     for (final o in _supplementarySellerOrders) {
-      merged[o.id] = _sellerScopedOverrides[o.id] ?? o;
+      merged[o.id] = o;
     }
 
     final views = <SellerOrderView>[];
@@ -325,6 +331,12 @@ class MockSellerOrderRepository implements SellerOrderRepository {
           .toList();
       if (ownedItems.isEmpty) continue;
 
+      final slice = _sellerSliceOverrides[_sliceKey(order.id, seller.sellerId)];
+      final effectiveStatus = slice?.status ?? order.status;
+      final effectiveTimeline = slice?.timeline ?? order.trackingTimeline;
+      final effectiveCancellationReason =
+          slice?.cancellationReason ?? order.cancellationReason;
+
       final sellerSubtotal =
           ownedItems.fold<double>(0.0, (sum, item) => sum + item.itemTotal);
 
@@ -333,18 +345,18 @@ class MockSellerOrderRepository implements SellerOrderRepository {
           orderId: order.id,
           sellerId: seller.sellerId,
           orderDate: order.orderDate,
-          status: order.status,
+          status: effectiveStatus,
           sellerItems: ownedItems,
           sellerSubtotal: sellerSubtotal,
           isMultiSellerOrder: ownedItems.length < order.items.length,
           deliveryAddress: SellerOrderFulfilmentAddress.fromMarketplaceAddress(
             order.deliveryAddress,
-            status: order.status,
+            status: effectiveStatus,
           ),
           paymentMethod: order.paymentMethod,
           paymentStatus: order.paymentStatus,
-          timeline: order.trackingTimeline,
-          cancellationReason: order.cancellationReason,
+          timeline: effectiveTimeline,
+          cancellationReason: effectiveCancellationReason,
         ),
       );
     }
@@ -498,9 +510,6 @@ class MockSellerOrderRepository implements SellerOrderRepository {
   }
 
   Future<MarketplaceOrder?> _findRawOrder(String orderId) async {
-    if (_sellerScopedOverrides.containsKey(orderId)) {
-      return _sellerScopedOverrides[orderId];
-    }
     for (final o in _supplementarySellerOrders) {
       if (o.id == orderId) return o;
     }
@@ -540,27 +549,29 @@ class MockSellerOrderRepository implements SellerOrderRepository {
     }
 
     final now = DateTime.now();
-    final updated = raw.copyWith(
+    _sellerSliceOverrides[_sliceKey(orderId, sellerId)] = _SellerOrderSliceState(
       status: MarketplaceOrderStatus.processing,
-      trackingTimeline: [
+      timeline: [
         OrderStatusStep(
-          title: 'Processing',
-          description: 'Seller confirmed order and began preparation.',
+          title: 'Processing (Seller Items Accepted)',
+          description:
+              'Seller accepted their ${currentView.totalUnits} item(s) and began preparation.',
           timestamp: now,
           isCompleted: true,
           isCurrent: true,
         ),
-        ...raw.trackingTimeline
-            .map((s) => OrderStatusStep(
-                  title: s.title,
-                  description: s.description,
-                  timestamp: s.timestamp,
-                  isCompleted: s.isCompleted,
-                  isCurrent: false,
-                )),
+        ...currentView.timeline.map(
+          (s) => OrderStatusStep(
+            title: s.title,
+            description: s.description,
+            timestamp: s.timestamp,
+            isCompleted: s.isCompleted,
+            isCurrent: false,
+          ),
+        ),
       ],
+      cancellationReason: currentView.cancellationReason,
     );
-    _sellerScopedOverrides[orderId] = updated;
 
     return getSellerOrderById(
       sellerId: sellerId,
@@ -610,28 +621,28 @@ class MockSellerOrderRepository implements SellerOrderRepository {
     }
 
     final now = DateTime.now();
-    final updated = raw.copyWith(
+    _sellerSliceOverrides[_sliceKey(orderId, sellerId)] = _SellerOrderSliceState(
       status: MarketplaceOrderStatus.cancelled,
       cancellationReason: reason.trim(),
-      trackingTimeline: [
+      timeline: [
         OrderStatusStep(
-          title: 'Order Cancelled by Seller',
+          title: 'Seller Items Cancelled',
           description: reason.trim(),
           timestamp: now,
           isCompleted: true,
           isCurrent: true,
         ),
-        ...raw.trackingTimeline
-            .map((s) => OrderStatusStep(
-                  title: s.title,
-                  description: s.description,
-                  timestamp: s.timestamp,
-                  isCompleted: s.isCompleted,
-                  isCurrent: false,
-                )),
+        ...currentView.timeline.map(
+          (s) => OrderStatusStep(
+            title: s.title,
+            description: s.description,
+            timestamp: s.timestamp,
+            isCompleted: s.isCompleted,
+            isCurrent: false,
+          ),
+        ),
       ],
     );
-    _sellerScopedOverrides[orderId] = updated;
 
     return getSellerOrderById(
       sellerId: sellerId,
@@ -639,4 +650,16 @@ class MockSellerOrderRepository implements SellerOrderRepository {
       orderId: orderId,
     );
   }
+}
+
+class _SellerOrderSliceState {
+  final MarketplaceOrderStatus status;
+  final List<OrderStatusStep> timeline;
+  final String? cancellationReason;
+
+  const _SellerOrderSliceState({
+    required this.status,
+    required this.timeline,
+    this.cancellationReason,
+  });
 }
