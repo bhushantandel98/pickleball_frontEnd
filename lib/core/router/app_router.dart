@@ -72,6 +72,8 @@ import 'package:pickleball_platform/features/player/presentation/pages/product_d
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_discovery_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_order_details_page.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_orders_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_editor_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_product_review_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_products_page.dart';
@@ -548,10 +550,12 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.marketplaceSellerOrders,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Orders Fulfillment Pipeline',
-              path: AppRoutes.marketplaceSellerOrders,
-              role: UserRole.marketplaceSeller,
+            builder: (context, state) => const SellerOrdersPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.marketplaceSellerOrderDetails,
+            builder: (context, state) => SellerOrderDetailsPage(
+              orderId: state.pathParameters['id'],
             ),
           ),
           GoRoute(

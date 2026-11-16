@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pickleball_platform/app/service_locator.dart';
 import 'package:pickleball_platform/core/design_system/app_colors.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
 import 'package:pickleball_platform/core/widgets/state_views/empty_view.dart';
+import 'package:pickleball_platform/features/marketplace_seller/data/repositories/mock_marketplace_seller_repository.dart';
+import 'package:pickleball_platform/features/marketplace_seller/data/repositories/mock_seller_catalog_repository.dart';
+import 'package:pickleball_platform/features/marketplace_seller/data/repositories/mock_seller_order_repository.dart';
 import 'package:pickleball_platform/features/marketplace_seller/domain/entities/seller_profile_entities.dart';
+import 'package:pickleball_platform/features/marketplace_seller/domain/repositories/marketplace_seller_repository.dart';
+import 'package:pickleball_platform/features/marketplace_seller/domain/repositories/seller_catalog_repository.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/marketplace_seller_cubit.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/seller_order_cubit.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/seller_order_state.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/widgets/seller_page_scaffold.dart';
+import 'package:pickleball_platform/features/player/data/repositories/mock_marketplace_repository.dart';
+import 'package:pickleball_platform/features/player/domain/repositories/marketplace_repository.dart';
 
 /// Marketplace Seller Dashboard — Profile & Verification Overview (Feature 6.1).
 class SellerDashboardPage extends StatelessWidget {
@@ -57,7 +68,18 @@ class SellerDashboardPage extends StatelessWidget {
                   icon: const Icon(Icons.add),
                   label: const Text('Add Pickleball Product'),
                 ),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.go(AppRoutes.marketplaceSellerOrders),
+                  icon: const Icon(Icons.local_shipping_outlined),
+                  label: const Text('Manage Orders'),
+                ),
               ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _SellerOrdersOverviewSection(
+              sellerId: profile.sellerId,
+              userId: profile.ownerUserId,
             ),
             const SizedBox(height: AppSpacing.lg),
             Row(
@@ -321,6 +343,202 @@ class _DocumentSummaryRow extends StatelessWidget {
           label: Text(doc.isVerifiedByStaff ? 'Staff Checked' : 'Attached'),
         ),
       ],
+    );
+  }
+}
+
+class _SellerOrdersOverviewSection extends StatelessWidget {
+  final String sellerId;
+  final String userId;
+
+  const _SellerOrdersOverviewSection({
+    required this.sellerId,
+    required this.userId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return BlocProvider<SellerOrderCubit>(
+      create: (_) {
+        if (sl.isRegistered<SellerOrderCubit>()) {
+          return sl<SellerOrderCubit>()
+            ..loadOrders(userId: userId, sellerId: sellerId);
+        }
+        final sellerRepo = sl.isRegistered<MarketplaceSellerRepository>()
+            ? sl<MarketplaceSellerRepository>()
+            : MockMarketplaceSellerRepository();
+        final catalogRepo = sl.isRegistered<SellerCatalogRepository>()
+            ? sl<SellerCatalogRepository>()
+            : MockSellerCatalogRepository(sellerRepository: sellerRepo);
+        final marketplaceRepo = sl.isRegistered<MarketplaceRepository>()
+            ? sl<MarketplaceRepository>()
+            : MockMarketplaceRepository();
+
+        return SellerOrderCubit(
+          repository: MockSellerOrderRepository(
+            marketplaceRepository: marketplaceRepo,
+            sellerRepository: sellerRepo,
+            catalogRepository: catalogRepo,
+          ),
+        )..loadOrders(userId: userId, sellerId: sellerId);
+      },
+      child: BlocBuilder<SellerOrderCubit, SellerOrderState>(
+        builder: (context, state) {
+          if (state is SellerOrderLoading || state is SellerOrderInitial) {
+            return const AppCard(
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            );
+          }
+          if (state is SellerOrderFailure) {
+            return AppCard(
+              child: Text(
+                'Order metrics unavailable: ${state.message}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.error,
+                ),
+              ),
+            );
+          }
+
+          final metrics = (state as SellerOrderLoaded).metrics;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Order Overview', style: theme.textTheme.titleLarge),
+                  TextButton.icon(
+                    onPressed: () =>
+                        context.go(AppRoutes.marketplaceSellerOrders),
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('All Orders'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _MetricTile(
+                    label: 'Total Orders',
+                    value: '${metrics.totalOrders}',
+                  ),
+                  _MetricTile(
+                    label: 'New / Pending',
+                    value: '${metrics.pendingOrders}',
+                  ),
+                  _MetricTile(
+                    label: 'Processing',
+                    value: '${metrics.processingOrders}',
+                  ),
+                  _MetricTile(
+                    label: 'Completed',
+                    value: '${metrics.completedOrders}',
+                  ),
+                  _MetricTile(
+                    label: 'Cancelled',
+                    value: '${metrics.cancelledOrders}',
+                  ),
+                  _MetricTile(
+                    label: 'Gross Order Value',
+                    value: metrics.formattedGrossOrderValue,
+                    footnote: 'Not settled payout',
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('Recent Orders', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.xs),
+              if (metrics.recentOrders.isEmpty)
+                const EmptyStateView(
+                  title: 'No Orders Yet',
+                  message:
+                      'Orders containing your approved & published products will appear here.',
+                )
+              else
+                AppCard(
+                  child: Column(
+                    children: metrics.recentOrders.map((order) {
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          '${order.orderId} • ${order.formattedSellerSubtotal}',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${order.formattedOrderDate} • ${order.totalUnits} item(s) • ${order.status.displayName}',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go(
+                          AppRoutes.marketplaceSellerOrderDetailsPath(
+                            order.orderId,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? footnote;
+
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    this.footnote,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 170,
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (footnote != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                footnote!,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: AppColors.warning,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

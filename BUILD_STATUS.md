@@ -17,7 +17,7 @@
 | **Phase 3** | Coach, Academy & Academy Staff | **Completed (Feature 3.6 Ready for Review)** | 100% | Coach (3.1–3.4), Academy (3.5), and Academy Staff (3.6) modules implemented with strict role, branch & ownership isolation |
 | **Phase 4** | Venue Partner & Venue Staff | **Completed (Feature 3.8 Ready for Review)** | 100% | Venue Partner (3.7) and Venue Staff (3.8) implemented with strict partner, location & delegated permission isolation |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
-| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.3 Ready for Review)** | 75% | Features 6.1 (Registration/KYC), 6.2 (Product Catalog) & 6.3 (Submission, Review Feedback & Publishing) implemented; orders & settlements pending |
+| **Phase 6** | Marketplace (Seller & Catalog) | **In Progress (Feature 6.4 Ready for Review)** | 85% | Features 6.1 (Registration/KYC), 6.2 (Product Catalog), 6.3 (Submission/Publishing) & 6.4 (Dashboard & Order Management) implemented; fulfilment tracking & settlements pending |
 | **Phase 7** | Platform Admin & Staff | Not Started | 0% | Sole Admin dashboard & permission gates |
 | **Phase 8** | Integration & Release Hardening | Not Started | 0% | Mock replaced with API; release ready |
 
@@ -25,10 +25,10 @@
 
 ## Active Task
 
-- **Task ID:** Feature 6.3 — Marketplace Product Submission, Review Feedback & Publishing Workflow
-- **Description:** Implemented Feature 6.3 — Marketplace Product Submission, Review Feedback & Publishing Workflow (`/marketplace-seller/products/:id/review` via `SellerProductReviewPage`, `SellerProductStatus.staffRecommended`, `SellerProduct.submissionReadinessIssues`, `SellerProduct.actionAvailabilitySummary`, and optional `submissionNote` on `SellerCatalogRepository.submitProductForReview`). Sellers can review complete product details & readiness before submission, submit/resubmit with optional response notes, inspect full `reviewHistory` timelines and `needsInformation`/`rejected` feedback, edit and resubmit, and manually publish/unpublish `approved` products while keeping Staff-recommend vs Admin-approve governance and repository-level ownership/status enforcement intact.
+- **Task ID:** Feature 6.4 — Marketplace Seller Dashboard & Order Management
+- **Description:** Implemented Feature 6.4 — Marketplace Seller Dashboard & Order Management (`/marketplace-seller/dashboard` order overview + `/marketplace-seller/orders` + `/marketplace-seller/orders/:id`) reusing existing Player Marketplace order entities (`MarketplaceOrder`, `MarketplaceCartItem`, `MarketplaceOrderStatus`, `OrderStatusStep`, `MarketplaceRepository`) via `SellerOrderRepository`, `MockSellerOrderRepository`, `SellerOrderCubit`, `SellerOrderScaffold`, `SellerOrdersPage`, and `SellerOrderDetailsPage`. Provides Seller Dashboard order counts (total, pending, processing, completed, cancelled), gross order value clearly labeled as non-settled payout, recent orders, and quick links to catalog & orders; seller-scoped order listing with search, status, and date filters; and order details with multi-seller item/financial isolation, fulfilment-only address masking after completion/cancellation, read-only payment status, and permitted seller actions (`Accept Order` `placed -> processing` and `Cancel Order` with mandatory reason in `placed`/`processing`). Delivery/fulfilment tracking (Feature 6.5) and settlements (Feature 6.6) are intentionally excluded.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 93.2s).
+  - `flutter analyze`: Passed — No issues found! (ran in 4.1s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)

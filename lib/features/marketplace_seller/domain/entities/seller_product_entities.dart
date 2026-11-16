@@ -502,6 +502,7 @@ class SellerProduct extends Equatable {
       id: productId,
       title: name,
       brand: brand,
+      sellerId: sellerId,
       sellerName: sellerName,
       description: description,
       price: effectiveStartingPrice,

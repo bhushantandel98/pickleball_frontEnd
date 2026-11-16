@@ -155,6 +155,10 @@ abstract final class AppRoutes {
       '/marketplace-seller/products/$productId/review';
   static const String marketplaceSellerOrders =
       '/marketplace-seller/orders';
+  static const String marketplaceSellerOrderDetails =
+      '/marketplace-seller/orders/:id';
+  static String marketplaceSellerOrderDetailsPath(String orderId) =>
+      '/marketplace-seller/orders/$orderId';
   static const String marketplaceSellerSettlements =
       '/marketplace-seller/settlements';
 

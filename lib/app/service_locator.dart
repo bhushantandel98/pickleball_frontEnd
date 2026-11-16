@@ -60,10 +60,13 @@ import 'package:pickleball_platform/features/referee/domain/repositories/referee
 import 'package:pickleball_platform/features/referee/presentation/bloc/referee_cubit.dart';
 import 'package:pickleball_platform/features/marketplace_seller/data/repositories/mock_marketplace_seller_repository.dart';
 import 'package:pickleball_platform/features/marketplace_seller/data/repositories/mock_seller_catalog_repository.dart';
+import 'package:pickleball_platform/features/marketplace_seller/data/repositories/mock_seller_order_repository.dart';
 import 'package:pickleball_platform/features/marketplace_seller/domain/repositories/marketplace_seller_repository.dart';
 import 'package:pickleball_platform/features/marketplace_seller/domain/repositories/seller_catalog_repository.dart';
+import 'package:pickleball_platform/features/marketplace_seller/domain/repositories/seller_order_repository.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/marketplace_seller_cubit.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/seller_catalog_cubit.dart';
+import 'package:pickleball_platform/features/marketplace_seller/presentation/bloc/seller_order_cubit.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_calendar_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_dashboard_repository.dart';
 import 'package:pickleball_platform/features/coach/data/repositories/mock_coach_profile_repository.dart';
@@ -374,6 +377,13 @@ Future<void> initServiceLocator() async {
       sellerRepository: sl<MarketplaceSellerRepository>(),
     ),
   );
+
+  // --- Seller Order Cubit (Feature 6.4) ---
+  sl.registerFactory<SellerOrderCubit>(
+    () => SellerOrderCubit(
+      repository: sl<SellerOrderRepository>(),
+    ),
+  );
 }
 
 /// Registers mock dependencies, data sources, and repositories for development/testing.
@@ -533,6 +543,15 @@ void initMockServiceLocator() {
       sellerRepository: sl<MarketplaceSellerRepository>(),
     ),
   );
+
+  // Seller Order Repository (Feature 6.4)
+  sl.registerLazySingleton<SellerOrderRepository>(
+    () => MockSellerOrderRepository(
+      marketplaceRepository: sl<MarketplaceRepository>(),
+      sellerRepository: sl<MarketplaceSellerRepository>(),
+      catalogRepository: sl<SellerCatalogRepository>(),
+    ),
+  );
 }
 
 /// Registers real remote API dependencies, Dio clients, and production repositories.
@@ -669,6 +688,15 @@ void initRemoteServiceLocator() {
   sl.registerLazySingleton<SellerCatalogRepository>(
     () => MockSellerCatalogRepository(
       sellerRepository: sl<MarketplaceSellerRepository>(),
+    ),
+  );
+
+  // Seller Order Repository (mock baseline until remote endpoint connects)
+  sl.registerLazySingleton<SellerOrderRepository>(
+    () => MockSellerOrderRepository(
+      marketplaceRepository: sl<MarketplaceRepository>(),
+      sellerRepository: sl<MarketplaceSellerRepository>(),
+      catalogRepository: sl<SellerCatalogRepository>(),
     ),
   );
 }

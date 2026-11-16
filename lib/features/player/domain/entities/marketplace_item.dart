@@ -135,6 +135,7 @@ class MarketplaceProduct extends Equatable {
   final String id;
   final String title;
   final String brand;
+  final String? sellerId;
   final String sellerName;
   final String description;
   final double price;
@@ -157,6 +158,7 @@ class MarketplaceProduct extends Equatable {
     required this.id,
     required this.title,
     required this.brand,
+    this.sellerId,
     required this.sellerName,
     required this.description,
     required this.price,
@@ -206,6 +208,7 @@ class MarketplaceProduct extends Equatable {
     String? id,
     String? title,
     String? brand,
+    String? sellerId,
     String? sellerName,
     String? description,
     double? price,
@@ -228,6 +231,7 @@ class MarketplaceProduct extends Equatable {
       id: id ?? this.id,
       title: title ?? this.title,
       brand: brand ?? this.brand,
+      sellerId: sellerId ?? this.sellerId,
       sellerName: sellerName ?? this.sellerName,
       description: description ?? this.description,
       price: price ?? this.price,

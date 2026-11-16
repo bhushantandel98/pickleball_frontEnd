@@ -3071,3 +3071,28 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
   - **Request Body:** `{ "isPublished": true | false }`
   - **Response (`200 OK`):** Updated `SellerProduct` with `isPublished` and `publishedAt` (set when `true`, cleared when `false`).
   - **Errors:** `403 Forbidden` if seller is not `approved` or not owner; `409 Conflict` / `422` if `product.status != "approved"`.
+
+---
+
+### 9.4 Feature 6.4 — Seller Dashboard & Order Management
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/marketplace_seller/` (`SellerOrderRepository`, `MockSellerOrderRepository`, `SellerOrderCubit`, `SellerOrderScaffold`, `SellerOrdersPage`, `SellerOrderDetailsPage`, and `_SellerOrdersOverviewSection` in `SellerDashboardPage`).
+- **Routes:** `/marketplace-seller/dashboard`, `/marketplace-seller/orders`, `/marketplace-seller/orders/:id` (all require `UserRole.marketplaceSeller` + `activeOrganizationId`).
+- **Reuse of Player Order Infrastructure:** Reuses `MarketplaceOrder`, `MarketplaceCartItem`, `MarketplaceOrderStatus`, `OrderStatusStep`, and `MarketplaceRepository` without creating a parallel order system. `MarketplaceProduct` includes optional `sellerId` for strict seller-item attribution.
+
+#### 2. Multi-Seller Isolation & Data Contracts
+- **Seller Order Projection (`SellerOrderView`):** `orderId`, `sellerId`, `orderDate`, `status` (`MarketplaceOrderStatus`), `sellerItems[]` (filtered strictly to items owned by `{sellerId}`), `sellerSubtotal` (sum of `sellerItems` only), `isMultiSellerOrder`, `deliveryAddress` (`SellerOrderFulfilmentAddress`, masking street/phone when `delivered` or `cancelled`), `paymentMethod` (read-only), `paymentStatus` (read-only), `timeline[]`, `cancellationReason`.
+- **Dashboard Metrics (`SellerDashboardMetrics`):** `totalOrders`, `pendingOrders`, `processingOrders`, `completedOrders`, `cancelledOrders`, `grossOrderValue` (explicitly NOT settled payout), `recentOrders[]`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/marketplace-seller/{sellerId}/dashboard/orders` — Compute seller-scoped order counts, gross order value, and recent orders.
+2. `GET /api/v1/marketplace-seller/{sellerId}/orders?q=&status=&fromDate=&toDate=` — List orders containing at least one item owned by `{sellerId}`, returning only that seller's items and subtotal.
+3. `GET /api/v1/marketplace-seller/{sellerId}/orders/{orderId}` — Fetch single seller-scoped order (`403`/`404` if `{sellerId}` has no items in the order).
+4. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/accept` — Transition seller's order items from `placed` -> `processing`.
+5. `POST /api/v1/marketplace-seller/{sellerId}/orders/{orderId}/cancel` — Body `{ "reason": "..." }`. Transition from `placed` or `processing` -> `cancelled`.
+
+#### 4. Authorization & Governance Rules
+- Backend must filter order items by `sellerId` on every query so multi-seller orders never leak another seller's products, pricing, or totals.
+- Sellers cannot modify `paymentMethod`, `paymentStatus`, or execute refunds/payouts.
+- Delivery/shipment tracking (Feature 6.5) and settlement statements (Feature 6.6) are separate workflows.
