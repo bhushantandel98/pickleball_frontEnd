@@ -520,6 +520,12 @@ class MockSellerOrderRepository implements SellerOrderRepository {
     if (orderStatus != MarketplaceOrderStatus.delivered) {
       payoutStatus = SellerPayoutStatus.pendingFulfilment;
     } else if (itemReturns.any(
+      (r) =>
+          r.eligibilityStatus ==
+          SellerReturnEligibilityStatus.snapshotUnavailable,
+    )) {
+      payoutStatus = SellerPayoutStatus.returnSnapshotUnavailable;
+    } else if (itemReturns.any(
       (r) => r.eligibilityStatus == SellerReturnEligibilityStatus.withinWindow,
     )) {
       payoutStatus = SellerPayoutStatus.inReturnWindowHold;

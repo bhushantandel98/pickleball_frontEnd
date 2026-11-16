@@ -245,6 +245,9 @@ class SellerOrderItemReturnSnapshot extends Equatable {
 enum SellerPayoutStatus {
   notApplicableCancelled('Cancelled — Not Eligible'),
   commissionNotConfigured('Commission Not Configured — Net Unavailable'),
+  returnSnapshotUnavailable(
+    'Return Policy Snapshot Unavailable — Payout Eligibility Unverified',
+  ),
   pendingFulfilment('Pending Delivery & Return Window'),
   inReturnWindowHold('Held During Return Window'),
   awaitingProviderPayout('Eligible — Awaiting Backend/Provider Payout');
