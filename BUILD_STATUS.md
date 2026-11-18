@@ -19,20 +19,20 @@
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
 | **Phase 6** | Marketplace (Seller & Catalog) | **Completed — Ready for Review** | 100% | Features 6.1–6.6 implemented (Registration/KYC, Product Catalog, Submission/Publishing, Dashboard & Orders, Fulfilment Updates, Return Windows & Settlement Visibility) |
 | **Phase 7** | Platform Admin & Staff | **Completed — Ready for Review** | 100% | Features 7.1 (Application Staff Dashboard & Operations) & 7.2 (Application Admin Dashboard & Governance) implemented |
-| **Phase 8** | Integration & Release Hardening | Not Started | 0% | Mock replaced with API; release ready |
+| **Phase 8** | Integration & Release Hardening | **In Progress (UI Audit Complete)** | 10% | Frontend UI Completion Audit (`docs/FRONTEND_UI_COMPLETION_AUDIT.md`) completed across all 12 roles; 11/12 roles complete, Coach `/coach/batches` & 2 public routes remain on `RoutePlaceholderView` |
 
 ---
 
 ## Active Task
 
-- **Task ID:** Feature 7.2 — Application Admin Dashboard & Governance
-- **Description:** Implemented Feature 7.2 — Application Admin Dashboard & Governance (`/application-admin/dashboard`, `/application-admin/staff-management`, `/application-admin/policies`, `/application-admin/audit-logs`) using Clean Architecture (`ApplicationAdminRepository`, `MockApplicationAdminRepository`, `ApplicationAdminCubit`, `ApplicationAdminScaffold`, `ApplicationAdminDashboardPage`, `ApplicationAdminStaffPage`, `ApplicationAdminPoliciesPage`, `ApplicationAdminAuditLogsPage`). Enforces sole Application Admin authorization (`user_app_admin_001`, ADR-007) at repository and UI layers, keeping Application Staff and non-admin users strictly blocked; provides final Seller & Product approval/rejection/needs-information workflows (approval never auto-publishes products), Application Staff permission & organization-scope management (no UI/API to create additional Application Admin accounts), configurable platform commission & return-window policy bounds (applying only to future orders), and immutable governance audit logging.
+- **Task ID:** Phase 8 — Frontend UI Completion Audit
+- **Description:** Completed full Frontend UI Completion Audit across all 12 platform roles, shared/identity modules, public routes, responsive layouts, and role-based route guards (`docs/FRONTEND_UI_COMPLETION_AUDIT.md`). **Status: Partially Complete** — 11 of 12 roles are UI-complete (`Player`, `Academy`, `Academy Staff`, `Venue Partner`, `Venue Staff`, `Tournament Organizer`, `Tournament Staff`, `Referee`, `Marketplace Seller`, `Application Staff`, `Application Admin`); `Coach` is partially complete because `/coach/batches` (`AppRoutes.coachBatches`) still renders `RoutePlaceholderView`, and `/public/tournaments/:id` & `/public/rankings` also remain on `RoutePlaceholderView`.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 223.2s).
+  - `flutter analyze`: Passed — No issues found! (ran in 78.2s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
-- **Status:** Completed — Ready for User Review.
+- **Status:** Audit Completed — Awaiting User Review on Remaining UI Tasks.
 
 ---
 
