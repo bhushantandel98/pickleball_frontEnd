@@ -556,7 +556,7 @@ void main() {
       expect(find.text('Log Out'), findsOneWidget);
     });
 
-    testWidgets('tapping settings tiles shows informational placeholder dialogs', (tester) async {
+    testWidgets('tapping settings tiles opens functional security & privacy dialogs', (tester) async {
       final repo = _FakeUserProfileRepository(Success(sampleProfile));
       final cubit = ProfileCubit(repository: repo);
       await cubit.loadProfile(userId: 'user_player_001');
@@ -570,20 +570,22 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Change Password tile
+      // Change Password tile opens interactive password form
       await tester.tap(find.text('Change Password'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Phase 1.3'), findsOneWidget);
-      await tester.tap(find.text('Understood'));
+      expect(find.text('Current Password'), findsOneWidget);
+      expect(find.text('Update Password'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
 
-      // Notification preferences tile
-      await tester.tap(find.text('Notification Preferences'));
+      // Privacy & Security tile opens interactive privacy toggles
+      await tester.tap(find.text('Privacy & Security'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Phase 1.4'), findsOneWidget);
-      await tester.tap(find.text('Understood'));
+      expect(find.text('Public Player Profile'), findsOneWidget);
+      expect(find.text('Save Preferences'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
     });
 

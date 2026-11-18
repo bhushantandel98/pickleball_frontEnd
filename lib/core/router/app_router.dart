@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pickleball_platform/core/access/session_cubit.dart';
-import 'package:pickleball_platform/core/access/user_role.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/router/route_guards.dart';
 import 'package:pickleball_platform/core/widgets/navigation/app_navigation_shell.dart';
@@ -42,9 +41,12 @@ import 'package:pickleball_platform/features/coach/presentation/pages/coach_dash
 import 'package:pickleball_platform/features/coach/presentation/pages/coach_profile_page.dart';
 import 'package:pickleball_platform/features/coach/presentation/pages/personal_coaching_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/register_page.dart';
+import 'package:pickleball_platform/features/coach/presentation/pages/coach_batches_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/pages/welcome_page.dart';
 import 'package:pickleball_platform/features/notifications/presentation/pages/notification_center_page.dart';
 import 'package:pickleball_platform/features/notifications/presentation/pages/notification_preferences_page.dart';
+import 'package:pickleball_platform/features/public_tournament/presentation/pages/public_rankings_page.dart';
+import 'package:pickleball_platform/features/public_tournament/presentation/pages/public_tournament_details_page.dart';
 import 'package:pickleball_platform/features/player/domain/entities/court_booking.dart';
 import 'package:pickleball_platform/features/player/domain/entities/court_item.dart';
 import 'package:pickleball_platform/features/player/domain/entities/tournament_item.dart';
@@ -194,18 +196,13 @@ GoRouter createAppRouter({
       // --- Public Unauthenticated Routes (FSD §3.1) ---
       GoRoute(
         path: AppRoutes.publicTournament,
-        builder: (context, state) => RoutePlaceholderView(
-          title: 'Tournament Live Schedule',
-          path: state.uri.path,
-          params: state.pathParameters,
+        builder: (context, state) => PublicTournamentDetailsPage(
+          tournamentId: state.pathParameters['id'] ?? '',
         ),
       ),
       GoRoute(
         path: AppRoutes.publicRankings,
-        builder: (context, state) => RoutePlaceholderView(
-          title: 'Public Platform Rankings',
-          path: state.uri.path,
-        ),
+        builder: (context, state) => const PublicRankingsPage(),
       ),
 
       // --- Authenticated Role Shell Routes ---
@@ -402,11 +399,7 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.coachBatches,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Assigned Batches',
-              path: AppRoutes.coachBatches,
-              role: UserRole.coach,
-            ),
+            builder: (context, state) => const CoachBatchesPage(),
           ),
           GoRoute(
             path: AppRoutes.coachProfile,

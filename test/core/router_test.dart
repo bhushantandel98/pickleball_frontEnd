@@ -13,6 +13,7 @@ import 'package:pickleball_platform/core/router/route_guards.dart';
 import 'package:pickleball_platform/core/widgets/state_views/account_suspended_view.dart';
 import 'package:pickleball_platform/core/widgets/state_views/empty_view.dart';
 import 'package:pickleball_platform/core/widgets/state_views/permission_denied_view.dart';
+import 'package:pickleball_platform/features/public_tournament/presentation/pages/public_tournament_details_page.dart';
 import 'package:pickleball_platform/features/role_selection/domain/entities/role_context.dart';
 
 Widget _wrapRouter({
@@ -412,15 +413,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Tournament Live Schedule'), findsOneWidget);
-      expect(
-        find.text('Route Path: /public/tournaments/national-open-2026'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Parameters: {id: national-open-2026}'),
-        findsOneWidget,
-      );
+      expect(find.byType(PublicTournamentDetailsPage), findsOneWidget);
+      expect(find.text('Public Tournament Details'), findsOneWidget);
     });
 
     testWidgets('Role selection view displays available roles and activates chosen role',

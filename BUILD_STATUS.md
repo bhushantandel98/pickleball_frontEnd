@@ -19,20 +19,20 @@
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
 | **Phase 6** | Marketplace (Seller & Catalog) | **Completed — Ready for Review** | 100% | Features 6.1–6.6 implemented (Registration/KYC, Product Catalog, Submission/Publishing, Dashboard & Orders, Fulfilment Updates, Return Windows & Settlement Visibility) |
 | **Phase 7** | Platform Admin & Staff | **Completed — Ready for Review** | 100% | Features 7.1 (Application Staff Dashboard & Operations) & 7.2 (Application Admin Dashboard & Governance) implemented |
-| **Phase 8** | Integration & Release Hardening | **In Progress (UI Audit Complete)** | 10% | Frontend UI Completion Audit (`docs/FRONTEND_UI_COMPLETION_AUDIT.md`) completed across all 12 roles; 11/12 roles complete, Coach `/coach/batches` & 2 public routes remain on `RoutePlaceholderView` |
+| **Phase 8** | Integration & Release Hardening | **In Progress (Frontend UI Complete)** | 25% | Frontend UI Completion Audit (`docs/FRONTEND_UI_COMPLETION_AUDIT.md`) & all 4 remaining UI gaps resolved across all 12 roles and public routes |
 
 ---
 
 ## Active Task
 
-- **Task ID:** Phase 8 — Frontend UI Completion Audit
-- **Description:** Completed full Frontend UI Completion Audit across all 12 platform roles, shared/identity modules, public routes, responsive layouts, and role-based route guards (`docs/FRONTEND_UI_COMPLETION_AUDIT.md`). **Status: Partially Complete** — 11 of 12 roles are UI-complete (`Player`, `Academy`, `Academy Staff`, `Venue Partner`, `Venue Staff`, `Tournament Organizer`, `Tournament Staff`, `Referee`, `Marketplace Seller`, `Application Staff`, `Application Admin`); `Coach` is partially complete because `/coach/batches` (`AppRoutes.coachBatches`) still renders `RoutePlaceholderView`, and `/public/tournaments/:id` & `/public/rankings` also remain on `RoutePlaceholderView`.
+- **Task ID:** Phase 8 — Frontend UI Gap Resolution
+- **Description:** Resolved all remaining frontend UI gaps identified in `docs/FRONTEND_UI_COMPLETION_AUDIT.md`: (1) replaced `/coach/batches` placeholder with `CoachBatchesPage` connected to `CoachDashboardCubit` / `MockCoachDashboardRepository`, (2) replaced `/public/tournaments/:id` placeholder with `PublicTournamentDetailsPage`, (3) replaced `/public/rankings` placeholder with `PublicRankingsPage`, and (4) replaced `AccountSettingsPage` informational placeholder dialogs with interactive Change Password, Notification Preferences navigation, and Privacy & Security preferences dialogs. **All 12 platform roles and public routes are now UI-complete.**
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 78.2s).
+  - `flutter analyze`: Passed — No issues found! (ran in 3.6s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
-- **Status:** Audit Completed — Awaiting User Review on Remaining UI Tasks.
+- **Status:** Frontend UI Complete — Ready for Backend Integration.
 
 ---
 

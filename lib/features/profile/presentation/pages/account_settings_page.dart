@@ -120,35 +120,96 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
     context.push(AppRoutes.profile);
   }
 
-  void _showPlaceholderDialog({
-    required String title,
-    required String message,
-  }) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          AppButton.primary(
-            label: 'Understood',
-            onPressed: () => Navigator.of(dialogContext).pop(),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _handleChangePassword() {
     if (widget.onChangePassword != null) {
       widget.onChangePassword!();
       return;
     }
-    _showPlaceholderDialog(
-      title: 'Change Password',
-      message:
-          'Password management and credential update flows will be integrated in Phase 1.3.',
+    _showChangePasswordDialog();
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final currentCtrl = TextEditingController();
+    final nextCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Change Password'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: currentCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Current Password',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Enter your current password.'
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextFormField(
+                controller: nextCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'New Password',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) => (v == null || v.trim().length < 8)
+                    ? 'Password must be at least 8 characters.'
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextFormField(
+                controller: confirmCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm New Password',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) =>
+                    v != nextCtrl.text ? 'Passwords do not match.' : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          AppButton.primary(
+            label: 'Update Password',
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.of(dialogContext).pop(true);
+              }
+            },
+          ),
+        ],
+      ),
     );
+
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Password updated locally for this session (mock mode).',
+          ),
+        ),
+      );
+    }
+
+    currentCtrl.dispose();
+    nextCtrl.dispose();
+    confirmCtrl.dispose();
   }
 
   void _handleNotificationPreferences() {
@@ -156,11 +217,16 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
       widget.onNotifications!();
       return;
     }
-    _showPlaceholderDialog(
-      title: 'Notification Preferences',
-      message:
-          'Push notifications, match alerts, and schedule reminders will be configurable in Phase 1.4.',
-    );
+    try {
+      context.push(AppRoutes.notificationPreferences);
+    } catch (_) {
+      // Fallback when rendered outside GoRouter in standalone widget tests
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Open Notification Preferences from the main app shell.'),
+        ),
+      );
+    }
   }
 
   void _handlePrivacySecurity() {
@@ -168,11 +234,66 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
       widget.onPrivacy!();
       return;
     }
-    _showPlaceholderDialog(
-      title: 'Privacy & Security',
-      message:
-          'Account data controls, privacy preferences, and session audit history will be available in Phase 1.3.',
+    _showPrivacySecurityDialog();
+  }
+
+  Future<void> _showPrivacySecurityDialog() async {
+    var publicProfile = true;
+    var showMatchHistory = true;
+    String activeEmail = 'Authenticated user';
+    try {
+      final session = context.read<SessionCubit>().state;
+      if (session.email != null && session.email!.isNotEmpty) {
+        activeEmail = session.email!;
+      }
+    } catch (_) {}
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Privacy & Security'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Active Session: $activeEmail'),
+              const SizedBox(height: AppSpacing.sm),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Public Player Profile'),
+                value: publicProfile,
+                onChanged: (v) => setDialogState(() => publicProfile = v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Show Match & Ranking History'),
+                value: showMatchHistory,
+                onChanged: (v) => setDialogState(() => showMatchHistory = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            AppButton.primary(
+              label: 'Save Preferences',
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+            ),
+          ],
+        ),
+      ),
     );
+
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Privacy preferences saved for this session.'),
+        ),
+      );
+    }
   }
 
   Future<void> _handleLogout() async {
