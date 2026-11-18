@@ -21,56 +21,63 @@ class _QuickActionItem {
 
 /// Quick action hub providing direct navigation into player feature areas.
 class PlayerQuickActions extends StatelessWidget {
-  const PlayerQuickActions({super.key});
+  final String? enrolledAcademyBranchId;
 
-  static const List<_QuickActionItem> _actions = [
-    _QuickActionItem(
-      title: 'Book a Court',
-      subtitle: 'Reserve court slots',
-      icon: Icons.sports_tennis,
-      route: AppRoutes.playerVenues,
-    ),
-    _QuickActionItem(
-      title: 'Find Coaches',
-      subtitle: 'Academies & batches',
-      icon: Icons.school_outlined,
-      route: AppRoutes.playerAcademies,
-    ),
-    _QuickActionItem(
-      title: 'Tournaments',
-      subtitle: 'Browse & enter draws',
-      icon: Icons.emoji_events_outlined,
-      route: AppRoutes.playerTournaments,
-    ),
-    _QuickActionItem(
-      title: 'Match Day',
-      subtitle: 'Live schedules & scores',
-      icon: Icons.schedule_outlined,
-      route: AppRoutes.playerMatchDay,
-    ),
-    _QuickActionItem(
-      title: 'Shop Gear',
-      subtitle: 'Paddles, balls & nets',
-      icon: Icons.shopping_bag_outlined,
-      route: AppRoutes.playerMarketplace,
-    ),
-    _QuickActionItem(
-      title: 'Community',
-      subtitle: 'Feed & game polls',
-      icon: Icons.groups_outlined,
-      route: AppRoutes.playerCommunity,
-    ),
-    _QuickActionItem(
-      title: 'My Bookings',
-      subtitle: 'Manage reservations',
-      icon: Icons.calendar_month_outlined,
-      route: AppRoutes.playerBookings,
-    ),
-  ];
+  const PlayerQuickActions({
+    super.key,
+    this.enrolledAcademyBranchId,
+  });
+
+  List<_QuickActionItem> _buildActions() {
+    final isEnrolled = enrolledAcademyBranchId != null &&
+        enrolledAcademyBranchId!.trim().isNotEmpty;
+
+    return [
+      _QuickActionItem(
+        title: isEnrolled ? 'View Academy' : 'Find Academy',
+        subtitle: isEnrolled ? 'Your enrolled academy' : 'Explore academies & batches',
+        icon: Icons.school_outlined,
+        route: isEnrolled
+            ? AppRoutes.playerAcademyDetailsPath(enrolledAcademyBranchId!)
+            : AppRoutes.playerAcademies,
+      ),
+      const _QuickActionItem(
+        title: 'Personal Coaching',
+        subtitle: '1-on-1 coaches & plans',
+        icon: Icons.person_search_outlined,
+        route: '${AppRoutes.playerAcademies}?tab=coaches',
+      ),
+      const _QuickActionItem(
+        title: 'Tournament',
+        subtitle: 'Browse & enter draws',
+        icon: Icons.emoji_events_outlined,
+        route: AppRoutes.playerTournaments,
+      ),
+      const _QuickActionItem(
+        title: 'Shop Gear',
+        subtitle: 'Paddles, balls & nets',
+        icon: Icons.shopping_bag_outlined,
+        route: AppRoutes.playerMarketplace,
+      ),
+      const _QuickActionItem(
+        title: 'Community',
+        subtitle: 'Feed & game polls',
+        icon: Icons.groups_outlined,
+        route: AppRoutes.playerCommunity,
+      ),
+      const _QuickActionItem(
+        title: 'Book a Court',
+        subtitle: 'Reserve court slots',
+        icon: Icons.sports_tennis,
+        route: AppRoutes.playerVenues,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final actions = _buildActions();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +94,6 @@ class PlayerQuickActions extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            // Determine column count based on available width
             final crossAxisCount = constraints.maxWidth > 800
                 ? 6
                 : constraints.maxWidth > 500
@@ -97,7 +103,7 @@ class PlayerQuickActions extends StatelessWidget {
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _actions.length,
+              itemCount: actions.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
                 crossAxisSpacing: AppSpacing.sm,
@@ -105,7 +111,7 @@ class PlayerQuickActions extends StatelessWidget {
                 mainAxisExtent: 96,
               ),
               itemBuilder: (context, index) {
-                final item = _actions[index];
+                final item = actions[index];
                 return AppCard(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   onTap: () => context.push(item.route),
@@ -124,7 +130,8 @@ class PlayerQuickActions extends StatelessWidget {
                           Icon(
                             Icons.arrow_forward_ios,
                             size: 12,
-                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.5),
                           ),
                         ],
                       ),

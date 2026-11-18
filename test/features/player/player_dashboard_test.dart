@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pickleball_platform/core/access/user_role.dart';
 import 'package:pickleball_platform/core/design_system/app_theme.dart';
 import 'package:pickleball_platform/core/errors/failures.dart';
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
+import 'package:pickleball_platform/core/widgets/navigation/role_nav_config.dart';
 import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
 import 'package:pickleball_platform/core/widgets/state_views/loading_view.dart';
+import 'package:pickleball_platform/features/player/data/repositories/mock_coaching_academy_repository.dart';
 import 'package:pickleball_platform/features/player/data/repositories/mock_player_dashboard_repository.dart';
+import 'package:pickleball_platform/features/player/domain/entities/coaching_academy_item.dart';
 import 'package:pickleball_platform/features/player/domain/entities/player_dashboard_data.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
 import 'package:pickleball_platform/features/player/presentation/cubit/player_dashboard_cubit.dart';
@@ -236,25 +240,28 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Header verification
+      // Header verification (no DUPR rating or My Profile button)
       expect(find.byType(PlayerHeaderCard), findsOneWidget);
       expect(find.text('Welcome back, Alex!'), findsOneWidget);
       expect(find.text('Alex Rivera'), findsOneWidget);
-      expect(find.text('3.85 DUPR'), findsOneWidget);
-      expect(find.text('Intermediate 3.5+'), findsOneWidget);
+      expect(find.textContaining('DUPR'), findsNothing);
+      expect(find.text('My Profile'), findsNothing);
 
-      // Quick actions verification
+      // Quick actions verification (ordered: Find Academy, Personal Coaching, Tournament, Shop Gear, Community, Book a Court)
       expect(find.byType(PlayerQuickActions), findsOneWidget);
-      expect(find.text('Book a Court'), findsOneWidget);
-      expect(find.text('Find Coaches'), findsOneWidget);
-      expect(find.text('Tournaments'), findsWidgets);
-      expect(find.text('Match Day'), findsOneWidget);
+      expect(find.text('Find Academy'), findsOneWidget);
+      expect(find.text('Personal Coaching'), findsOneWidget);
+      expect(find.text('Tournament'), findsOneWidget);
       expect(find.text('Shop Gear'), findsOneWidget);
-      expect(find.text('My Bookings'), findsOneWidget);
+      expect(find.text('Community'), findsOneWidget);
+      expect(find.text('Book a Court'), findsOneWidget);
+      expect(find.text('Match Day'), findsNothing);
+      expect(find.text('My Bookings'), findsNothing);
 
-      // Stats grid verification
+      // Stats grid verification (Skill Rating hidden when not enrolled / no active coaching)
       expect(find.byType(PlayerStatsGrid), findsOneWidget);
       expect(find.text('Activity & Stats'), findsOneWidget);
+      expect(find.text('Skill Rating'), findsNothing);
       expect(find.text('24'), findsOneWidget);
       expect(find.text('68%'), findsOneWidget);
 
@@ -315,7 +322,7 @@ void main() {
       await cubit.close();
     });
 
-    testWidgets('quick actions and header buttons navigate to expected routes', (tester) async {
+    testWidgets('quick actions navigate to expected routes', (tester) async {
       String? lastPushedRoute;
 
       final cubit = PlayerDashboardCubit(
@@ -331,10 +338,31 @@ void main() {
             builder: (context, state) => PlayerDashboardPage(cubit: cubit),
           ),
           GoRoute(
-            path: AppRoutes.profile,
+            path: AppRoutes.playerAcademies,
             builder: (context, state) {
-              lastPushedRoute = AppRoutes.profile;
-              return const Scaffold(body: Text('Profile Screen'));
+              lastPushedRoute = state.uri.toString();
+              return const Scaffold(body: Text('Academies Screen'));
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerTournaments,
+            builder: (context, state) {
+              lastPushedRoute = AppRoutes.playerTournaments;
+              return const Scaffold(body: Text('Tournaments Screen'));
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerMarketplace,
+            builder: (context, state) {
+              lastPushedRoute = AppRoutes.playerMarketplace;
+              return const Scaffold(body: Text('Shop Screen'));
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.playerCommunity,
+            builder: (context, state) {
+              lastPushedRoute = AppRoutes.playerCommunity;
+              return const Scaffold(body: Text('Community Screen'));
             },
           ),
           GoRoute(
@@ -342,13 +370,6 @@ void main() {
             builder: (context, state) {
               lastPushedRoute = AppRoutes.playerVenues;
               return const Scaffold(body: Text('Venues Screen'));
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.playerBookings,
-            builder: (context, state) {
-              lastPushedRoute = AppRoutes.playerBookings;
-              return const Scaffold(body: Text('Bookings Screen'));
             },
           ),
         ],
@@ -362,23 +383,24 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Tap "My Profile" button in header
-      final myProfileBtn = find.text('My Profile');
-      expect(myProfileBtn, findsOneWidget);
-      await tester.tap(myProfileBtn);
-      await tester.pumpAndSettle();
-      expect(lastPushedRoute, AppRoutes.profile);
+      final checks = [
+        ('Find Academy', AppRoutes.playerAcademies),
+        ('Personal Coaching', '${AppRoutes.playerAcademies}?tab=coaches'),
+        ('Tournament', AppRoutes.playerTournaments),
+        ('Shop Gear', AppRoutes.playerMarketplace),
+        ('Community', AppRoutes.playerCommunity),
+        ('Book a Court', AppRoutes.playerVenues),
+      ];
 
-      // Return to dashboard
-      router.pop();
-      await tester.pumpAndSettle();
-
-      // Tap "Book a Court" quick action
-      final bookCourtBtn = find.text('Book a Court');
-      expect(bookCourtBtn, findsOneWidget);
-      await tester.tap(bookCourtBtn);
-      await tester.pumpAndSettle();
-      expect(lastPushedRoute, AppRoutes.playerVenues);
+      for (final (label, expectedRoute) in checks) {
+        final actionBtn = find.text(label);
+        await tester.ensureVisible(actionBtn);
+        await tester.tap(actionBtn);
+        await tester.pumpAndSettle();
+        expect(lastPushedRoute, expectedRoute);
+        router.pop();
+        await tester.pumpAndSettle();
+      }
 
       await cubit.close();
     });
@@ -398,7 +420,7 @@ void main() {
 
       expect(find.byType(PlayerHeaderCard), findsOneWidget);
       expect(find.text('Welcome back, Alex!'), findsOneWidget);
-      expect(find.text('3.85 DUPR'), findsOneWidget);
+      expect(find.textContaining('DUPR'), findsNothing);
 
       await cubit.close();
     });
@@ -548,8 +570,91 @@ void main() {
       // Earlier dates/times must appear above later dates/times
       expect(earlyPosition, lessThan(midPosition));
       expect(midPosition, lessThan(latePosition));
+      // No Match Day highlight when no match is scheduled today
+      expect(find.text('Match Day • Today'), findsNothing);
 
       await cubit.close();
+    });
+
+    testWidgets('shows View Academy and Skill Rating when enrolled in an academy via MockCoachingAcademyRepository', (tester) async {
+      final coachingRepo = MockCoachingAcademyRepository(
+        customEnrollmentRequests: [
+          AcademyEnrollmentRequest(
+            id: 'ENR-APPROVED-1',
+            branchId: 'acad_branch_001',
+            branchName: 'Worli Sea Face Campus',
+            academyName: 'Pinnacle Sports Pickleball Academy',
+            programId: 'prog_001',
+            programTitle: 'Adult Tactical Mastery',
+            batchId: 'batch_001',
+            batchName: 'Morning Batch A',
+            schedule: 'Tue, Thu, Sat: 7:00 AM',
+            playerName: 'Alex Rivera',
+            playerPhone: '+91 98765 43210',
+            emergencyContactName: 'Carlos Rivera',
+            emergencyContactPhone: '+91 98765 43211',
+            requestedAt: DateTime(2026, 11, 1),
+            status: AcademyEnrollmentStatus.approved,
+          ),
+        ],
+      );
+
+      final cubit = PlayerDashboardCubit(
+        repository: MockPlayerDashboardRepository(
+          coachingAcademyRepository: coachingRepo,
+        ),
+      );
+
+      String? navigatedPath;
+      final router = GoRouter(
+        initialLocation: AppRoutes.playerDashboard,
+        routes: [
+          GoRoute(
+            path: AppRoutes.playerDashboard,
+            builder: (context, state) => PlayerDashboardPage(cubit: cubit),
+          ),
+          GoRoute(
+            path: AppRoutes.playerAcademyDetails,
+            builder: (context, state) {
+              navigatedPath = state.uri.toString();
+              return const Scaffold(body: Text('Enrolled Academy Details'));
+            },
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.lightTheme,
+          routerConfig: router,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Match Day highlight appears above Quick Actions because mock has a match today
+      expect(find.text('Match Day • Today'), findsOneWidget);
+      final matchDayY = tester.getTopLeft(find.text('Match Day • Today')).dy;
+      final quickActionsY = tester.getTopLeft(find.text('Quick Actions')).dy;
+      expect(matchDayY, lessThan(quickActionsY));
+
+      // Enrolled state shows View Academy and Skill Rating
+      expect(find.text('View Academy'), findsOneWidget);
+      expect(find.text('Find Academy'), findsNothing);
+      expect(find.text('Skill Rating'), findsOneWidget);
+
+      await tester.tap(find.text('View Academy'));
+      await tester.pumpAndSettle();
+      expect(navigatedPath, AppRoutes.playerAcademyDetailsPath('acad_branch_001'));
+
+      await cubit.close();
+    });
+
+    test('Player bottom navigation order is Academy | Tournament | Home | Community | Shop', () {
+      final destinations = RoleNavConfig.getDestinationsForRole(UserRole.player);
+      expect(
+        destinations.map((d) => d.label).toList(),
+        equals(['Academy', 'Tournament', 'Home', 'Community', 'Shop']),
+      );
     });
   });
 }

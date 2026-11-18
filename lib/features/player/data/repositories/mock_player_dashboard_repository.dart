@@ -1,6 +1,8 @@
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
+import 'package:pickleball_platform/features/player/domain/entities/coaching_academy_item.dart';
 import 'package:pickleball_platform/features/player/domain/entities/player_dashboard_data.dart';
+import 'package:pickleball_platform/features/player/domain/repositories/coaching_academy_repository.dart';
 import 'package:pickleball_platform/features/player/domain/repositories/player_dashboard_repository.dart';
 
 /// In-memory mock implementation of [PlayerDashboardRepository] adhering to ADR-011 and ADR-015.
@@ -8,11 +10,13 @@ class MockPlayerDashboardRepository implements PlayerDashboardRepository {
   final bool isUpcomingEmpty;
   final bool isRecentEmpty;
   final PlayerDashboardData? customData;
+  final CoachingAcademyRepository? coachingAcademyRepository;
 
   const MockPlayerDashboardRepository({
     this.isUpcomingEmpty = false,
     this.isRecentEmpty = false,
     this.customData,
+    this.coachingAcademyRepository,
   });
 
   @override
@@ -138,12 +142,40 @@ class MockPlayerDashboardRepository implements PlayerDashboardRepository {
             ),
           ];
 
+    String? enrolledAcademyBranchId;
+    String? enrolledAcademyName;
+    var hasActivePersonalCoaching = false;
+
+    if (coachingAcademyRepository != null) {
+      final enrollmentsResult =
+          await coachingAcademyRepository!.getMyEnrollmentRequests();
+      if (enrollmentsResult is Success<List<AcademyEnrollmentRequest>>) {
+        for (final request in enrollmentsResult.data) {
+          if (request.status == AcademyEnrollmentStatus.approved) {
+            enrolledAcademyBranchId = request.branchId;
+            enrolledAcademyName = request.academyName;
+            break;
+          }
+        }
+      }
+
+      final inquiriesResult =
+          await coachingAcademyRepository!.getMyCoachInquiries();
+      if (inquiriesResult is Success<List<CoachInquiryRequest>>) {
+        hasActivePersonalCoaching = inquiriesResult.data
+            .any((inquiry) => inquiry.status == CoachInquiryStatus.accepted);
+      }
+    }
+
     final data = PlayerDashboardData(
       profile: profile,
       stats: stats,
       upcomingActivities: upcoming,
       recentActivities: recent,
       unreadNotificationsCount: 3,
+      enrolledAcademyBranchId: enrolledAcademyBranchId,
+      enrolledAcademyName: enrolledAcademyName,
+      hasActivePersonalCoaching: hasActivePersonalCoaching,
     );
 
     return Success(data);

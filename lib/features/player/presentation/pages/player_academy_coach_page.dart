@@ -28,12 +28,14 @@ class PlayerAcademyCoachPage extends StatefulWidget {
   final AcademyDiscoveryCubit? academyCubit;
   final CoachDiscoveryCubit? coachCubit;
   final MyCoachingRequestsCubit? requestsCubit;
+  final int initialTabIndex;
 
   const PlayerAcademyCoachPage({
     super.key,
     this.academyCubit,
     this.coachCubit,
     this.requestsCubit,
+    this.initialTabIndex = 0,
   });
 
   @override
@@ -53,7 +55,11 @@ class _PlayerAcademyCoachPageState extends State<PlayerAcademyCoachPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, 2),
+    );
 
     _academyCubit = widget.academyCubit ??
         AcademyDiscoveryCubit(sl<CoachingAcademyRepository>());

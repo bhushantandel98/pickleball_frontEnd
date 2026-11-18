@@ -289,6 +289,9 @@ class PlayerDashboardData extends Equatable {
   final List<UpcomingActivity> upcomingActivities;
   final List<RecentActivityItem> recentActivities;
   final int unreadNotificationsCount;
+  final String? enrolledAcademyBranchId;
+  final String? enrolledAcademyName;
+  final bool hasActivePersonalCoaching;
 
   const PlayerDashboardData({
     required this.profile,
@@ -296,7 +299,32 @@ class PlayerDashboardData extends Equatable {
     this.upcomingActivities = const [],
     this.recentActivities = const [],
     this.unreadNotificationsCount = 0,
+    this.enrolledAcademyBranchId,
+    this.enrolledAcademyName,
+    this.hasActivePersonalCoaching = false,
   });
+
+  /// Whether the player has an approved academy enrollment.
+  bool get isEnrolledInAcademy =>
+      enrolledAcademyBranchId != null &&
+      enrolledAcademyBranchId!.trim().isNotEmpty;
+
+  /// Skill Rating is visible only when enrolled in an academy or in active personal coaching.
+  bool get showSkillRating => isEnrolledInAcademy || hasActivePersonalCoaching;
+
+  /// Returns a tournament match scheduled for today, if any.
+  UpcomingActivity? get todayMatch {
+    final now = DateTime.now();
+    for (final activity in upcomingActivities) {
+      if (activity.type == UpcomingActivityType.tournamentMatch &&
+          activity.dateTime.year == now.year &&
+          activity.dateTime.month == now.month &&
+          activity.dateTime.day == now.day) {
+        return activity;
+      }
+    }
+    return null;
+  }
 
   PlayerDashboardData copyWith({
     PlayerProfileSummary? profile,
@@ -304,6 +332,9 @@ class PlayerDashboardData extends Equatable {
     List<UpcomingActivity>? upcomingActivities,
     List<RecentActivityItem>? recentActivities,
     int? unreadNotificationsCount,
+    String? enrolledAcademyBranchId,
+    String? enrolledAcademyName,
+    bool? hasActivePersonalCoaching,
   }) {
     return PlayerDashboardData(
       profile: profile ?? this.profile,
@@ -312,6 +343,11 @@ class PlayerDashboardData extends Equatable {
       recentActivities: recentActivities ?? this.recentActivities,
       unreadNotificationsCount:
           unreadNotificationsCount ?? this.unreadNotificationsCount,
+      enrolledAcademyBranchId:
+          enrolledAcademyBranchId ?? this.enrolledAcademyBranchId,
+      enrolledAcademyName: enrolledAcademyName ?? this.enrolledAcademyName,
+      hasActivePersonalCoaching:
+          hasActivePersonalCoaching ?? this.hasActivePersonalCoaching,
     );
   }
 
@@ -322,5 +358,8 @@ class PlayerDashboardData extends Equatable {
         upcomingActivities,
         recentActivities,
         unreadNotificationsCount,
+        enrolledAcademyBranchId,
+        enrolledAcademyName,
+        hasActivePersonalCoaching,
       ];
 }

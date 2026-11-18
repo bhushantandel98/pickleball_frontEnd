@@ -6,10 +6,12 @@ import 'package:pickleball_platform/features/player/domain/entities/player_dashb
 /// Performance and activity statistics grid for the Player Dashboard.
 class PlayerStatsGrid extends StatelessWidget {
   final PlayerStats stats;
+  final bool showSkillRating;
 
   const PlayerStatsGrid({
     super.key,
     required this.stats,
+    this.showSkillRating = false,
   });
 
   @override
@@ -17,12 +19,13 @@ class PlayerStatsGrid extends StatelessWidget {
     final theme = Theme.of(context);
 
     final statItems = [
-      _StatData(
-        label: 'Skill Rating',
-        value: stats.skillRating.toStringAsFixed(2),
-        subtext: 'DUPR verified',
-        icon: Icons.military_tech_outlined,
-      ),
+      if (showSkillRating)
+        _StatData(
+          label: 'Skill Rating',
+          value: stats.skillRating.toStringAsFixed(2),
+          subtext: 'Coach / Academy rated',
+          icon: Icons.military_tech_outlined,
+        ),
       _StatData(
         label: 'Matches Played',
         value: stats.matchesPlayed.toString(),
@@ -65,7 +68,7 @@ class PlayerStatsGrid extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final crossAxisCount = constraints.maxWidth > 700
-                ? 5
+                ? statItems.length
                 : constraints.maxWidth > 420
                     ? 3
                     : 2;

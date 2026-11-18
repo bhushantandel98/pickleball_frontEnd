@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/design_system/responsive_layout.dart';
+import 'package:pickleball_platform/core/router/app_routes.dart';
+import 'package:pickleball_platform/core/widgets/app_card.dart';
+import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/core/widgets/state_views/empty_view.dart';
 import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
 import 'package:pickleball_platform/core/widgets/state_views/loading_view.dart';
@@ -129,6 +133,8 @@ class _PlayerDashboardViewState extends State<_PlayerDashboardView> {
   }
 
   Widget _buildMobileLayout(BuildContext context, PlayerDashboardData data) {
+    final todayMatch = data.todayMatch;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -137,13 +143,22 @@ class _PlayerDashboardViewState extends State<_PlayerDashboardView> {
           unreadNotificationsCount: data.unreadNotificationsCount,
         ),
         const SizedBox(height: AppSpacing.md),
-        const PlayerQuickActions(),
+        if (todayMatch != null) ...[
+          _MatchDayHighlightCard(match: todayMatch),
+          const SizedBox(height: AppSpacing.md),
+        ],
+        PlayerQuickActions(
+          enrolledAcademyBranchId: data.enrolledAcademyBranchId,
+        ),
         const SizedBox(height: AppSpacing.md),
         UpcomingActivitiesSection(
           activities: data.upcomingActivities,
         ),
         const SizedBox(height: AppSpacing.md),
-        PlayerStatsGrid(stats: data.stats),
+        PlayerStatsGrid(
+          stats: data.stats,
+          showSkillRating: data.showSkillRating,
+        ),
         const SizedBox(height: AppSpacing.md),
         RecentActivitySection(activities: data.recentActivities),
         const SizedBox(height: AppSpacing.lg),
@@ -152,6 +167,8 @@ class _PlayerDashboardViewState extends State<_PlayerDashboardView> {
   }
 
   Widget _buildWideLayout(BuildContext context, PlayerDashboardData data) {
+    final todayMatch = data.todayMatch;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -163,13 +180,19 @@ class _PlayerDashboardViewState extends State<_PlayerDashboardView> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left Column: Quick Actions & Upcoming Schedule
+            // Left Column: Match Day (if today), Quick Actions & Upcoming Schedule
             Expanded(
               flex: 6,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const PlayerQuickActions(),
+                  if (todayMatch != null) ...[
+                    _MatchDayHighlightCard(match: todayMatch),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                  PlayerQuickActions(
+                    enrolledAcademyBranchId: data.enrolledAcademyBranchId,
+                  ),
                   const SizedBox(height: AppSpacing.lg),
                   UpcomingActivitiesSection(
                     activities: data.upcomingActivities,
@@ -184,7 +207,10 @@ class _PlayerDashboardViewState extends State<_PlayerDashboardView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  PlayerStatsGrid(stats: data.stats),
+                  PlayerStatsGrid(
+                    stats: data.stats,
+                    showSkillRating: data.showSkillRating,
+                  ),
                   const SizedBox(height: AppSpacing.lg),
                   RecentActivitySection(
                     activities: data.recentActivities,
@@ -196,6 +222,108 @@ class _PlayerDashboardViewState extends State<_PlayerDashboardView> {
         ),
         const SizedBox(height: AppSpacing.lg),
       ],
+    );
+  }
+}
+
+class _MatchDayHighlightCard extends StatelessWidget {
+  final UpcomingActivity match;
+
+  const _MatchDayHighlightCard({required this.match});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return AppCard(
+      padding: EdgeInsets.zero,
+      onTap: () => context.push(match.actionRoute ?? AppRoutes.playerMatchDay),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: AppSpacing.borderRadiusMd,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primary.withValues(alpha: 0.14),
+              colorScheme.primaryContainer.withValues(alpha: 0.35),
+            ],
+          ),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: 0.35),
+          ),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                borderRadius: AppSpacing.borderRadiusSm,
+              ),
+              child: Icon(
+                Icons.sports_score,
+                color: colorScheme.onPrimary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      AppChip.info(label: 'Match Day • Today'),
+                      const SizedBox(width: AppSpacing.xs),
+                      Flexible(
+                        child: Text(
+                          match.timeSlot,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    match.title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      if (match.opponentOrCoach != null) match.opponentOrCoach!,
+                      '${match.venueOrLocation} (${match.courtName})',
+                    ].join(' • '),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: colorScheme.primary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

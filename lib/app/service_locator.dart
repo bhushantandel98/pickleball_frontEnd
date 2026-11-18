@@ -462,7 +462,9 @@ void initMockServiceLocator() {
 
   // Player Dashboard Repository
   sl.registerLazySingleton<PlayerDashboardRepository>(
-    () => const MockPlayerDashboardRepository(),
+    () => MockPlayerDashboardRepository(
+      coachingAcademyRepository: sl<CoachingAcademyRepository>(),
+    ),
   );
 
   // Venue Repository
@@ -619,7 +621,9 @@ void initRemoteServiceLocator() {
 
   // Player Dashboard Repository (mock baseline until remote endpoint connects)
   sl.registerLazySingleton<PlayerDashboardRepository>(
-    () => const MockPlayerDashboardRepository(),
+    () => MockPlayerDashboardRepository(
+      coachingAcademyRepository: sl<CoachingAcademyRepository>(),
+    ),
   );
 
   // Venue Repository (mock baseline until remote endpoint connects)
