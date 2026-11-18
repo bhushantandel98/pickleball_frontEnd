@@ -43,7 +43,26 @@ class MockAuthRepository implements AuthRepository {
         );
       }
 
-      // 2. Invalid Credentials Scenario
+      // 2. Common Demo Account (All 12 Platform Roles)
+      if (digits == '9999999999') {
+        if (request.password != 'Demo@123') {
+          throw const UnauthorizedException(
+            message: 'Invalid mobile number or password. Please verify your credentials.',
+          );
+        }
+        return const AuthSession(
+          userId: 'user_all_12_roles',
+          accessToken: 'mock_jwt_token_demo_all_12_roles',
+          refreshToken: 'mock_refresh_token_demo_all_12_roles',
+          name: 'Platform Demo User',
+          phone: '+919999999999',
+          email: 'demo@pickleball.platform',
+          availableRoles: UserRole.values,
+          activeRole: null,
+        );
+      }
+
+      // 3. Invalid Credentials Scenario
       // Known valid test accounts: 9876543210 (multi-role) and 9876543211 (single role)
       final isValidPhone = digits == '9876543210' || digits == '9876543211';
       final isValidPassword = request.password.isNotEmpty && request.password != 'wrongpass';
@@ -54,7 +73,7 @@ class MockAuthRepository implements AuthRepository {
         );
       }
 
-      // 3. Multi-role user: Alex Rivera (Player, Coach, Referee)
+      // 4. Multi-role user: Alex Rivera (Player, Coach, Referee)
       if (digits == '9876543210') {
         return const AuthSession(
           userId: 'usr_mock_multi_001',

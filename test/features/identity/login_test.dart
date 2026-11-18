@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pickleball_platform/app/service_locator.dart';
+import 'package:pickleball_platform/core/access/role_preference_storage.dart';
 import 'package:pickleball_platform/core/access/session_cubit.dart';
 import 'package:pickleball_platform/core/access/user_role.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
@@ -13,6 +16,8 @@ import 'package:pickleball_platform/core/router/app_router.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_button.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
+import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
+import 'package:pickleball_platform/core/widgets/state_views/permission_denied_view.dart';
 import 'package:pickleball_platform/features/identity/data/models/auth_response_model.dart';
 import 'package:pickleball_platform/features/identity/data/models/login_request_model.dart';
 import 'package:pickleball_platform/features/identity/data/repositories/mock_auth_repository.dart';
@@ -22,6 +27,7 @@ import 'package:pickleball_platform/features/identity/presentation/bloc/login_cu
 import 'package:pickleball_platform/features/identity/presentation/pages/login_page.dart';
 import 'package:pickleball_platform/features/identity/presentation/validators/login_validators.dart';
 import 'package:pickleball_platform/features/identity/presentation/widgets/brand_logo_emblem.dart';
+import 'package:pickleball_platform/features/role_selection/presentation/pages/role_selection_page.dart';
 
 void main() {
   group('Login Validators Unit Tests', () {
@@ -573,29 +579,128 @@ void main() {
       expect(find.text('Create Player Account'), findsOneWidget);
     });
 
-    testWidgets('successful login navigates to temporary placeholder destination (/auth/login-success)',
+    testWidgets(
+        'demo login (9999999999 / Demo@123) authenticates all 12 roles, visits every dashboard, switches roles, remembers role, and supports logout/re-login',
         (tester) async {
+      tester.view.physicalSize = const Size(1440, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await sl.reset();
+      await initServiceLocator();
+      addTearDown(sl.reset);
+
       final config = MockConfig.instance;
       config.setLatencyEnabled(false);
 
+      final demoSessionCubit = SessionCubit(
+        preferenceStorage: MockRolePreferenceStorage(),
+      );
+      addTearDown(demoSessionCubit.close);
+
+      final demoRouter = createAppRouter(
+        sessionCubit: demoSessionCubit,
+        initialLocation: AppRoutes.login,
+      );
+
       await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.lightTheme,
+        BlocProvider<SessionCubit>.value(
+          value: demoSessionCubit,
+          child: MaterialApp.router(
+            routerConfig: demoRouter,
+            theme: AppTheme.lightTheme,
+          ),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Welcome Back'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField).first, '9876543210');
-      await tester.enterText(find.byType(TextFormField).last, 'Password123');
+      // Wrong password for demo account is rejected
+      await tester.enterText(find.byType(TextFormField).first, '9999999999');
+      await tester.enterText(find.byType(TextFormField).last, 'Wrong@123');
+      await tester.tap(find.widgetWithText(AppButton, 'Sign In'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Invalid mobile number or password. Please verify your credentials.'),
+        findsOneWidget,
+      );
 
+      // Valid demo credentials authenticate all 12 roles and navigate to RoleSelectionPage
+      await tester.enterText(find.byType(TextFormField).last, 'Demo@123');
       await tester.tap(find.widgetWithText(AppButton, 'Sign In'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Login Successful'), findsOneWidget);
-      expect(find.text('Route Path: ${AppRoutes.loginSuccess}'), findsOneWidget);
+      expect(demoSessionCubit.state.isAuthenticated, isTrue);
+      expect(demoSessionCubit.state.userId, 'user_all_12_roles');
+      expect(demoSessionCubit.state.availableRoles.length, 12);
+      expect(find.byType(RoleSelectionPage), findsOneWidget);
+
+      // Select and verify every one of the 12 role dashboards
+      for (final role in UserRole.values) {
+        final roleFinder = find.text(role.displayName);
+        if (roleFinder.evaluate().isEmpty) {
+          await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+          await tester.pumpAndSettle();
+        }
+        await tester.ensureVisible(roleFinder.first);
+        await tester.tap(roleFinder.first);
+        await tester.pumpAndSettle();
+
+        final continueBtn = find.text('Continue to Dashboard');
+        if (continueBtn.evaluate().isNotEmpty) {
+          await tester.ensureVisible(continueBtn);
+          await tester.tap(continueBtn);
+          await tester.pumpAndSettle();
+        }
+
+        expect(demoSessionCubit.state.activeRole, role);
+        expect(find.byType(PermissionDeniedView), findsNothing,
+            reason: '${role.displayName} should not hit PermissionDeniedView');
+        expect(find.byType(ErrorStateView), findsNothing,
+            reason: '${role.displayName} should not hit ErrorStateView');
+
+        // Navigate back to RoleSelectionPage with switchRole=true
+        demoRouter.go('${AppRoutes.roleSelection}?switchRole=true');
+        await tester.pumpAndSettle();
+        expect(find.byType(RoleSelectionPage), findsOneWidget);
+      }
+
+      // Enable Remember my choice for Coach, continue, then logout and re-login
+      final rememberSwitch = find.byType(Switch);
+      await tester.ensureVisible(rememberSwitch);
+      await tester.tap(rememberSwitch);
+      await tester.pumpAndSettle();
+
+      final coachFinder = find.text(UserRole.coach.displayName);
+      await tester.ensureVisible(coachFinder.first);
+      await tester.tap(coachFinder.first);
+      await tester.pumpAndSettle();
+
+      final continueBtn = find.text('Continue to Dashboard');
+      if (continueBtn.evaluate().isNotEmpty) {
+        await tester.ensureVisible(continueBtn);
+        await tester.tap(continueBtn);
+        await tester.pumpAndSettle();
+      }
+      expect(demoSessionCubit.state.activeRole, UserRole.coach);
+
+      // Logout returns to unauthenticated Welcome/Login
+      demoSessionCubit.signOut();
+      await tester.pumpAndSettle();
+      expect(demoSessionCubit.state.isAuthenticated, isFalse);
+
+      // Re-login with demo account preserves remembered Coach role
+      demoRouter.go(AppRoutes.login);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).first, '9999999999');
+      await tester.enterText(find.byType(TextFormField).last, 'Demo@123');
+      await tester.tap(find.widgetWithText(AppButton, 'Sign In'));
+      await tester.pumpAndSettle();
+
+      expect(demoSessionCubit.state.isAuthenticated, isTrue);
+      expect(demoSessionCubit.state.activeRole, UserRole.coach);
     });
   });
 }

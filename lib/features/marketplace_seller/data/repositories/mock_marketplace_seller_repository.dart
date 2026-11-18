@@ -160,12 +160,16 @@ class MockMarketplaceSellerRepository implements MarketplaceSellerRepository {
     return false;
   }
 
+  bool _isAuthorizedOwner(SellerProfileModel seller, String userId) =>
+      seller.ownerUserId == userId ||
+      (userId == 'user_all_12_roles' && seller.sellerId == 'org_seller_001');
+
   (SellerProfileModel?, Failure?) _resolveAuthorizedSeller(
     String sellerId,
     String userId,
   ) {
     final seller = _sellers[sellerId];
-    if (seller == null || seller.ownerUserId != userId) {
+    if (seller == null || !_isAuthorizedOwner(seller, userId)) {
       return (
         null,
         const ForbiddenFailure(
@@ -205,7 +209,7 @@ class MockMarketplaceSellerRepository implements MarketplaceSellerRepository {
     }
 
     for (final seller in _sellers.values) {
-      if (seller.ownerUserId == userId) {
+      if (_isAuthorizedOwner(seller, userId)) {
         if (!seller.isActive ||
             seller.verificationStatus == SellerVerificationStatus.suspended) {
           return const FailureResult(

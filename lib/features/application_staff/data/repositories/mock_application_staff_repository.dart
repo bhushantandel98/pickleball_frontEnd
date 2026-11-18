@@ -36,6 +36,30 @@ class MockApplicationStaffRepository implements ApplicationStaffRepository {
       isActive: true,
       assignedAt: DateTime(2024, 11, 1),
     ),
+    // Common demo account with Application Staff permissions for UI verification.
+    'user_all_12_roles': ApplicationStaffProfileModel(
+      staffId: 'app_staff_demo',
+      userId: 'user_all_12_roles',
+      organizationScopeId: 'platform_ops_in',
+      authorizedOrganizationIds: const {
+        'org_seller_001',
+        'org_seller_002',
+        'org_venue_001',
+        'org_acad_001',
+      },
+      staffName: 'Platform Demo User',
+      staffEmail: 'demo@pickleball.platform',
+      roleTitle: 'Platform Operations Staff (Demo)',
+      permissions: const {
+        ApplicationStaffPermission.viewDashboard,
+        ApplicationStaffPermission.reviewSellers,
+        ApplicationStaffPermission.reviewProducts,
+        ApplicationStaffPermission.handleSupportTickets,
+        ApplicationStaffPermission.monitorPlatformHealth,
+      },
+      isActive: true,
+      assignedAt: DateTime(2025, 1, 1),
+    ),
     // Restricted staff profile for verifying permission & org-scope filtering.
     'user_app_staff_002': ApplicationStaffProfileModel(
       staffId: 'app_staff_002',

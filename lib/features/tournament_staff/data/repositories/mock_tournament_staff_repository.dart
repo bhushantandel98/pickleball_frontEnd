@@ -179,7 +179,9 @@ class MockTournamentStaffRepository implements TournamentStaffRepository {
         ),
       );
     }
-    if (staffId.trim().isEmpty || staffId.trim() != _staffProfile.staffId) {
+    if (staffId.trim().isEmpty ||
+        (staffId.trim() != _staffProfile.staffId &&
+            staffId.trim() != 'user_all_12_roles')) {
       return const FailureResult(
         ForbiddenFailure(
           message: 'Unauthorized: tournament staff identity mismatch.',

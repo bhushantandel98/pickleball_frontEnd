@@ -16,6 +16,7 @@ import 'package:pickleball_platform/features/application_staff/domain/entities/a
 /// - Immutable governance audit logging for every Admin mutation.
 class MockApplicationAdminRepository implements ApplicationAdminRepository {
   static const String _soleAdminUserId = 'user_app_admin_001';
+  static const String _demoAllRolesUserId = 'user_all_12_roles';
   static const String _soleAdminName = 'Platform Administrator';
   static const String _soleAdminEmail = 'root-admin@platform.internal';
 
@@ -149,7 +150,8 @@ class MockApplicationAdminRepository implements ApplicationAdminRepository {
   ];
 
   Result<String> _requireSoleAdmin(String adminUserId) {
-    if (adminUserId.trim() != _soleAdminUserId) {
+    final normalized = adminUserId.trim();
+    if (normalized != _soleAdminUserId && normalized != _demoAllRolesUserId) {
       return const FailureResult(
         ForbiddenFailure(
           message:

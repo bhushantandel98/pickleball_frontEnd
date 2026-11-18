@@ -232,13 +232,17 @@ class MockRoleContextRepository implements RoleContextRepository {
             role: UserRole.tournamentStaff,
             organizationId: 'org_tourn_001',
             organizationName: 'Pacific Pickleball Series',
-            tournamentId: 'tourn_001',
+            tournamentId: 'tourn_org_001',
             tournamentName: 'Mumbai Championship 2026',
             isActive: true,
           ),
           const RoleProfile(
             roleAssignmentId: 'assign_all_referee',
             role: UserRole.referee,
+            organizationId: 'org_tourn_001',
+            organizationName: 'Pacific Pickleball Series',
+            tournamentId: 'tourn_org_001',
+            tournamentName: 'Mumbai Championship 2026',
             isActive: true,
           ),
           const RoleProfile(
@@ -265,9 +269,9 @@ class MockRoleContextRepository implements RoleContextRepository {
 
         return RoleContext(
           userId: userId,
-          displayName: 'Platform Super User',
-          phone: '+91 9876599999',
-          email: 'superuser@platform.internal',
+          displayName: 'Platform Demo User',
+          phone: '+91 9999999999',
+          email: 'demo@pickleball.platform',
           roleProfiles: profiles,
           preferredRoleAssignmentId: preferredAssignmentId,
         );

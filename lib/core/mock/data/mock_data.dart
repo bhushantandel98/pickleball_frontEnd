@@ -189,6 +189,18 @@ abstract final class MockData {
     createdAt: DateTime(2024, 12, 1),
   );
 
+  /// Common demo account holding all 12 platform roles.
+  static final UserProfile demoAll12RolesUser = UserProfile(
+    id: 'user_all_12_roles',
+    name: 'Platform Demo User',
+    email: 'demo@pickleball.platform',
+    phone: '+91 9999999999',
+    availableRoles: UserRole.values,
+    activeRole: UserRole.player,
+    rating: 4.0,
+    createdAt: DateTime(2025, 1, 1),
+  );
+
   /// Complete list of sample users.
   static final List<UserProfile> allUsers = [
     playerUser,
@@ -206,6 +218,7 @@ abstract final class MockData {
     multiRoleUser,
     organizerPlayerUser,
     suspendedUser,
+    demoAll12RolesUser,
   ];
 
   // ---------------------------------------------------------------------------

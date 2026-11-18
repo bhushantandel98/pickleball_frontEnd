@@ -205,9 +205,13 @@ class MockRefereeRepository implements RefereeRepository {
     ),
   ];
 
+  String _effectiveRefereeId(String refereeId) =>
+      refereeId == 'user_all_12_roles' ? _seededRefereeId : refereeId;
+
   Failure? _validateContext(String tournamentId, String refereeId) {
+    final effectiveId = _effectiveRefereeId(refereeId);
     if (tournamentId != _profile.tournamentId ||
-        refereeId != _profile.refereeId) {
+        effectiveId != _profile.refereeId) {
       return const ForbiddenFailure(
         message: 'Access denied: Referee session does not match this tournament.',
       );
@@ -225,18 +229,20 @@ class MockRefereeRepository implements RefereeRepository {
     String refereeId,
     String matchId,
   ) {
+    final effectiveId = _effectiveRefereeId(refereeId);
     return _matches.indexWhere(
       (m) =>
           m.id == matchId &&
           m.tournamentId == tournamentId &&
-          m.refereeId == refereeId,
+          m.refereeId == effectiveId,
     );
   }
 
   RefereeWorkspaceData _buildWorkspace(String tournamentId, String refereeId) {
+    final effectiveId = _effectiveRefereeId(refereeId);
     final assigned = _matches
         .where(
-          (m) => m.tournamentId == tournamentId && m.refereeId == refereeId,
+          (m) => m.tournamentId == tournamentId && m.refereeId == effectiveId,
         )
         .toList(growable: false);
 

@@ -216,7 +216,8 @@ class _DesktopShell extends StatelessWidget {
                     ),
                     child: InkWell(
                       borderRadius: AppSpacing.borderRadiusSm,
-                      onTap: () => context.go(AppRoutes.roleSelection),
+                      onTap: () =>
+                          context.go('${AppRoutes.roleSelection}?switchRole=true'),
                       child: Container(
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
@@ -321,14 +322,15 @@ AppBar _buildAppBar(
         padding: const EdgeInsets.only(right: AppSpacing.sm),
         child: AppChip.neutral(
           label: role.id,
-          onTap: () => context.go(AppRoutes.roleSelection),
+          onTap: () => context.go('${AppRoutes.roleSelection}?switchRole=true'),
         ),
       ),
       if (session.availableRoles.length > 1) ...[
         IconButton(
           icon: const Icon(Icons.switch_account_outlined),
           tooltip: 'Switch Role',
-          onPressed: () => context.go(AppRoutes.roleSelection),
+          onPressed: () =>
+              context.go('${AppRoutes.roleSelection}?switchRole=true'),
         ),
       ],
       IconButton(

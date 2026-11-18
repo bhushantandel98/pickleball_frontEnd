@@ -260,7 +260,8 @@ class MockVenueStaffRepository implements VenueStaffRepository {
         ),
       );
     }
-    if (staffId.trim().isEmpty || staffId != _staffProfile.staffId) {
+    if (staffId.trim().isEmpty ||
+        (staffId != _staffProfile.staffId && staffId != 'user_all_12_roles')) {
       return const FailureResult(
         ForbiddenFailure(
           message: 'Unauthorized: venue staff identity mismatch.',

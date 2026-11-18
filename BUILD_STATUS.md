@@ -25,12 +25,13 @@
 
 ## Active Task
 
-- **Task ID:** Phase 8 — Frontend UI Gap Resolution & Account Settings Persistence
-- **Description:** Resolved all remaining frontend UI gaps identified in `docs/FRONTEND_UI_COMPLETION_AUDIT.md` and completed repository-backed Account Settings persistence: (1) replaced `/coach/batches` placeholder with `CoachBatchesPage` connected to `CoachDashboardCubit` / `MockCoachDashboardRepository`, (2) replaced `/public/tournaments/:id` placeholder with `PublicTournamentDetailsPage`, (3) replaced `/public/rankings` placeholder with `PublicRankingsPage`, and (4) wired `AccountSettingsPage` Privacy & Security preferences (`publicPlayerProfile`, `showMatchHistory`) to `ProfileCubit` / `UserProfileRepository` (`MockUserProfileDataSource`) and Change Password to `AuthRepository.changePassword` (`MockAuthRepository`) with repository-confirmed feedback and error handling. **All 12 platform roles and public routes are now UI-complete.**
+- **Task ID:** Phase 8 — Common 12-Role Demo Login Flow & Frontend UI Completion
+- **Description:** Implemented and verified the complete frontend-only mock login flow for all 12 platform roles using the common demo account (`9999999999` / `Demo@123`, `user_all_12_roles`) alongside all existing individual mock accounts: (1) added `9999999999` / `Demo@123` credential validation in `MockAuthRepository`, (2) wired `LoginPage._handleSuccess` into `SessionCubit.signIn` and `RoleSelectionPage` / remembered-role routing, (3) updated `AppNavigationShell` role-switch links to use `?switchRole=true`, (4) added `user_all_12_roles` profile & scoped context support in `MockData`, `MockRoleContextRepository`, `MockVenueStaffRepository`, `MockTournamentStaffRepository`, `MockRefereeRepository`, `MockMarketplaceSellerRepository`, `MockSellerCatalogRepository`, `MockSellerOrderRepository`, `MockApplicationStaffRepository`, and `MockApplicationAdminRepository`.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 5.1s).
-  - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**); `test/features/profile/profile_test.dart` passed all 22 tests.
+  - `flutter analyze`: Passed — No issues found! (ran in 36.4s).
+  - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**); `test/features/identity/login_test.dart` verified login (`9999999999` / `Demo@123`), `RoleSelectionPage`, all 12 role dashboards, role switching, remember-role persistence, and logout/re-login.
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
+  - **Known Limitation (Pre-existing UI layout):** `UpcomingActivitiesSection` in `PlayerDashboardPage` has a 39px horizontal `Row` overflow at narrow `800x600` test viewport width (passes cleanly at desktop `1440x1200`).
 - **Assigned To:** Lead Frontend Architect (Antigravity)
 - **Status:** Frontend UI Complete — Ready for Backend Integration.
 

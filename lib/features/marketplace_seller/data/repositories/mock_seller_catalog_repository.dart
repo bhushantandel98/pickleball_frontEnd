@@ -425,7 +425,10 @@ class MockSellerCatalogRepository implements SellerCatalogRepository {
             ),
           );
         }
-        if (profile.sellerId != sellerId || profile.ownerUserId != userId) {
+        if (profile.sellerId != sellerId ||
+            (profile.ownerUserId != userId &&
+                !(userId == 'user_all_12_roles' &&
+                    sellerId == 'org_seller_001'))) {
           return const FailureResult(
             ForbiddenFailure(
               message:

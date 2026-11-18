@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
+import 'package:pickleball_platform/core/access/session_cubit.dart';
 import 'package:pickleball_platform/core/design_system/app_colors.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/design_system/responsive_layout.dart';
@@ -77,12 +78,38 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _handleSuccess(AuthSession session) {
+  Future<void> _handleSuccess(AuthSession session) async {
     if (widget.onLoginSuccess != null) {
       widget.onLoginSuccess!(session);
-    } else {
-      context.go(AppRoutes.loginSuccess);
+      return;
     }
+
+    SessionCubit? sessionCubit;
+    try {
+      sessionCubit = context.read<SessionCubit>();
+    } catch (_) {
+      // SessionCubit optional in standalone widget tests
+    }
+
+    if (sessionCubit != null) {
+      await sessionCubit.signIn(
+        userId: session.userId,
+        email: session.email ?? '',
+        displayName: session.name,
+        roles: session.availableRoles,
+        activeRole: session.activeRole,
+      );
+      if (!mounted) return;
+      final activeRole = sessionCubit.state.activeRole;
+      context.go(
+        activeRole != null
+            ? activeRole.defaultDashboardPath
+            : AppRoutes.roleSelection,
+      );
+      return;
+    }
+
+    context.go(AppRoutes.roleSelection);
   }
 
   void _handleForgotPassword() {
