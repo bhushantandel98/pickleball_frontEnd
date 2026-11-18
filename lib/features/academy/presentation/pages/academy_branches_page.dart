@@ -74,13 +74,6 @@ class _AcademyBranchesPageState extends State<AcademyBranchesPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Select a branch to view and manage its batches',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
             ...branches.map((branch) {
               final branchBatches = state.data.batches
                   .where((b) => b.branchId == branch.id)

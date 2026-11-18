@@ -8,8 +8,17 @@ import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/core/widgets/state_views/empty_view.dart';
 import 'package:pickleball_platform/features/academy/domain/entities/academy_entities.dart';
 import 'package:pickleball_platform/features/academy/presentation/bloc/academy_cubit.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_staff_management_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/widgets/academy_branch_filter_bar.dart';
 import 'package:pickleball_platform/features/academy/presentation/widgets/academy_page_scaffold.dart';
+
+enum _EnrollmentSection {
+  enrollments('Enrollment Management'),
+  staff('Staff Management');
+
+  final String label;
+  const _EnrollmentSection(this.label);
+}
 
 enum _EnrollmentTab {
   pending('Pending Requests'),
@@ -37,6 +46,7 @@ class AcademyEnrollmentsPage extends StatefulWidget {
 }
 
 class _AcademyEnrollmentsPageState extends State<AcademyEnrollmentsPage> {
+  _EnrollmentSection _section = _EnrollmentSection.enrollments;
   _EnrollmentTab _activeTab = _EnrollmentTab.pending;
 
   @override
@@ -51,6 +61,26 @@ class _AcademyEnrollmentsPageState extends State<AcademyEnrollmentsPage> {
         final cubit = context.read<AcademyCubit>();
         final theme = Theme.of(context);
         final df = DateFormat('dd MMM yyyy');
+        final activeSection =
+            state.canManageStaff ? _section : _EnrollmentSection.enrollments;
+
+        if (activeSection == _EnrollmentSection.staff) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SegmentedButton<_EnrollmentSection>(
+                segments: _EnrollmentSection.values
+                    .map((s) => ButtonSegment(value: s, label: Text(s.label)))
+                    .toList(),
+                selected: {activeSection},
+                onSelectionChanged: (sel) =>
+                    setState(() => _section = sel.first),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AcademyStaffManagementSection(state: state),
+            ],
+          );
+        }
 
         final branchScoped = state.data.enrollments.where((e) {
           if (!state.canAccessBranch(e.branchId)) return false;
@@ -80,6 +110,17 @@ class _AcademyEnrollmentsPageState extends State<AcademyEnrollmentsPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (state.canManageStaff) ...[
+              SegmentedButton<_EnrollmentSection>(
+                segments: _EnrollmentSection.values
+                    .map((s) => ButtonSegment(value: s, label: Text(s.label)))
+                    .toList(),
+                selected: {activeSection},
+                onSelectionChanged: (sel) =>
+                    setState(() => _section = sel.first),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             AcademyBranchFilterBar(
               branches: state.scopedBranches,
               selectedBranchId: state.selectedBranchId,

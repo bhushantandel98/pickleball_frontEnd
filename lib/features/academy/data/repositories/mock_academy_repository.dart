@@ -341,6 +341,20 @@ class MockAcademyRepository implements AcademyRepository {
               coachName: 'Aarav Sharma',
               focusArea: 'Third-Shot Drop & Transition Reset',
               progressScore: 84,
+              aspectRatings: const {
+                'asp_serve': 8,
+                'asp_return': 8,
+                'asp_dink': 9,
+                'asp_drop': 8,
+                'asp_volley': 8,
+                'asp_reset': 9,
+                'asp_footwork': 8,
+                'asp_positioning': 9,
+                'asp_shot_sel': 8,
+                'asp_agility': 8,
+                'asp_stamina': 9,
+                'asp_composure': 9,
+              },
               feedback: 'Consistent soft drops under pressure; work on split-step timing at mid-court.',
             ),
             CoachPerformanceAssessment(
@@ -350,6 +364,20 @@ class MockAcademyRepository implements AcademyRepository {
               coachName: 'Aarav Sharma',
               focusArea: 'Kitchen Line Dink Patience',
               progressScore: 76,
+              aspectRatings: const {
+                'asp_serve': 7,
+                'asp_return': 7,
+                'asp_dink': 8,
+                'asp_drop': 7,
+                'asp_volley': 7,
+                'asp_reset': 8,
+                'asp_footwork': 7,
+                'asp_positioning': 8,
+                'asp_shot_sel': 8,
+                'asp_agility': 8,
+                'asp_stamina': 8,
+                'asp_composure': 8,
+              },
               feedback: 'Good cross-court dink depth; avoid popping up backhand volleys.',
             ),
           ],
@@ -466,6 +494,68 @@ class MockAcademyRepository implements AcademyRepository {
         AttendanceTrendPoint(label: 'Sat', attendanceRate: 94),
         AttendanceTrendPoint(label: 'Sun', attendanceRate: 89),
       ],
+      performanceAspects: const [
+        PerformanceAspectConfig(
+          id: 'asp_serve',
+          label: 'Serve Consistency',
+          category: 'Technical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_return',
+          label: 'Return Depth',
+          category: 'Technical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_dink',
+          label: 'Dink Control',
+          category: 'Technical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_drop',
+          label: 'Third-Shot Drop',
+          category: 'Technical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_volley',
+          label: 'NVZ Volley Reflexes',
+          category: 'Technical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_reset',
+          label: 'Transition Reset',
+          category: 'Tactical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_footwork',
+          label: 'Footwork & Balance',
+          category: 'Physical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_positioning',
+          label: 'Court Positioning',
+          category: 'Tactical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_shot_sel',
+          label: 'Shot Selection',
+          category: 'Tactical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_agility',
+          label: 'Lateral Agility',
+          category: 'Physical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_stamina',
+          label: 'Match Stamina',
+          category: 'Physical',
+        ),
+        PerformanceAspectConfig(
+          id: 'asp_composure',
+          label: 'Mental Composure',
+          category: 'Mental',
+        ),
+      ],
     );
   }
 
@@ -516,6 +606,7 @@ class MockAcademyRepository implements AcademyRepository {
       students: students ?? _data.students,
       staffMembers: staffMembers ?? _data.staffMembers,
       attendanceTrends: _data.attendanceTrends,
+      performanceAspects: _data.performanceAspects,
     );
   }
 
@@ -1375,6 +1466,81 @@ class MockAcademyRepository implements AcademyRepository {
     }).toList();
 
     _data = _withUpdatedData(staffMembers: updatedStaff);
+    return Success(_data);
+  }
+
+  @override
+  Future<Result<AcademyWorkspaceData>> recordStudentAssessment({
+    required String academyId,
+    required String studentId,
+    required String coachId,
+    required String coachName,
+    required String focusArea,
+    required Map<String, int> aspectRatings,
+    required String feedback,
+  }) async {
+    if (shouldFail) {
+      return const FailureResult(
+        ServerFailure(message: 'Unable to record student assessment.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+
+    if (focusArea.trim().isEmpty || aspectRatings.isEmpty) {
+      return const FailureResult(
+        ValidationFailure(
+          message: 'Focus area and at least one aspect rating are required.',
+        ),
+      );
+    }
+
+    final validRatings = <String, int>{};
+    for (final entry in aspectRatings.entries) {
+      validRatings[entry.key] = entry.value.clamp(1, 10);
+    }
+    final avg = validRatings.values.fold<int>(0, (s, v) => s + v) /
+        validRatings.length;
+    final progressScore = (avg * 10).round().clamp(10, 100);
+
+    final assessment = CoachPerformanceAssessment(
+      id: 'assess_${DateTime.now().microsecondsSinceEpoch}',
+      date: DateTime.now(),
+      coachId: coachId,
+      coachName: coachName,
+      focusArea: focusArea.trim(),
+      progressScore: progressScore,
+      aspectRatings: validRatings,
+      feedback: feedback.trim(),
+    );
+
+    final updatedStudents = _data.students.map((s) {
+      if (s.id != studentId) return s;
+      return AcademyStudent(
+        id: s.id,
+        academyId: s.academyId,
+        name: s.name,
+        phone: s.phone,
+        email: s.email,
+        ageGroup: s.ageGroup,
+        skillLevel: s.skillLevel,
+        branchId: s.branchId,
+        branchName: s.branchName,
+        batchId: s.batchId,
+        batchName: s.batchName,
+        assignedCoachId: s.assignedCoachId,
+        assignedCoachName: s.assignedCoachName,
+        enrollmentStatus: s.enrollmentStatus,
+        paymentStatus: s.paymentStatus,
+        monthlyFeeInr: s.monthlyFeeInr,
+        joinedAt: s.joinedAt,
+        academyNotes: s.academyNotes,
+        attendanceHistory: s.attendanceHistory,
+        coachAssessments: [assessment, ...s.coachAssessments],
+      );
+    }).toList();
+
+    _data = _withUpdatedData(students: updatedStudents);
     return Success(_data);
   }
 }

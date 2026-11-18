@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:pickleball_platform/core/design_system/app_colors.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
+import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
 import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/core/widgets/app_text_field.dart';
@@ -198,7 +198,13 @@ class _AcademyStudentsPageState extends State<AcademyStudentsPage> {
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: AppCard(
                     padding: const EdgeInsets.all(AppSpacing.md),
-                    onTap: () => _openStudentProfile(context, student),
+                    onTap: () => context.push(
+                      state.isAdmin
+                          ? AppRoutes.academyStudentProfilePath(student.id)
+                          : AppRoutes.academyStaffStudentProfilePath(
+                              student.id,
+                            ),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -256,164 +262,6 @@ class _AcademyStudentsPageState extends State<AcademyStudentsPage> {
           ],
         );
       },
-    );
-  }
-
-  Future<void> _openStudentProfile(
-    BuildContext context,
-    AcademyStudent student,
-  ) async {
-    final df = DateFormat('dd MMM yyyy');
-    final theme = Theme.of(context);
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: Text(student.name),
-        content: SizedBox(
-          width: 520,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Academy-Entered Information
-                AppChip.neutral(label: 'Academy-Entered Information'),
-                const SizedBox(height: AppSpacing.xs),
-                Text('Phone: ${student.phone}'),
-                Text('Email: ${student.email}'),
-                Text('Age Group: ${student.ageGroup}'),
-                Text('Branch: ${student.branchName}'),
-                Text('Batch: ${student.batchName} (${student.skillLevel.label})'),
-                Text('Assigned Coach: ${student.assignedCoachName ?? 'Unassigned'}'),
-                Text('Enrollment Status: ${student.enrollmentStatus.label}'),
-                Text(
-                  'Payment Status: ${student.paymentStatus.label} (₹${student.monthlyFeeInr.toStringAsFixed(0)}/mo)',
-                ),
-                Text('Joined: ${df.format(student.joinedAt)}'),
-                if (student.academyNotes != null &&
-                    student.academyNotes!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Academy Notes: ${student.academyNotes}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-                const Divider(height: AppSpacing.lg),
-
-                // Attendance History
-                Text(
-                  'Attendance History',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                if (student.attendanceHistory.isEmpty)
-                  const Text('No attendance records yet.')
-                else
-                  ...student.attendanceHistory.map(
-                    (att) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${df.format(att.date)} • ${att.batchName}',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ),
-                          Text(
-                            att.status,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: att.status == 'Present'
-                                  ? AppColors.success
-                                  : AppColors.warning,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                const Divider(height: AppSpacing.lg),
-
-                // Coach-Recorded Performance Assessments & Feedback
-                Row(
-                  children: [
-                    Text(
-                      'Performance & Progress',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    AppChip.info(label: 'Coach-Recorded'),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                if (student.coachAssessments.isEmpty)
-                  const Text('No coach-recorded assessments yet.')
-                else
-                  ...student.coachAssessments.map(
-                    (assess) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: AppCard(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    assess.focusArea,
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  '${assess.progressScore}%',
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            LinearProgressIndicator(
-                              value: (assess.progressScore / 100).clamp(0.0, 1.0),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              assess.feedback,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Recorded by Coach ${assess.coachName} • ${df.format(assess.date)}',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 }

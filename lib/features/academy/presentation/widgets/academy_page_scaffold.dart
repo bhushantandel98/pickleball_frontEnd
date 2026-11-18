@@ -159,8 +159,11 @@ class _AcademyScaffoldBodyState extends State<_AcademyScaffoldBody> {
             );
 
           case AcademyLoaded():
-            final theme = Theme.of(context);
             final cubit = context.read<AcademyCubit>();
+            final headerAction = widget.headerActionBuilder?.call(context, state);
+            final hasHeaderAction =
+                headerAction != null && headerAction is! SizedBox;
+
             return Scaffold(
               body: SafeArea(
                 child: RefreshIndicator(
@@ -174,35 +177,13 @@ class _AcademyScaffoldBodyState extends State<_AcademyScaffoldBody> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Wrap(
-                            spacing: AppSpacing.sm,
-                            runSpacing: AppSpacing.sm,
-                            alignment: WrapAlignment.spaceBetween,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.title,
-                                    style: theme.textTheme.headlineSmall
-                                        ?.copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    widget.subtitle,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (widget.headerActionBuilder != null)
-                                widget.headerActionBuilder!(context, state),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.md),
+                          if (hasHeaderAction) ...[
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: headerAction,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
                           widget.bodyBuilder(context, state),
                         ],
                       ),

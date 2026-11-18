@@ -509,6 +509,22 @@ class StudentAttendanceEntry extends Equatable {
   List<Object?> get props => [id, date, batchName, status, markedBy];
 }
 
+/// Configurable performance aspect used by coaches to rate players (1–10 scale).
+class PerformanceAspectConfig extends Equatable {
+  final String id;
+  final String label;
+  final String category;
+
+  const PerformanceAspectConfig({
+    required this.id,
+    required this.label,
+    required this.category,
+  });
+
+  @override
+  List<Object?> get props => [id, label, category];
+}
+
 /// Coach-recorded performance assessment and progress feedback for a student.
 class CoachPerformanceAssessment extends Equatable {
   final String id;
@@ -517,6 +533,7 @@ class CoachPerformanceAssessment extends Equatable {
   final String coachName;
   final String focusArea;
   final int progressScore;
+  final Map<String, int> aspectRatings;
   final String feedback;
 
   const CoachPerformanceAssessment({
@@ -526,8 +543,15 @@ class CoachPerformanceAssessment extends Equatable {
     required this.coachName,
     required this.focusArea,
     required this.progressScore,
+    this.aspectRatings = const {},
     required this.feedback,
   });
+
+  double get overallRating {
+    if (aspectRatings.isEmpty) return progressScore / 10.0;
+    final total = aspectRatings.values.fold<int>(0, (sum, v) => sum + v);
+    return total / aspectRatings.length;
+  }
 
   @override
   List<Object?> get props => [
@@ -537,6 +561,7 @@ class CoachPerformanceAssessment extends Equatable {
         coachName,
         focusArea,
         progressScore,
+        aspectRatings,
         feedback,
       ];
 }
@@ -712,6 +737,7 @@ class AcademyWorkspaceData extends Equatable {
   final List<AcademyStudent> students;
   final List<AcademyStaffMember> staffMembers;
   final List<AttendanceTrendPoint> attendanceTrends;
+  final List<PerformanceAspectConfig> performanceAspects;
 
   const AcademyWorkspaceData({
     required this.profile,
@@ -724,6 +750,7 @@ class AcademyWorkspaceData extends Equatable {
     this.students = const [],
     this.staffMembers = const [],
     this.attendanceTrends = const [],
+    this.performanceAspects = const [],
   });
 
   @override
@@ -738,5 +765,6 @@ class AcademyWorkspaceData extends Equatable {
         students,
         staffMembers,
         attendanceTrends,
+        performanceAspects,
       ];
 }

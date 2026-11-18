@@ -147,4 +147,14 @@ abstract class AcademyRepository {
     required Set<AcademyStaffPermission> permissions,
     required bool isActive,
   });
+
+  Future<Result<AcademyWorkspaceData>> recordStudentAssessment({
+    required String academyId,
+    required String studentId,
+    required String coachId,
+    required String coachName,
+    required String focusArea,
+    required Map<String, int> aspectRatings,
+    required String feedback,
+  });
 }

@@ -16,6 +16,7 @@ import 'package:pickleball_platform/features/academy/presentation/pages/academy_
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_dashboard_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_enrollments_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_staff_management_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_student_profile_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_students_page.dart';
 import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_attendance_page.dart';
 import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_operations_page.dart';
@@ -429,6 +430,12 @@ GoRouter createAppRouter({
             builder: (context, state) => const AcademyStudentsPage(),
           ),
           GoRoute(
+            path: AppRoutes.academyStudentProfile,
+            builder: (context, state) => AcademyStudentProfilePage(
+              studentId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+          GoRoute(
             path: AppRoutes.academyEnrollments,
             builder: (context, state) => const AcademyEnrollmentsPage(),
           ),
@@ -453,6 +460,12 @@ GoRouter createAppRouter({
           GoRoute(
             path: AppRoutes.academyStaffStudents,
             builder: (context, state) => const AcademyStudentsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStaffStudentProfile,
+            builder: (context, state) => AcademyStudentProfilePage(
+              studentId: state.pathParameters['id'] ?? '',
+            ),
           ),
           GoRoute(
             path: AppRoutes.academyStaffEnrollments,

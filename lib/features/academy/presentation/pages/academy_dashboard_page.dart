@@ -5,7 +5,6 @@ import 'package:pickleball_platform/core/design_system/app_colors.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
-import 'package:pickleball_platform/core/widgets/app_chip.dart';
 import 'package:pickleball_platform/features/academy/domain/entities/academy_entities.dart';
 import 'package:pickleball_platform/features/academy/presentation/bloc/academy_cubit.dart';
 import 'package:pickleball_platform/features/academy/presentation/bloc/academy_state.dart';
@@ -29,22 +28,9 @@ class AcademyDashboardPage extends StatelessWidget {
       cubit: cubit,
       academyId: academyId,
       title: 'Academy Dashboard',
-      subtitle:
-          'Student growth, branch distribution, batch capacity, attendance trends & fee collection.',
-      headerActionBuilder: (context, state) {
-        if (!state.canManageStaff) {
-          return AppChip.info(label: 'Staff Scope');
-        }
-        return OutlinedButton.icon(
-          onPressed: () => context.push(AppRoutes.academyStaffManagement),
-          icon: const Icon(Icons.manage_accounts_outlined, size: 18),
-          label: const Text('Staff Management'),
-        );
-      },
+      subtitle: '',
       bodyBuilder: (context, state) {
         final cubit = context.read<AcademyCubit>();
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
 
         final totalStudents = state.scopedStudents.length;
         final activeEnrollments = state.activeStudentCount;
@@ -67,50 +53,10 @@ class AcademyDashboardPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Organization & Branch Filter Header
-            AppCard(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              state.data.profile.academyName,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              '${state.data.profile.primaryCity} • ${state.isAdmin ? 'Admin View' : 'Assigned Branch Staff View'}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (state.canManageStaff)
-                        IconButton(
-                          tooltip: 'Staff Management',
-                          icon: const Icon(Icons.settings_outlined),
-                          onPressed: () =>
-                              context.push(AppRoutes.academyStaffManagement),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  AcademyBranchFilterBar(
-                    branches: state.scopedBranches,
-                    selectedBranchId: state.selectedBranchId,
-                    onBranchSelected: cubit.selectBranch,
-                  ),
-                ],
-              ),
+            AcademyBranchFilterBar(
+              branches: state.scopedBranches,
+              selectedBranchId: state.selectedBranchId,
+              onBranchSelected: cubit.selectBranch,
             ),
             const SizedBox(height: AppSpacing.md),
 

@@ -54,6 +54,10 @@ class AcademyLoaded extends AcademyState {
       isAdmin || hasPermission(AcademyStaffPermission.manageEnrollments);
   bool get canRecordTuition =>
       isAdmin || hasPermission(AcademyStaffPermission.recordTuition);
+  bool get canRecordAssessment =>
+      isAdmin ||
+      hasPermission(AcademyStaffPermission.manageBatches) ||
+      hasPermission(AcademyStaffPermission.manageAttendance);
 
   bool canAccessBranch(String branchId) =>
       isAdmin || (authorizedBranchIds?.contains(branchId) ?? false);

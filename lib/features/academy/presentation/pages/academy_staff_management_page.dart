@@ -33,37 +33,69 @@ class AcademyStaffManagementPage extends StatelessWidget {
       headerActionBuilder: (context, state) {
         if (!state.canManageStaff) return const SizedBox.shrink();
         return FilledButton.icon(
-          onPressed: () => _showStaffDialog(context, state: state),
+          onPressed: () => showAcademyStaffDialog(context, state: state),
           icon: const Icon(Icons.person_add_outlined),
           label: const Text('Add Staff'),
         );
       },
-      bodyBuilder: (context, state) {
-        if (!state.canManageStaff) {
-          return const EmptyStateView(
-            icon: Icon(Icons.lock_outline),
-            title: 'Academy Admin Only',
-            message:
-                'Staff members cannot manage staff roles, branch access, or permissions.',
-          );
-        }
+      bodyBuilder: (context, state) => AcademyStaffManagementSection(state: state),
+    );
+  }
+}
 
-        final theme = Theme.of(context);
-        final staffList = state.data.staffMembers;
+/// Reusable Staff Management body widget (used inside Enrollment tab & standalone route).
+class AcademyStaffManagementSection extends StatelessWidget {
+  final AcademyLoaded state;
 
-        if (staffList.isEmpty) {
-          return EmptyStateView(
+  const AcademyStaffManagementSection({
+    super.key,
+    required this.state,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!state.canManageStaff) {
+      return const EmptyStateView(
+        icon: Icon(Icons.lock_outline),
+        title: 'Academy Admin Only',
+        message:
+            'Staff members cannot manage staff roles, branch access, or permissions.',
+      );
+    }
+
+    final theme = Theme.of(context);
+    final staffList = state.data.staffMembers;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Academy Staff (${staffList.length})',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () => showAcademyStaffDialog(context, state: state),
+              icon: const Icon(Icons.person_add_outlined, size: 18),
+              label: const Text('Add Staff'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        if (staffList.isEmpty)
+          EmptyStateView(
             icon: const Icon(Icons.manage_accounts_outlined),
             title: 'No Staff Members',
             message: 'Add staff members and assign branch permissions.',
             actionLabel: 'Add Staff',
-            onAction: () => _showStaffDialog(context, state: state),
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: staffList.map((member) {
+            onAction: () => showAcademyStaffDialog(context, state: state),
+          )
+        else
+          ...staffList.map((member) {
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: AppCard(
@@ -116,7 +148,7 @@ class AcademyStaffManagementPage extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: OutlinedButton.icon(
-                        onPressed: () => _showStaffDialog(
+                        onPressed: () => showAcademyStaffDialog(
                           context,
                           state: state,
                           existing: member,
@@ -129,17 +161,17 @@ class AcademyStaffManagementPage extends StatelessWidget {
                 ),
               ),
             );
-          }).toList(),
-        );
-      },
+          }),
+      ],
     );
   }
+}
 
-  Future<void> _showStaffDialog(
-    BuildContext context, {
-    required AcademyLoaded state,
-    AcademyStaffMember? existing,
-  }) async {
+Future<void> showAcademyStaffDialog(
+  BuildContext context, {
+  required AcademyLoaded state,
+  AcademyStaffMember? existing,
+}) async {
     final cubit = context.read<AcademyCubit>();
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
@@ -300,5 +332,4 @@ class AcademyStaffManagementPage extends StatelessWidget {
         ),
       ),
     );
-  }
 }

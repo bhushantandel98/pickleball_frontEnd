@@ -423,6 +423,36 @@ class AcademyCubit extends Cubit<AcademyState> {
     return _apply(res, 'Staff member updated.');
   }
 
+  Future<bool> recordStudentAssessment({
+    required String studentId,
+    required String coachId,
+    required String coachName,
+    required String focusArea,
+    required Map<String, int> aspectRatings,
+    required String feedback,
+  }) async {
+    final current = state;
+    if (current is! AcademyLoaded) return false;
+    final student = current.data.students
+        .where((s) => s.id == studentId)
+        .firstOrNull;
+    if (student == null ||
+        !current.canRecordAssessment ||
+        !current.canAccessBranch(student.branchId)) {
+      return _deny('You do not have permission to record assessments for this student.');
+    }
+    final res = await repository.recordStudentAssessment(
+      academyId: current.data.profile.academyId,
+      studentId: studentId,
+      coachId: coachId,
+      coachName: coachName,
+      focusArea: focusArea,
+      aspectRatings: aspectRatings,
+      feedback: feedback,
+    );
+    return _apply(res, 'Performance assessment recorded.');
+  }
+
   bool _deny(String message) {
     final current = state;
     if (current is AcademyLoaded) {

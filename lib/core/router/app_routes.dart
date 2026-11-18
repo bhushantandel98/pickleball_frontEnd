@@ -91,6 +91,8 @@ abstract final class AppRoutes {
   static const String academyBranches = '/academy/branches';
   static const String academyCoaches = '/academy/coaches';
   static const String academyStudents = '/academy/students';
+  static const String academyStudentProfile = '/academy/students/:id';
+  static String academyStudentProfilePath(String id) => '/academy/students/$id';
   static const String academyEnrollments = '/academy/enrollments';
   static const String academyStaffManagement = '/academy/staff-management';
 
@@ -100,6 +102,9 @@ abstract final class AppRoutes {
   static const String academyStaffBranches = '/academy-staff/branches';
   static const String academyStaffCoaches = '/academy-staff/coaches';
   static const String academyStaffStudents = '/academy-staff/students';
+  static const String academyStaffStudentProfile = '/academy-staff/students/:id';
+  static String academyStaffStudentProfilePath(String id) =>
+      '/academy-staff/students/$id';
   static const String academyStaffEnrollments = '/academy-staff/enrollments';
   static const String academyStaffAttendance = '/academy-staff/attendance';
   static const String academyStaffOperations = '/academy-staff/operations';
