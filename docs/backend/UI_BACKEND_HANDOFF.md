@@ -3168,3 +3168,28 @@ Enable delegated Tournament Staff to operate strictly within their assigned `tou
 #### 4. Authorization & Admin-Only Boundaries
 - Application Staff can review, request information (`needsInformation`), triage support, and recommend/escalate (`recommendedToAdmin` / `escalatedToAdmin`) to Application Admin.
 - Application Staff **cannot** grant final Seller/Product `approved`/`rejected` decisions, manage Application Staff permissions, alter platform commission/policy rules, or trigger financial payouts (all Application Admin-only).
+
+---
+
+### 10.2 Feature 7.2 — Application Admin Dashboard & Governance
+
+#### 1. Overview & Architecture
+- **Frontend Layer:** `lib/features/application_admin/` (`ApplicationAdminRepository`, `MockApplicationAdminRepository`, `ApplicationAdminCubit`, `ApplicationAdminScaffold`, `ApplicationAdminDashboardPage`, `ApplicationAdminStaffPage`, `ApplicationAdminPoliciesPage`, `ApplicationAdminAuditLogsPage`).
+- **Routes:** `/application-admin/dashboard`, `/application-admin/staff-management`, `/application-admin/policies`, `/application-admin/audit-logs` (all require `UserRole.applicationAdmin` and sole Admin identity).
+
+#### 2. Key Entities & Payloads
+- **Approval Item (`AdminApprovalItem`):** `id`, `targetType` (`sellerVerification`, `productCatalog`), `targetId`, `organizationId`, `organizationName`, `subjectTitle`, `summary`, `staffRecommendationNote`, `recommendedByStaffId`, `submittedAt`, `status` (`pendingAdminDecision`, `needsInformation`, `approved`, `rejected`), `decisionReason`, `decidedAt`.
+- **Commission & Return Policy (`AdminCommissionPolicy`):** `policyId`, `defaultCommissionRatePercent` (nullable `0.0..50.0`), `minReturnWindowDays` (`0..60`), `maxReturnWindowDays` (`min..60`), `pickleballOnlyEnforced` (`true`), `version`, `updatedByAdminId`, `updatedAt`.
+- **Audit Log Entry (`AdminAuditLogEntry`):** `id`, `timestamp`, `actorUserId`, `actorRole`, `action`, `targetType`, `targetId`, `organizationId`, `detail`.
+
+#### 3. Proposed Future REST API Endpoints
+1. `GET /api/v1/application-admin/dashboard` — Return sole-admin macro KPIs, active policy, recent approval items, and staff summary.
+2. `GET /api/v1/application-admin/approvals?targetType=&status=` — List Seller & Product items awaiting or decided by Application Admin.
+3. `POST /api/v1/application-admin/approvals/{itemId}/decide` — Body `{ "decision": "approved" | "rejected" | "needsInformation", "reason": "..." }`. Valid only from `pendingAdminDecision` (`409 Conflict` if already decided; `422` if `reason` < 5 chars). Product approval must **not** auto-publish.
+4. `GET /api/v1/application-admin/staff` & `PUT /api/v1/application-admin/staff/{staffId}/access` — Manage existing Application Staff `permissions[]`, `authorizedOrganizationIds[]`, and `isActive`. No endpoint may create additional Application Admin accounts (ADR-007).
+5. `GET /api/v1/application-admin/policies` & `PUT /api/v1/application-admin/policies` — Update `defaultCommissionRatePercent`, `minReturnWindowDays`, `maxReturnWindowDays` (applies only to future orders; historical order snapshots remain immutable).
+6. `GET /api/v1/application-admin/audit-logs?q=` — Read-only immutable governance audit log stream.
+
+#### 4. Authorization & Governance Rules
+- All `/api/v1/application-admin/**` endpoints must strictly verify `UserRole.applicationAdmin` (`403 Forbidden` for Application Staff or any other role).
+- Every Admin mutation must append an immutable `AdminAuditLogEntry`.

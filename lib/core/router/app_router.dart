@@ -72,6 +72,10 @@ import 'package:pickleball_platform/features/player/presentation/pages/product_d
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_confirmation_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_details_page.dart';
 import 'package:pickleball_platform/features/player/presentation/pages/tournament_discovery_page.dart';
+import 'package:pickleball_platform/features/application_admin/presentation/pages/application_admin_audit_logs_page.dart';
+import 'package:pickleball_platform/features/application_admin/presentation/pages/application_admin_dashboard_page.dart';
+import 'package:pickleball_platform/features/application_admin/presentation/pages/application_admin_policies_page.dart';
+import 'package:pickleball_platform/features/application_admin/presentation/pages/application_admin_staff_page.dart';
 import 'package:pickleball_platform/features/application_staff/presentation/pages/application_staff_dashboard_page.dart';
 import 'package:pickleball_platform/features/application_staff/presentation/pages/application_staff_operations_page.dart';
 import 'package:pickleball_platform/features/marketplace_seller/presentation/pages/seller_order_details_page.dart';
@@ -579,35 +583,19 @@ GoRouter createAppRouter({
           // 12. Application Admin
           GoRoute(
             path: AppRoutes.applicationAdminDashboard,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Platform Macro Dashboard',
-              path: AppRoutes.applicationAdminDashboard,
-              role: UserRole.applicationAdmin,
-            ),
+            builder: (context, state) => const ApplicationAdminDashboardPage(),
           ),
           GoRoute(
             path: AppRoutes.applicationAdminStaff,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Staff Management & Capability Scopes',
-              path: AppRoutes.applicationAdminStaff,
-              role: UserRole.applicationAdmin,
-            ),
+            builder: (context, state) => const ApplicationAdminStaffPage(),
           ),
           GoRoute(
             path: AppRoutes.applicationAdminPolicies,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Platform Commissions & Policies',
-              path: AppRoutes.applicationAdminPolicies,
-              role: UserRole.applicationAdmin,
-            ),
+            builder: (context, state) => const ApplicationAdminPoliciesPage(),
           ),
           GoRoute(
             path: AppRoutes.applicationAdminAuditLogs,
-            builder: (context, state) => const RoutePlaceholderView(
-              title: 'Immutable Audit Log Viewer',
-              path: AppRoutes.applicationAdminAuditLogs,
-              role: UserRole.applicationAdmin,
-            ),
+            builder: (context, state) => const ApplicationAdminAuditLogsPage(),
           ),
         ],
       ),

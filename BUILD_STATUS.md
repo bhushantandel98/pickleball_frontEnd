@@ -18,17 +18,17 @@
 | **Phase 4** | Venue Partner & Venue Staff | **Completed (Feature 3.8 Ready for Review)** | 100% | Venue Partner (3.7) and Venue Staff (3.8) implemented with strict partner, location & delegated permission isolation |
 | **Phase 5** | Tournament Operations (Org, Staff, Ref) | **Completed (Feature 5.3 Ready for Review)** | 100% | Tournament Organizer (5.1), Tournament Staff (5.2), and Referee (5.3) implemented with strict session, tournament & match isolation |
 | **Phase 6** | Marketplace (Seller & Catalog) | **Completed — Ready for Review** | 100% | Features 6.1–6.6 implemented (Registration/KYC, Product Catalog, Submission/Publishing, Dashboard & Orders, Fulfilment Updates, Return Windows & Settlement Visibility) |
-| **Phase 7** | Platform Admin & Staff | **In Progress (Feature 7.1 Ready for Review)** | 35% | Feature 7.1 Application Staff Dashboard & Operations implemented with permission gates; Feature 7.2 & Application Admin pending |
+| **Phase 7** | Platform Admin & Staff | **Completed — Ready for Review** | 100% | Features 7.1 (Application Staff Dashboard & Operations) & 7.2 (Application Admin Dashboard & Governance) implemented |
 | **Phase 8** | Integration & Release Hardening | Not Started | 0% | Mock replaced with API; release ready |
 
 ---
 
 ## Active Task
 
-- **Task ID:** Feature 7.1 — Application Staff Dashboard & Operations
-- **Description:** Implemented Feature 7.1 — Application Staff Dashboard & Operations (`/application-staff/dashboard`, `/application-staff/operations`) using Clean Architecture (`ApplicationStaffRepository`, `MockApplicationStaffRepository`, `ApplicationStaffCubit`, `ApplicationStaffScaffold`, `ApplicationStaffDashboardPage`, `ApplicationStaffOperationsPage`). Enforces active staff membership (`isActive == true`), delegated `ApplicationStaffPermission` checks (`viewDashboard`, `reviewSellers`, `reviewProducts`, `handleSupportTickets`, `monitorPlatformHealth`), and server/profile-derived organization-scope authorization (`ApplicationStaffProfile.authorizedOrganizationIds` / `isAuthorizedForOrganization`) across `getStaffDashboard`, `getOperationalQueue`, and `updateQueueItemStatus` so out-of-scope queue items (such as `sq_006` in `org_external_tenant_999`) cannot be viewed, searched, counted, or updated. Application Admin-only final approvals, policies, staff management, and payouts remain strictly inaccessible.
+- **Task ID:** Feature 7.2 — Application Admin Dashboard & Governance
+- **Description:** Implemented Feature 7.2 — Application Admin Dashboard & Governance (`/application-admin/dashboard`, `/application-admin/staff-management`, `/application-admin/policies`, `/application-admin/audit-logs`) using Clean Architecture (`ApplicationAdminRepository`, `MockApplicationAdminRepository`, `ApplicationAdminCubit`, `ApplicationAdminScaffold`, `ApplicationAdminDashboardPage`, `ApplicationAdminStaffPage`, `ApplicationAdminPoliciesPage`, `ApplicationAdminAuditLogsPage`). Enforces sole Application Admin authorization (`user_app_admin_001`, ADR-007) at repository and UI layers, keeping Application Staff and non-admin users strictly blocked; provides final Seller & Product approval/rejection/needs-information workflows (approval never auto-publishes products), Application Staff permission & organization-scope management (no UI/API to create additional Application Admin accounts), configurable platform commission & return-window policy bounds (applying only to future orders), and immutable governance audit logging.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 19.3s).
+  - `flutter analyze`: Passed — No issues found! (ran in 223.2s).
   - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
