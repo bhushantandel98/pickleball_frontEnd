@@ -12,28 +12,28 @@ class RoleNavConfig {
       case UserRole.player:
         return const [
           NavDestinationItem(
-            label: 'Home',
-            routePath: AppRoutes.playerDashboard,
-            icon: Icons.dashboard_outlined,
-            selectedIcon: Icons.dashboard,
+            label: 'Academy',
+            routePath: AppRoutes.playerAcademies,
+            icon: Icons.school_outlined,
+            selectedIcon: Icons.school,
           ),
           NavDestinationItem(
-            label: 'Courts',
-            routePath: AppRoutes.playerVenues,
-            icon: Icons.sports_tennis_outlined,
-            selectedIcon: Icons.sports_tennis,
-          ),
-          NavDestinationItem(
-            label: 'Bookings',
-            routePath: AppRoutes.playerBookings,
-            icon: Icons.calendar_month_outlined,
-            selectedIcon: Icons.calendar_month,
-          ),
-          NavDestinationItem(
-            label: 'Tournaments',
+            label: 'Tournament',
             routePath: AppRoutes.playerTournaments,
             icon: Icons.emoji_events_outlined,
             selectedIcon: Icons.emoji_events,
+          ),
+          NavDestinationItem(
+            label: 'Home',
+            routePath: AppRoutes.playerDashboard,
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home,
+          ),
+          NavDestinationItem(
+            label: 'Community',
+            routePath: AppRoutes.playerCommunity,
+            icon: Icons.groups_outlined,
+            selectedIcon: Icons.groups,
           ),
           NavDestinationItem(
             label: 'Shop',
@@ -80,22 +80,10 @@ class RoleNavConfig {
       case UserRole.academy:
         return const [
           NavDestinationItem(
-            label: 'Dashboard',
-            routePath: AppRoutes.academyDashboard,
-            icon: Icons.dashboard_outlined,
-            selectedIcon: Icons.dashboard,
-          ),
-          NavDestinationItem(
             label: 'Branches',
             routePath: AppRoutes.academyBranches,
             icon: Icons.store_outlined,
             selectedIcon: Icons.store,
-          ),
-          NavDestinationItem(
-            label: 'Programs',
-            routePath: AppRoutes.academyPrograms,
-            icon: Icons.menu_book_outlined,
-            selectedIcon: Icons.menu_book,
           ),
           NavDestinationItem(
             label: 'Coaches',
@@ -104,7 +92,19 @@ class RoleNavConfig {
             selectedIcon: Icons.sports,
           ),
           NavDestinationItem(
-            label: 'Enrollments',
+            label: 'Dashboard',
+            routePath: AppRoutes.academyDashboard,
+            icon: Icons.dashboard_outlined,
+            selectedIcon: Icons.dashboard,
+          ),
+          NavDestinationItem(
+            label: 'Student',
+            routePath: AppRoutes.academyStudents,
+            icon: Icons.people_outline,
+            selectedIcon: Icons.people,
+          ),
+          NavDestinationItem(
+            label: 'Enrollment',
             routePath: AppRoutes.academyEnrollments,
             icon: Icons.badge_outlined,
             selectedIcon: Icons.badge,
@@ -114,22 +114,34 @@ class RoleNavConfig {
       case UserRole.academyStaff:
         return const [
           NavDestinationItem(
+            label: 'Branches',
+            routePath: AppRoutes.academyStaffBranches,
+            icon: Icons.store_outlined,
+            selectedIcon: Icons.store,
+          ),
+          NavDestinationItem(
+            label: 'Coaches',
+            routePath: AppRoutes.academyStaffCoaches,
+            icon: Icons.sports_outlined,
+            selectedIcon: Icons.sports,
+          ),
+          NavDestinationItem(
             label: 'Dashboard',
             routePath: AppRoutes.academyStaffDashboard,
             icon: Icons.dashboard_outlined,
             selectedIcon: Icons.dashboard,
           ),
           NavDestinationItem(
-            label: 'Attendance',
-            routePath: AppRoutes.academyStaffAttendance,
-            icon: Icons.fact_check_outlined,
-            selectedIcon: Icons.fact_check,
+            label: 'Student',
+            routePath: AppRoutes.academyStaffStudents,
+            icon: Icons.people_outline,
+            selectedIcon: Icons.people,
           ),
           NavDestinationItem(
-            label: 'Operations',
-            routePath: AppRoutes.academyStaffOperations,
-            icon: Icons.tune_outlined,
-            selectedIcon: Icons.tune,
+            label: 'Enrollment',
+            routePath: AppRoutes.academyStaffEnrollments,
+            icon: Icons.badge_outlined,
+            selectedIcon: Icons.badge,
           ),
         ];
 

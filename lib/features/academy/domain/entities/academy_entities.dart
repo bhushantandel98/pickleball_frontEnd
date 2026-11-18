@@ -1,4 +1,16 @@
 import 'package:equatable/equatable.dart';
+import 'package:pickleball_platform/features/academy_staff/domain/entities/academy_staff_entities.dart';
+
+/// Skill levels for academy batches (non-DUPR).
+enum BatchSkillLevel {
+  beginner('Beginner'),
+  intermediate('Intermediate'),
+  advanced('Advanced'),
+  pro('Pro');
+
+  final String label;
+  const BatchSkillLevel(this.label);
+}
 
 /// Affiliation status between an Academy and a Coach.
 /// Coaches must accept an invitation before becoming active; academies cannot
@@ -65,6 +77,7 @@ class AcademyBranch extends Equatable {
   final String id;
   final String academyId;
   final String name;
+  final String contactPerson;
   final String city;
   final String address;
   final String operatingHours;
@@ -76,16 +89,18 @@ class AcademyBranch extends Equatable {
     required this.id,
     required this.academyId,
     required this.name,
-    required this.city,
+    this.contactPerson = '',
+    this.city = '',
     required this.address,
-    required this.operatingHours,
-    required this.courtCount,
-    required this.contactPhone,
+    this.operatingHours = '',
+    this.courtCount = 0,
+    this.contactPhone = '',
     this.isActive = true,
   });
 
   AcademyBranch copyWith({
     String? name,
+    String? contactPerson,
     String? city,
     String? address,
     String? operatingHours,
@@ -97,6 +112,7 @@ class AcademyBranch extends Equatable {
       id: id,
       academyId: academyId,
       name: name ?? this.name,
+      contactPerson: contactPerson ?? this.contactPerson,
       city: city ?? this.city,
       address: address ?? this.address,
       operatingHours: operatingHours ?? this.operatingHours,
@@ -111,6 +127,7 @@ class AcademyBranch extends Equatable {
         id,
         academyId,
         name,
+        contactPerson,
         city,
         address,
         operatingHours,
@@ -183,7 +200,7 @@ class AcademyProgram extends Equatable {
       ];
 }
 
-/// A scheduled training batch within an [AcademyProgram] at a specific branch.
+/// A scheduled training batch within a specific Academy branch.
 class AcademyBatch extends Equatable {
   final String id;
   final String academyId;
@@ -192,6 +209,10 @@ class AcademyBatch extends Equatable {
   final String branchId;
   final String branchName;
   final String name;
+  final BatchSkillLevel skillLevel;
+  final List<String> daysOfWeek;
+  final String startTime;
+  final String endTime;
   final String scheduleLabel;
   final int capacity;
   final int enrolledCount;
@@ -201,11 +222,15 @@ class AcademyBatch extends Equatable {
   const AcademyBatch({
     required this.id,
     required this.academyId,
-    required this.programId,
-    required this.programTitle,
+    this.programId = '',
+    this.programTitle = '',
     required this.branchId,
     required this.branchName,
     required this.name,
+    this.skillLevel = BatchSkillLevel.beginner,
+    this.daysOfWeek = const ['Mon', 'Wed', 'Fri'],
+    this.startTime = '06:00 PM',
+    this.endTime = '07:30 PM',
     required this.scheduleLabel,
     required this.capacity,
     required this.enrolledCount,
@@ -214,25 +239,44 @@ class AcademyBatch extends Equatable {
   });
 
   bool get isFull => enrolledCount >= capacity;
+  int get availableSeats => (capacity - enrolledCount).clamp(0, capacity);
 
   AcademyBatch copyWith({
+    String? branchId,
+    String? branchName,
+    String? name,
+    BatchSkillLevel? skillLevel,
+    List<String>? daysOfWeek,
+    String? startTime,
+    String? endTime,
+    String? scheduleLabel,
+    int? capacity,
     int? enrolledCount,
     String? assignedCoachId,
     String? assignedCoachName,
+    bool clearAssignedCoach = false,
   }) {
     return AcademyBatch(
       id: id,
       academyId: academyId,
       programId: programId,
       programTitle: programTitle,
-      branchId: branchId,
-      branchName: branchName,
-      name: name,
-      scheduleLabel: scheduleLabel,
-      capacity: capacity,
+      branchId: branchId ?? this.branchId,
+      branchName: branchName ?? this.branchName,
+      name: name ?? this.name,
+      skillLevel: skillLevel ?? this.skillLevel,
+      daysOfWeek: daysOfWeek ?? this.daysOfWeek,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      scheduleLabel: scheduleLabel ?? this.scheduleLabel,
+      capacity: capacity ?? this.capacity,
       enrolledCount: enrolledCount ?? this.enrolledCount,
-      assignedCoachId: assignedCoachId ?? this.assignedCoachId,
-      assignedCoachName: assignedCoachName ?? this.assignedCoachName,
+      assignedCoachId: clearAssignedCoach
+          ? null
+          : (assignedCoachId ?? this.assignedCoachId),
+      assignedCoachName: clearAssignedCoach
+          ? null
+          : (assignedCoachName ?? this.assignedCoachName),
     );
   }
 
@@ -245,6 +289,10 @@ class AcademyBatch extends Equatable {
         branchId,
         branchName,
         name,
+        skillLevel,
+        daysOfWeek,
+        startTime,
+        endTime,
         scheduleLabel,
         capacity,
         enrolledCount,
@@ -406,6 +454,252 @@ class AcademyEnrollmentRecord extends Equatable {
       ];
 }
 
+/// Searchable registered coach candidate for Academy connection requests.
+class CoachDirectoryCandidate extends Equatable {
+  final String coachId;
+  final String name;
+  final String mobileNumber;
+  final String specialization;
+  final int experienceYears;
+  final double rating;
+  final String city;
+  final String bio;
+
+  const CoachDirectoryCandidate({
+    required this.coachId,
+    required this.name,
+    required this.mobileNumber,
+    required this.specialization,
+    required this.experienceYears,
+    required this.rating,
+    required this.city,
+    required this.bio,
+  });
+
+  @override
+  List<Object?> get props => [
+        coachId,
+        name,
+        mobileNumber,
+        specialization,
+        experienceYears,
+        rating,
+        city,
+        bio,
+      ];
+}
+
+/// Attendance entry for an academy student's session history.
+class StudentAttendanceEntry extends Equatable {
+  final String id;
+  final DateTime date;
+  final String batchName;
+  final String status;
+  final String markedBy;
+
+  const StudentAttendanceEntry({
+    required this.id,
+    required this.date,
+    required this.batchName,
+    required this.status,
+    required this.markedBy,
+  });
+
+  @override
+  List<Object?> get props => [id, date, batchName, status, markedBy];
+}
+
+/// Coach-recorded performance assessment and progress feedback for a student.
+class CoachPerformanceAssessment extends Equatable {
+  final String id;
+  final DateTime date;
+  final String coachId;
+  final String coachName;
+  final String focusArea;
+  final int progressScore;
+  final String feedback;
+
+  const CoachPerformanceAssessment({
+    required this.id,
+    required this.date,
+    required this.coachId,
+    required this.coachName,
+    required this.focusArea,
+    required this.progressScore,
+    required this.feedback,
+  });
+
+  @override
+  List<Object?> get props => [
+        id,
+        date,
+        coachId,
+        coachName,
+        focusArea,
+        progressScore,
+        feedback,
+      ];
+}
+
+/// Student profile within an Academy, clearly separating academy-entered data
+/// from coach-recorded performance assessments.
+class AcademyStudent extends Equatable {
+  final String id;
+  final String academyId;
+  final String name;
+  final String phone;
+  final String email;
+  final String ageGroup;
+  final BatchSkillLevel skillLevel;
+  final String branchId;
+  final String branchName;
+  final String batchId;
+  final String batchName;
+  final String? assignedCoachId;
+  final String? assignedCoachName;
+  final EnrollmentRequestStatus enrollmentStatus;
+  final TuitionFeeStatus paymentStatus;
+  final double monthlyFeeInr;
+  final DateTime joinedAt;
+  final String? academyNotes;
+  final List<StudentAttendanceEntry> attendanceHistory;
+  final List<CoachPerformanceAssessment> coachAssessments;
+
+  const AcademyStudent({
+    required this.id,
+    required this.academyId,
+    required this.name,
+    required this.phone,
+    required this.email,
+    required this.ageGroup,
+    required this.skillLevel,
+    required this.branchId,
+    required this.branchName,
+    required this.batchId,
+    required this.batchName,
+    this.assignedCoachId,
+    this.assignedCoachName,
+    required this.enrollmentStatus,
+    required this.paymentStatus,
+    required this.monthlyFeeInr,
+    required this.joinedAt,
+    this.academyNotes,
+    this.attendanceHistory = const [],
+    this.coachAssessments = const [],
+  });
+
+  @override
+  List<Object?> get props => [
+        id,
+        academyId,
+        name,
+        phone,
+        email,
+        ageGroup,
+        skillLevel,
+        branchId,
+        branchName,
+        batchId,
+        batchName,
+        assignedCoachId,
+        assignedCoachName,
+        enrollmentStatus,
+        paymentStatus,
+        monthlyFeeInr,
+        joinedAt,
+        academyNotes,
+        attendanceHistory,
+        coachAssessments,
+      ];
+}
+
+/// Manageable Academy Staff member record for Academy Admin governance.
+class AcademyStaffMember extends Equatable {
+  final String staffId;
+  final String userId;
+  final String academyId;
+  final String name;
+  final String email;
+  final String phone;
+  final String roleTitle;
+  final List<String> assignedBranchIds;
+  final List<String> assignedBranchNames;
+  final Set<AcademyStaffPermission> permissions;
+  final bool isActive;
+  final DateTime assignedAt;
+
+  const AcademyStaffMember({
+    required this.staffId,
+    required this.userId,
+    required this.academyId,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.roleTitle,
+    required this.assignedBranchIds,
+    required this.assignedBranchNames,
+    required this.permissions,
+    this.isActive = true,
+    required this.assignedAt,
+  });
+
+  AcademyStaffMember copyWith({
+    String? name,
+    String? email,
+    String? phone,
+    String? roleTitle,
+    List<String>? assignedBranchIds,
+    List<String>? assignedBranchNames,
+    Set<AcademyStaffPermission>? permissions,
+    bool? isActive,
+  }) {
+    return AcademyStaffMember(
+      staffId: staffId,
+      userId: userId,
+      academyId: academyId,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      roleTitle: roleTitle ?? this.roleTitle,
+      assignedBranchIds: assignedBranchIds ?? this.assignedBranchIds,
+      assignedBranchNames: assignedBranchNames ?? this.assignedBranchNames,
+      permissions: permissions ?? this.permissions,
+      isActive: isActive ?? this.isActive,
+      assignedAt: assignedAt,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        staffId,
+        userId,
+        academyId,
+        name,
+        email,
+        phone,
+        roleTitle,
+        assignedBranchIds,
+        assignedBranchNames,
+        permissions,
+        isActive,
+        assignedAt,
+      ];
+}
+
+/// Attendance trend data point for dashboard visualization.
+class AttendanceTrendPoint extends Equatable {
+  final String label;
+  final double attendanceRate;
+
+  const AttendanceTrendPoint({
+    required this.label,
+    required this.attendanceRate,
+  });
+
+  @override
+  List<Object?> get props => [label, attendanceRate];
+}
+
 /// Aggregated Academy workspace data payload.
 class AcademyWorkspaceData extends Equatable {
   final AcademyProfileSummary profile;
@@ -414,14 +708,22 @@ class AcademyWorkspaceData extends Equatable {
   final List<AcademyBatch> batches;
   final List<AcademyCoachAffiliation> coachAffiliations;
   final List<AcademyEnrollmentRecord> enrollments;
+  final List<CoachDirectoryCandidate> coachDirectory;
+  final List<AcademyStudent> students;
+  final List<AcademyStaffMember> staffMembers;
+  final List<AttendanceTrendPoint> attendanceTrends;
 
   const AcademyWorkspaceData({
     required this.profile,
     required this.branches,
-    required this.programs,
+    this.programs = const [],
     required this.batches,
     required this.coachAffiliations,
     required this.enrollments,
+    this.coachDirectory = const [],
+    this.students = const [],
+    this.staffMembers = const [],
+    this.attendanceTrends = const [],
   });
 
   @override
@@ -432,5 +734,9 @@ class AcademyWorkspaceData extends Equatable {
         batches,
         coachAffiliations,
         enrollments,
+        coachDirectory,
+        students,
+        staffMembers,
+        attendanceTrends,
       ];
 }

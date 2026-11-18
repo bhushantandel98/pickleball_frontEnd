@@ -25,15 +25,15 @@
 
 ## Active Task
 
-- **Task ID:** Phase 8 — Common 12-Role Demo Login Flow & Frontend UI Completion
-- **Description:** Implemented and verified the complete frontend-only mock login flow for all 12 platform roles using the common demo account (`9999999999` / `Demo@123`, `user_all_12_roles`) alongside all existing individual mock accounts: (1) added `9999999999` / `Demo@123` credential validation in `MockAuthRepository`, (2) wired `LoginPage._handleSuccess` into `SessionCubit.signIn` and `RoleSelectionPage` / remembered-role routing, (3) updated `AppNavigationShell` role-switch links to use `?switchRole=true`, (4) added `user_all_12_roles` profile & scoped context support in `MockData`, `MockRoleContextRepository`, `MockVenueStaffRepository`, `MockTournamentStaffRepository`, `MockRefereeRepository`, `MockMarketplaceSellerRepository`, `MockSellerCatalogRepository`, `MockSellerOrderRepository`, `MockApplicationStaffRepository`, and `MockApplicationAdminRepository`.
+- **Task ID:** Phase 8 — Shared Academy Admin & Academy Staff UI & Workflows
+- **Description:** Unified Academy Admin and Academy Staff into a shared, permission- and branch-scoped UI experience: (1) reordered bottom navigation for both roles to `Branches | Coaches | Dashboard | Student | Enrollment` (Dashboard centred), (2) removed all `Program` UI/workflows and combined Branches & Batches into `AcademyBranchesPage` (branch fields: name, contact person, address; batch fields: name, non-DUPR skill levels `Beginner/Intermediate/Advanced/Pro`, days of week, start/end time, capacity, assigned approved coach, branch, plus View/Edit Batch details & enrolled player list), (3) replaced coach invite-code workflow in `AcademyCoachesPage` with name/mobile search, profile viewing, connection requests, separate Pending Requests & Approved Coach Lists, and batch assignment, (4) redesigned `AcademyDashboardPage` with graphical KPIs, branch distribution, batch capacity utilisation, weekly attendance trends, coach activity, pending enrollments, and monthly fee collection, (5) added `AcademyStudentsPage` with search/filters, individual student profile, attendance history, coach-recorded assessments vs academy-entered info, and (6) updated `AcademyEnrollmentsPage` (Pending, Approved, Rejected, History) and added Admin-only `AcademyStaffManagementPage` under Academy settings/management.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 36.4s).
-  - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**); `test/features/identity/login_test.dart` verified login (`9999999999` / `Demo@123`), `RoleSelectionPage`, all 12 role dashboards, role switching, remember-role persistence, and logout/re-login.
+  - `flutter analyze`: Passed — No issues found! (ran in 7.0s).
+  - `flutter test`: 568 tests ran, 565 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
   - **Known Limitation (Pre-existing UI layout):** `UpcomingActivitiesSection` in `PlayerDashboardPage` has a 39px horizontal `Row` overflow at narrow `800x600` test viewport width (passes cleanly at desktop `1440x1200`).
 - **Assigned To:** Lead Frontend Architect (Antigravity)
-- **Status:** Frontend UI Complete — Ready for Backend Integration.
+- **Status:** Completed — Committed & Pushed to `dev`.
 
 ---
 

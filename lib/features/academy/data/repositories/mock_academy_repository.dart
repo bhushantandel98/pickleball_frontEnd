@@ -2,6 +2,7 @@ import 'package:pickleball_platform/core/errors/failures.dart';
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/features/academy/domain/entities/academy_entities.dart';
 import 'package:pickleball_platform/features/academy/domain/repositories/academy_repository.dart';
+import 'package:pickleball_platform/features/academy_staff/domain/entities/academy_staff_entities.dart';
 
 /// In-memory mock implementation of [AcademyRepository] for Phase 3 Feature 3.5.
 class MockAcademyRepository implements AcademyRepository {
@@ -48,10 +49,9 @@ class MockAcademyRepository implements AcademyRepository {
           id: 'branch_andheri',
           academyId: 'acad_001',
           name: 'Andheri West Branch',
+          contactPerson: 'Rohan Deshmukh',
           city: 'Mumbai',
           address: '14 Link Road, Andheri West, Mumbai 400053',
-          operatingHours: '06:00 AM – 10:30 PM',
-          courtCount: 6,
           contactPhone: '+91 22 2634 8810',
           isActive: true,
         ),
@@ -59,10 +59,9 @@ class MockAcademyRepository implements AcademyRepository {
           id: 'branch_bandra',
           academyId: 'acad_001',
           name: 'Bandra West Branch',
+          contactPerson: 'Meera Kulkarni',
           city: 'Mumbai',
           address: '28 Chapel Road, Bandra West, Mumbai 400050',
-          operatingHours: '06:30 AM – 10:00 PM',
-          courtCount: 4,
           contactPhone: '+91 22 2640 5521',
           isActive: true,
         ),
@@ -70,79 +69,42 @@ class MockAcademyRepository implements AcademyRepository {
           id: 'branch_powai',
           academyId: 'acad_001',
           name: 'Powai Training Annex',
+          contactPerson: 'Ankit Joshi',
           city: 'Mumbai',
           address: 'Hiranandani Gardens, Powai, Mumbai 400076',
-          operatingHours: '07:00 AM – 09:00 PM',
-          courtCount: 3,
           contactPhone: '+91 22 2570 9932',
           isActive: false,
         ),
       ],
-      programs: const [
-        AcademyProgram(
-          id: 'prog_001',
-          academyId: 'acad_001',
-          branchId: 'branch_andheri',
-          branchName: 'Andheri West Branch',
-          title: 'Intermediate Doubles Mastery',
-          skillLevel: 'Intermediate (3.0–3.5)',
-          ageGroup: 'Adults (18+)',
-          description:
-              'Structured third-shot drop, kitchen dink patterns, and doubles transition positioning.',
-          monthlyTuitionInr: 4500,
-          isActive: true,
-        ),
-        AcademyProgram(
-          id: 'prog_002',
-          academyId: 'acad_001',
-          branchId: 'branch_bandra',
-          branchName: 'Bandra West Branch',
-          title: 'Junior Foundation Academy',
-          skillLevel: 'Beginner (1.5–2.5)',
-          ageGroup: 'Juniors (9–16)',
-          description:
-              'Footwork agility, grip fundamentals, rules, and rally consistency for young players.',
-          monthlyTuitionInr: 3500,
-          isActive: true,
-        ),
-        AcademyProgram(
-          id: 'prog_003',
-          academyId: 'acad_001',
-          branchId: 'branch_andheri',
-          branchName: 'Andheri West Branch',
-          title: 'High-Performance DUPR Squad',
-          skillLevel: 'Advanced (4.0+)',
-          ageGroup: 'Open Competitive',
-          description:
-              'High-tempo counter-attacking drills, video match analysis, and tournament prep.',
-          monthlyTuitionInr: 6500,
-          isActive: true,
-        ),
-      ],
+      programs: const [],
       batches: const [
         AcademyBatch(
           id: 'batch_b2',
           academyId: 'acad_001',
-          programId: 'prog_001',
-          programTitle: 'Intermediate Doubles Mastery',
           branchId: 'branch_andheri',
           branchName: 'Andheri West Branch',
-          name: 'Batch B2 — Evening',
-          scheduleLabel: 'Mon / Wed / Fri • 19:00 – 20:30',
+          name: 'Evening Intermediate Batch',
+          skillLevel: BatchSkillLevel.intermediate,
+          daysOfWeek: ['Mon', 'Wed', 'Fri'],
+          startTime: '07:00 PM',
+          endTime: '08:30 PM',
+          scheduleLabel: 'Mon, Wed, Fri • 07:00 PM – 08:30 PM',
           capacity: 8,
-          enrolledCount: 8,
+          enrolledCount: 6,
           assignedCoachId: 'coach_001',
           assignedCoachName: 'Aarav Sharma',
         ),
         AcademyBatch(
           id: 'batch_j1',
           academyId: 'acad_001',
-          programId: 'prog_002',
-          programTitle: 'Junior Foundation Academy',
           branchId: 'branch_bandra',
           branchName: 'Bandra West Branch',
-          name: 'Junior Squad J1',
-          scheduleLabel: 'Tue / Thu / Sat • 16:30 – 18:00',
+          name: 'Morning Beginner Squad',
+          skillLevel: BatchSkillLevel.beginner,
+          daysOfWeek: ['Tue', 'Thu', 'Sat'],
+          startTime: '07:30 AM',
+          endTime: '09:00 AM',
+          scheduleLabel: 'Tue, Thu, Sat • 07:30 AM – 09:00 AM',
           capacity: 10,
           enrolledCount: 7,
           assignedCoachId: 'coach_001',
@@ -151,12 +113,14 @@ class MockAcademyRepository implements AcademyRepository {
         AcademyBatch(
           id: 'batch_hp1',
           academyId: 'acad_001',
-          programId: 'prog_003',
-          programTitle: 'High-Performance DUPR Squad',
           branchId: 'branch_andheri',
           branchName: 'Andheri West Branch',
-          name: 'DUPR Elite A1',
-          scheduleLabel: 'Sat / Sun • 07:00 – 09:00',
+          name: 'Weekend Advanced Squad',
+          skillLevel: BatchSkillLevel.advanced,
+          daysOfWeek: ['Sat', 'Sun'],
+          startTime: '07:00 AM',
+          endTime: '09:00 AM',
+          scheduleLabel: 'Sat, Sun • 07:00 AM – 09:00 AM',
           capacity: 6,
           enrolledCount: 5,
           assignedCoachId: 'coach_002',
@@ -262,18 +226,245 @@ class MockAcademyRepository implements AcademyRepository {
           academyId: 'acad_001',
           branchId: 'branch_andheri',
           branchName: 'Andheri West Branch',
-          programId: 'prog_001',
-          programTitle: 'Intermediate Doubles Mastery',
+          programId: '',
+          programTitle: '',
           batchId: 'batch_b2',
-          batchName: 'Batch B2 — Evening',
+          batchName: 'Evening Intermediate Batch',
           studentName: 'Sanya Bhatia',
           studentContact: '+91 98198 77665',
-          status: EnrollmentRequestStatus.waitlisted,
-          waitlistPosition: 1,
+          status: EnrollmentRequestStatus.declined,
           feeStatus: TuitionFeeStatus.pending,
           tuitionAmountInr: 4500,
-          requestedAt: now.subtract(const Duration(days: 1)),
+          requestedAt: now.subtract(const Duration(days: 5)),
         ),
+      ],
+      coachDirectory: const [
+        CoachDirectoryCandidate(
+          coachId: 'coach_001',
+          name: 'Aarav Sharma',
+          mobileNumber: '9820012345',
+          specialization: 'Doubles Strategy & Third-Shot Drops',
+          experienceYears: 6,
+          rating: 4.8,
+          city: 'Mumbai',
+          bio: 'Former national finalist focusing on doubles positioning and kitchen-line consistency.',
+        ),
+        CoachDirectoryCandidate(
+          coachId: 'coach_002',
+          name: 'Priya Nair',
+          mobileNumber: '9821167890',
+          specialization: 'High-Performance Match Play',
+          experienceYears: 8,
+          rating: 4.9,
+          city: 'Mumbai',
+          bio: 'High-tempo counter-attacking specialist and tournament preparation mentor.',
+        ),
+        CoachDirectoryCandidate(
+          coachId: 'coach_003',
+          name: 'Vikram Desai',
+          mobileNumber: '9819033445',
+          specialization: 'Junior Footwork & Agility',
+          experienceYears: 5,
+          rating: 4.7,
+          city: 'Mumbai',
+          bio: 'Certified youth pickleball coach building speed, footwork, and rally habits.',
+        ),
+        CoachDirectoryCandidate(
+          coachId: 'coach_004',
+          name: 'Kabir Mehta',
+          mobileNumber: '9820455667',
+          specialization: 'Beginner Fundamentals & Serve Mechanics',
+          experienceYears: 4,
+          rating: 4.6,
+          city: 'Mumbai',
+          bio: 'Patient fundamentals coach helping new players master grips, serves, and scoring.',
+        ),
+        CoachDirectoryCandidate(
+          coachId: 'coach_005',
+          name: 'Neha Kapoor',
+          mobileNumber: '9876541122',
+          specialization: 'Pro Tactical Video Analysis',
+          experienceYears: 9,
+          rating: 4.9,
+          city: 'Mumbai',
+          bio: 'Pro-level tactical analyst coaching tournament athletes on shot selection.',
+        ),
+      ],
+      students: [
+        AcademyStudent(
+          id: 'stu_001',
+          academyId: 'acad_001',
+          name: 'Rhea Kulkarni',
+          phone: '+91 98205 11100',
+          email: 'rhea.k@example.com',
+          ageGroup: 'Adult (24)',
+          skillLevel: BatchSkillLevel.intermediate,
+          branchId: 'branch_andheri',
+          branchName: 'Andheri West Branch',
+          batchId: 'batch_b2',
+          batchName: 'Evening Intermediate Batch',
+          assignedCoachId: 'coach_001',
+          assignedCoachName: 'Aarav Sharma',
+          enrollmentStatus: EnrollmentRequestStatus.approved,
+          paymentStatus: TuitionFeeStatus.paid,
+          monthlyFeeInr: 4500,
+          joinedAt: now.subtract(const Duration(days: 60)),
+          academyNotes: 'Prefers evening slots; emergency contact: +91 98205 00001.',
+          attendanceHistory: [
+            StudentAttendanceEntry(
+              id: 'att_1',
+              date: now.subtract(const Duration(days: 2)),
+              batchName: 'Evening Intermediate Batch',
+              status: 'Present',
+              markedBy: 'Staff: Kavita Rao',
+            ),
+            StudentAttendanceEntry(
+              id: 'att_2',
+              date: now.subtract(const Duration(days: 4)),
+              batchName: 'Evening Intermediate Batch',
+              status: 'Present',
+              markedBy: 'Staff: Kavita Rao',
+            ),
+            StudentAttendanceEntry(
+              id: 'att_3',
+              date: now.subtract(const Duration(days: 7)),
+              batchName: 'Evening Intermediate Batch',
+              status: 'Late',
+              markedBy: 'Staff: Kavita Rao',
+            ),
+          ],
+          coachAssessments: [
+            CoachPerformanceAssessment(
+              id: 'assess_1',
+              date: now.subtract(const Duration(days: 3)),
+              coachId: 'coach_001',
+              coachName: 'Aarav Sharma',
+              focusArea: 'Third-Shot Drop & Transition Reset',
+              progressScore: 84,
+              feedback: 'Consistent soft drops under pressure; work on split-step timing at mid-court.',
+            ),
+            CoachPerformanceAssessment(
+              id: 'assess_2',
+              date: now.subtract(const Duration(days: 17)),
+              coachId: 'coach_001',
+              coachName: 'Aarav Sharma',
+              focusArea: 'Kitchen Line Dink Patience',
+              progressScore: 76,
+              feedback: 'Good cross-court dink depth; avoid popping up backhand volleys.',
+            ),
+          ],
+        ),
+        AcademyStudent(
+          id: 'stu_002',
+          academyId: 'acad_001',
+          name: 'Aryan Verma',
+          phone: '+91 98331 22445',
+          email: 'aryan.v@example.com',
+          ageGroup: 'Junior (14)',
+          skillLevel: BatchSkillLevel.beginner,
+          branchId: 'branch_bandra',
+          branchName: 'Bandra West Branch',
+          batchId: 'batch_j1',
+          batchName: 'Morning Beginner Squad',
+          assignedCoachId: 'coach_001',
+          assignedCoachName: 'Aarav Sharma',
+          enrollmentStatus: EnrollmentRequestStatus.approved,
+          paymentStatus: TuitionFeeStatus.overdue,
+          monthlyFeeInr: 3500,
+          joinedAt: now.subtract(const Duration(days: 35)),
+          academyNotes: 'Guardian: Neha Verma (+91 98331 22440). Fee reminder sent.',
+          attendanceHistory: [
+            StudentAttendanceEntry(
+              id: 'att_4',
+              date: now.subtract(const Duration(days: 1)),
+              batchName: 'Morning Beginner Squad',
+              status: 'Present',
+              markedBy: 'Staff: Kavita Rao',
+            ),
+            StudentAttendanceEntry(
+              id: 'att_5',
+              date: now.subtract(const Duration(days: 3)),
+              batchName: 'Morning Beginner Squad',
+              status: 'Absent',
+              markedBy: 'Staff: Kavita Rao',
+            ),
+          ],
+          coachAssessments: [
+            CoachPerformanceAssessment(
+              id: 'assess_3',
+              date: now.subtract(const Duration(days: 5)),
+              coachId: 'coach_001',
+              coachName: 'Aarav Sharma',
+              focusArea: 'Serve Placement & Footwork',
+              progressScore: 71,
+              feedback: 'Great lateral agility; keep paddle up in ready position after serve.',
+            ),
+          ],
+        ),
+        AcademyStudent(
+          id: 'stu_003',
+          academyId: 'acad_001',
+          name: 'Karan Malhotra',
+          phone: '+91 98207 99881',
+          email: 'karan.m@example.com',
+          ageGroup: 'Adult (29)',
+          skillLevel: BatchSkillLevel.advanced,
+          branchId: 'branch_andheri',
+          branchName: 'Andheri West Branch',
+          batchId: 'batch_hp1',
+          batchName: 'Weekend Advanced Squad',
+          assignedCoachId: 'coach_002',
+          assignedCoachName: 'Priya Nair',
+          enrollmentStatus: EnrollmentRequestStatus.pending,
+          paymentStatus: TuitionFeeStatus.pending,
+          monthlyFeeInr: 6500,
+          joinedAt: now.subtract(const Duration(days: 1)),
+          academyNotes: 'Trial session completed on Saturday; awaiting final approval.',
+          attendanceHistory: const [],
+          coachAssessments: [
+            CoachPerformanceAssessment(
+              id: 'assess_4',
+              date: now.subtract(const Duration(days: 2)),
+              coachId: 'coach_002',
+              coachName: 'Priya Nair',
+              focusArea: 'Trial Evaluation — Counter-Attacking',
+              progressScore: 88,
+              feedback: 'Strong hand speed at NVZ; recommended for Weekend Advanced Squad.',
+            ),
+          ],
+        ),
+      ],
+      staffMembers: [
+        AcademyStaffMember(
+          staffId: 'staff_acad_001',
+          userId: 'user_acad_staff_001',
+          academyId: 'acad_001',
+          name: 'Kavita Rao',
+          email: 'kavita.rao@apexpickleball.in',
+          phone: '+91 98200 55443',
+          roleTitle: 'Branch Operations Coordinator',
+          assignedBranchIds: const ['branch_andheri'],
+          assignedBranchNames: const ['Andheri West Branch'],
+          permissions: const {
+            AcademyStaffPermission.viewDashboard,
+            AcademyStaffPermission.manageAttendance,
+            AcademyStaffPermission.manageBatches,
+            AcademyStaffPermission.manageEnrollments,
+            AcademyStaffPermission.viewStudents,
+            AcademyStaffPermission.viewCoaches,
+          },
+          isActive: true,
+          assignedAt: now.subtract(const Duration(days: 90)),
+        ),
+      ],
+      attendanceTrends: const [
+        AttendanceTrendPoint(label: 'Mon', attendanceRate: 88),
+        AttendanceTrendPoint(label: 'Tue', attendanceRate: 82),
+        AttendanceTrendPoint(label: 'Wed', attendanceRate: 91),
+        AttendanceTrendPoint(label: 'Thu', attendanceRate: 85),
+        AttendanceTrendPoint(label: 'Fri', attendanceRate: 90),
+        AttendanceTrendPoint(label: 'Sat', attendanceRate: 94),
+        AttendanceTrendPoint(label: 'Sun', attendanceRate: 89),
       ],
     );
   }
@@ -305,15 +496,39 @@ class MockAcademyRepository implements AcademyRepository {
     return Success(_data);
   }
 
+  AcademyWorkspaceData _withUpdatedData({
+    List<AcademyBranch>? branches,
+    List<AcademyProgram>? programs,
+    List<AcademyBatch>? batches,
+    List<AcademyCoachAffiliation>? coachAffiliations,
+    List<AcademyEnrollmentRecord>? enrollments,
+    List<AcademyStudent>? students,
+    List<AcademyStaffMember>? staffMembers,
+  }) {
+    return AcademyWorkspaceData(
+      profile: _data.profile,
+      branches: branches ?? _data.branches,
+      programs: programs ?? _data.programs,
+      batches: batches ?? _data.batches,
+      coachAffiliations: coachAffiliations ?? _data.coachAffiliations,
+      enrollments: enrollments ?? _data.enrollments,
+      coachDirectory: _data.coachDirectory,
+      students: students ?? _data.students,
+      staffMembers: staffMembers ?? _data.staffMembers,
+      attendanceTrends: _data.attendanceTrends,
+    );
+  }
+
   @override
   Future<Result<AcademyWorkspaceData>> createBranch({
     required String academyId,
     required String name,
-    required String city,
+    String contactPerson = '',
+    String city = '',
     required String address,
-    required String operatingHours,
-    required int courtCount,
-    required String contactPhone,
+    String operatingHours = '',
+    int courtCount = 0,
+    String contactPhone = '',
   }) async {
     if (shouldFail) {
       return const FailureResult(
@@ -322,16 +537,11 @@ class MockAcademyRepository implements AcademyRepository {
     }
     final ownershipError = _validateAcademyOwnership(academyId);
     if (ownershipError != null) return ownershipError;
-    if (name.trim().isEmpty || city.trim().isEmpty || address.trim().isEmpty) {
+    if (name.trim().isEmpty || address.trim().isEmpty) {
       return const FailureResult(
         ValidationFailure(
-          message: 'Branch name, city, and address are required.',
+          message: 'Branch name and address are required.',
         ),
-      );
-    }
-    if (courtCount <= 0) {
-      return const FailureResult(
-        ValidationFailure(message: 'Court count must be at least 1.'),
       );
     }
 
@@ -339,24 +549,16 @@ class MockAcademyRepository implements AcademyRepository {
       id: 'branch_${DateTime.now().microsecondsSinceEpoch}',
       academyId: academyId,
       name: name.trim(),
+      contactPerson: contactPerson.trim(),
       city: city.trim(),
       address: address.trim(),
-      operatingHours: operatingHours.trim().isEmpty
-          ? '06:00 AM – 10:00 PM'
-          : operatingHours.trim(),
+      operatingHours: operatingHours.trim(),
       courtCount: courtCount,
       contactPhone: contactPhone.trim(),
       isActive: true,
     );
 
-    _data = AcademyWorkspaceData(
-      profile: _data.profile,
-      branches: [..._data.branches, branch],
-      programs: _data.programs,
-      batches: _data.batches,
-      coachAffiliations: _data.coachAffiliations,
-      enrollments: _data.enrollments,
-    );
+    _data = _withUpdatedData(branches: [..._data.branches, branch]);
     return Success(_data);
   }
 
@@ -365,11 +567,12 @@ class MockAcademyRepository implements AcademyRepository {
     required String academyId,
     required String branchId,
     required String name,
-    required String city,
+    String contactPerson = '',
+    String city = '',
     required String address,
-    required String operatingHours,
-    required int courtCount,
-    required String contactPhone,
+    String operatingHours = '',
+    int courtCount = 0,
+    String contactPhone = '',
   }) async {
     if (shouldFail) {
       return const FailureResult(
@@ -378,16 +581,11 @@ class MockAcademyRepository implements AcademyRepository {
     }
     final ownershipError = _validateAcademyOwnership(academyId);
     if (ownershipError != null) return ownershipError;
-    if (name.trim().isEmpty || city.trim().isEmpty || address.trim().isEmpty) {
+    if (name.trim().isEmpty || address.trim().isEmpty) {
       return const FailureResult(
         ValidationFailure(
-          message: 'Branch name, city, and address are required.',
+          message: 'Branch name and address are required.',
         ),
-      );
-    }
-    if (courtCount <= 0) {
-      return const FailureResult(
-        ValidationFailure(message: 'Court count must be at least 1.'),
       );
     }
     final existing = _data.branches
@@ -403,6 +601,7 @@ class MockAcademyRepository implements AcademyRepository {
       if (b.id != branchId) return b;
       return b.copyWith(
         name: name.trim(),
+        contactPerson: contactPerson.trim(),
         city: city.trim(),
         address: address.trim(),
         operatingHours: operatingHours.trim(),
@@ -411,14 +610,7 @@ class MockAcademyRepository implements AcademyRepository {
       );
     }).toList();
 
-    _data = AcademyWorkspaceData(
-      profile: _data.profile,
-      branches: updatedBranches,
-      programs: _data.programs,
-      batches: _data.batches,
-      coachAffiliations: _data.coachAffiliations,
-      enrollments: _data.enrollments,
-    );
+    _data = _withUpdatedData(branches: updatedBranches);
     return Success(_data);
   }
 
@@ -552,9 +744,14 @@ class MockAcademyRepository implements AcademyRepository {
   @override
   Future<Result<AcademyWorkspaceData>> createBatch({
     required String academyId,
-    required String programId,
+    String programId = '',
+    String? branchId,
     required String name,
-    required String scheduleLabel,
+    BatchSkillLevel skillLevel = BatchSkillLevel.beginner,
+    List<String> daysOfWeek = const ['Mon', 'Wed', 'Fri'],
+    String startTime = '06:00 PM',
+    String endTime = '07:30 PM',
+    String? scheduleLabel,
     required int capacity,
     String? assignedCoachId,
   }) async {
@@ -565,19 +762,21 @@ class MockAcademyRepository implements AcademyRepository {
     }
     final ownershipError = _validateAcademyOwnership(academyId);
     if (ownershipError != null) return ownershipError;
-    if (name.trim().isEmpty || scheduleLabel.trim().isEmpty || capacity <= 0) {
+    if (name.trim().isEmpty || capacity <= 0 || daysOfWeek.isEmpty) {
       return const FailureResult(
         ValidationFailure(
-          message: 'Batch name, schedule, and capacity (> 0) are required.',
+          message: 'Batch name, training days, and capacity (> 0) are required.',
         ),
       );
     }
-    final program = _data.programs
-        .where((p) => p.id == programId && p.academyId == academyId)
+
+    final targetBranchId = branchId?.trim() ?? '';
+    final branch = _data.branches
+        .where((b) => b.id == targetBranchId && b.academyId == academyId)
         .firstOrNull;
-    if (program == null) {
+    if (branch == null) {
       return const FailureResult(
-        NotFoundFailure(message: 'Program not found for this academy.'),
+        NotFoundFailure(message: 'Branch not found for this academy.'),
       );
     }
 
@@ -592,42 +791,219 @@ class MockAcademyRepository implements AcademyRepository {
       if (coach == null) {
         return const FailureResult(
           ValidationFailure(
-            message: 'Only accepted affiliated coaches can be assigned to batches.',
-          ),
-        );
-      }
-      if (!coach.assignedBranchIds.contains(program.branchId)) {
-        return FailureResult(
-          ValidationFailure(
-            message:
-                'Coach must be assigned to ${program.branchName} before leading this batch.',
+            message: 'Only approved academy coaches can be assigned to batches.',
           ),
         );
       }
     }
 
+    final resolvedSchedule = scheduleLabel?.trim().isNotEmpty == true
+        ? scheduleLabel!.trim()
+        : '${daysOfWeek.join(', ')} • $startTime – $endTime';
+
     final batch = AcademyBatch(
       id: 'batch_${DateTime.now().microsecondsSinceEpoch}',
       academyId: academyId,
-      programId: program.id,
-      programTitle: program.title,
-      branchId: program.branchId,
-      branchName: program.branchName,
+      programId: programId,
+      branchId: branch.id,
+      branchName: branch.name,
       name: name.trim(),
-      scheduleLabel: scheduleLabel.trim(),
+      skillLevel: skillLevel,
+      daysOfWeek: List<String>.from(daysOfWeek),
+      startTime: startTime.trim(),
+      endTime: endTime.trim(),
+      scheduleLabel: resolvedSchedule,
       capacity: capacity,
       enrolledCount: 0,
       assignedCoachId: coach?.coachId,
       assignedCoachName: coach?.coachName,
     );
 
-    _data = AcademyWorkspaceData(
-      profile: _data.profile,
-      branches: _data.branches,
-      programs: _data.programs,
-      batches: [..._data.batches, batch],
-      coachAffiliations: _data.coachAffiliations,
-      enrollments: _data.enrollments,
+    _data = _withUpdatedData(batches: [..._data.batches, batch]);
+    return Success(_data);
+  }
+
+  @override
+  Future<Result<AcademyWorkspaceData>> updateBatch({
+    required String academyId,
+    required String batchId,
+    required String branchId,
+    required String name,
+    required BatchSkillLevel skillLevel,
+    required List<String> daysOfWeek,
+    required String startTime,
+    required String endTime,
+    required int capacity,
+    String? assignedCoachId,
+  }) async {
+    if (shouldFail) {
+      return const FailureResult(
+        ServerFailure(message: 'Unable to update batch.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+    if (name.trim().isEmpty || capacity <= 0 || daysOfWeek.isEmpty) {
+      return const FailureResult(
+        ValidationFailure(
+          message: 'Batch name, training days, and capacity (> 0) are required.',
+        ),
+      );
+    }
+    final branch = _data.branches
+        .where((b) => b.id == branchId && b.academyId == academyId)
+        .firstOrNull;
+    if (branch == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Branch not found for this academy.'),
+      );
+    }
+
+    AcademyCoachAffiliation? coach;
+    if (assignedCoachId != null && assignedCoachId.isNotEmpty) {
+      coach = _data.coachAffiliations
+          .where((c) =>
+              c.academyId == academyId &&
+              c.coachId == assignedCoachId &&
+              c.status == CoachAffiliationStatus.accepted)
+          .firstOrNull;
+      if (coach == null) {
+        return const FailureResult(
+          ValidationFailure(
+            message: 'Only approved academy coaches can be assigned to batches.',
+          ),
+        );
+      }
+    }
+
+    final resolvedSchedule = '${daysOfWeek.join(', ')} • $startTime – $endTime';
+    final updatedBatches = _data.batches.map((b) {
+      if (b.id != batchId) return b;
+      return b.copyWith(
+        branchId: branch.id,
+        branchName: branch.name,
+        name: name.trim(),
+        skillLevel: skillLevel,
+        daysOfWeek: List<String>.from(daysOfWeek),
+        startTime: startTime.trim(),
+        endTime: endTime.trim(),
+        scheduleLabel: resolvedSchedule,
+        capacity: capacity,
+        assignedCoachId: coach?.coachId,
+        assignedCoachName: coach?.coachName,
+        clearAssignedCoach: coach == null,
+      );
+    }).toList();
+
+    _data = _withUpdatedData(batches: updatedBatches);
+    return Success(_data);
+  }
+
+  @override
+  Future<Result<AcademyWorkspaceData>> assignCoachToBatch({
+    required String academyId,
+    required String batchId,
+    String? coachId,
+  }) async {
+    if (shouldFail) {
+      return const FailureResult(
+        ServerFailure(message: 'Unable to assign coach to batch.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+
+    AcademyCoachAffiliation? coach;
+    if (coachId != null && coachId.isNotEmpty) {
+      coach = _data.coachAffiliations
+          .where((c) =>
+              c.academyId == academyId &&
+              c.coachId == coachId &&
+              c.status == CoachAffiliationStatus.accepted)
+          .firstOrNull;
+      if (coach == null) {
+        return const FailureResult(
+          ValidationFailure(
+            message: 'Only approved coaches can be assigned to a batch.',
+          ),
+        );
+      }
+    }
+
+    final updatedBatches = _data.batches.map((b) {
+      if (b.id != batchId) return b;
+      return b.copyWith(
+        assignedCoachId: coach?.coachId,
+        assignedCoachName: coach?.coachName,
+        clearAssignedCoach: coach == null,
+      );
+    }).toList();
+
+    _data = _withUpdatedData(batches: updatedBatches);
+    return Success(_data);
+  }
+
+  @override
+  Future<Result<AcademyWorkspaceData>> sendCoachConnectionRequest({
+    required String academyId,
+    required String coachId,
+    required List<String> branchIds,
+  }) async {
+    if (shouldFail) {
+      return const FailureResult(
+        ServerFailure(message: 'Unable to send coach connection request.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+
+    final candidate = _data.coachDirectory
+        .where((c) => c.coachId == coachId)
+        .firstOrNull;
+    if (candidate == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Coach not found in directory.'),
+      );
+    }
+
+    final alreadyExists = _data.coachAffiliations.any(
+      (a) =>
+          a.coachId == coachId &&
+          (a.status == CoachAffiliationStatus.accepted ||
+              a.status == CoachAffiliationStatus.pendingAcceptance),
+    );
+    if (alreadyExists) {
+      return const FailureResult(
+        ValidationFailure(
+          message: 'This coach already has an active or pending connection.',
+        ),
+      );
+    }
+
+    final selectedBranches =
+        _data.branches.where((b) => branchIds.contains(b.id)).toList();
+    if (selectedBranches.isEmpty) {
+      return const FailureResult(
+        ValidationFailure(message: 'Select at least one branch.'),
+      );
+    }
+
+    final affiliation = AcademyCoachAffiliation(
+      id: 'aff_${DateTime.now().microsecondsSinceEpoch}',
+      academyId: academyId,
+      coachId: candidate.coachId,
+      coachName: candidate.name,
+      coachContact: candidate.mobileNumber,
+      specialization: candidate.specialization,
+      assignedBranchIds: selectedBranches.map((b) => b.id).toList(),
+      assignedBranchNames: selectedBranches.map((b) => b.name).toList(),
+      canModifyOfficialSchedule: false,
+      status: CoachAffiliationStatus.pendingAcceptance,
+      invitedAt: DateTime.now(),
+    );
+
+    _data = _withUpdatedData(
+      coachAffiliations: [affiliation, ..._data.coachAffiliations],
     );
     return Success(_data);
   }
@@ -749,14 +1125,7 @@ class MockAcademyRepository implements AcademyRepository {
       );
     }).toList();
 
-    _data = AcademyWorkspaceData(
-      profile: _data.profile,
-      branches: _data.branches,
-      programs: _data.programs,
-      batches: _data.batches,
-      coachAffiliations: updated,
-      enrollments: _data.enrollments,
-    );
+    _data = _withUpdatedData(coachAffiliations: updated);
     return Success(_data);
   }
 
@@ -785,14 +1154,7 @@ class MockAcademyRepository implements AcademyRepository {
       return c.copyWith(status: CoachAffiliationStatus.revoked);
     }).toList();
 
-    _data = AcademyWorkspaceData(
-      profile: _data.profile,
-      branches: _data.branches,
-      programs: _data.programs,
-      batches: _data.batches,
-      coachAffiliations: updated,
-      enrollments: _data.enrollments,
-    );
+    _data = _withUpdatedData(coachAffiliations: updated);
     return Success(_data);
   }
 
@@ -887,12 +1249,8 @@ class MockAcademyRepository implements AcademyRepository {
       );
     }).toList();
 
-    _data = AcademyWorkspaceData(
-      profile: _data.profile,
-      branches: _data.branches,
-      programs: _data.programs,
+    _data = _withUpdatedData(
       batches: updatedBatches,
-      coachAffiliations: _data.coachAffiliations,
       enrollments: updatedEnrollments,
     );
     return Success(_data);
@@ -926,14 +1284,97 @@ class MockAcademyRepository implements AcademyRepository {
       return e.copyWith(feeStatus: feeStatus);
     }).toList();
 
-    _data = AcademyWorkspaceData(
-      profile: _data.profile,
-      branches: _data.branches,
-      programs: _data.programs,
-      batches: _data.batches,
-      coachAffiliations: _data.coachAffiliations,
-      enrollments: updatedEnrollments,
+    _data = _withUpdatedData(enrollments: updatedEnrollments);
+    return Success(_data);
+  }
+
+  @override
+  Future<Result<AcademyWorkspaceData>> addStaffMember({
+    required String academyId,
+    required String name,
+    required String email,
+    required String phone,
+    required String roleTitle,
+    required List<String> assignedBranchIds,
+    required Set<AcademyStaffPermission> permissions,
+  }) async {
+    if (shouldFail) {
+      return const FailureResult(
+        ServerFailure(message: 'Unable to add staff member.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+    if (name.trim().isEmpty || email.trim().isEmpty || roleTitle.trim().isEmpty) {
+      return const FailureResult(
+        ValidationFailure(
+          message: 'Staff name, email, and role title are required.',
+        ),
+      );
+    }
+    final branches =
+        _data.branches.where((b) => assignedBranchIds.contains(b.id)).toList();
+    if (branches.isEmpty) {
+      return const FailureResult(
+        ValidationFailure(message: 'Assign at least one branch to staff.'),
+      );
+    }
+
+    final member = AcademyStaffMember(
+      staffId: 'staff_${DateTime.now().microsecondsSinceEpoch}',
+      userId: 'user_staff_${DateTime.now().microsecondsSinceEpoch}',
+      academyId: academyId,
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      roleTitle: roleTitle.trim(),
+      assignedBranchIds: branches.map((b) => b.id).toList(),
+      assignedBranchNames: branches.map((b) => b.name).toList(),
+      permissions: Set<AcademyStaffPermission>.from(permissions),
+      isActive: true,
+      assignedAt: DateTime.now(),
     );
+
+    _data = _withUpdatedData(staffMembers: [..._data.staffMembers, member]);
+    return Success(_data);
+  }
+
+  @override
+  Future<Result<AcademyWorkspaceData>> updateStaffMember({
+    required String academyId,
+    required String staffId,
+    required String roleTitle,
+    required List<String> assignedBranchIds,
+    required Set<AcademyStaffPermission> permissions,
+    required bool isActive,
+  }) async {
+    if (shouldFail) {
+      return const FailureResult(
+        ServerFailure(message: 'Unable to update staff member.'),
+      );
+    }
+    final ownershipError = _validateAcademyOwnership(academyId);
+    if (ownershipError != null) return ownershipError;
+    final branches =
+        _data.branches.where((b) => assignedBranchIds.contains(b.id)).toList();
+    if (branches.isEmpty) {
+      return const FailureResult(
+        ValidationFailure(message: 'Assign at least one branch to staff.'),
+      );
+    }
+
+    final updatedStaff = _data.staffMembers.map((m) {
+      if (m.staffId != staffId) return m;
+      return m.copyWith(
+        roleTitle: roleTitle.trim(),
+        assignedBranchIds: branches.map((b) => b.id).toList(),
+        assignedBranchNames: branches.map((b) => b.name).toList(),
+        permissions: Set<AcademyStaffPermission>.from(permissions),
+        isActive: isActive,
+      );
+    }).toList();
+
+    _data = _withUpdatedData(staffMembers: updatedStaff);
     return Success(_data);
   }
 }

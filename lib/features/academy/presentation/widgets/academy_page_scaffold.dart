@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
+import 'package:pickleball_platform/core/access/session_cubit.dart';
+import 'package:pickleball_platform/core/access/user_role.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
 import 'package:pickleball_platform/core/design_system/responsive_layout.dart';
 import 'package:pickleball_platform/core/widgets/state_views/error_view.dart';
@@ -95,12 +97,27 @@ class _AcademyScaffoldBody extends StatefulWidget {
 }
 
 class _AcademyScaffoldBodyState extends State<_AcademyScaffoldBody> {
+  (bool, String?) _resolveRoleScope() {
+    try {
+      final session = context.read<SessionCubit>().state;
+      final isStaff = session.activeRole == UserRole.academyStaff;
+      return (!isStaff, session.userId);
+    } catch (_) {
+      return (true, null);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     final cubit = context.read<AcademyCubit>();
     if (cubit.state is AcademyInitial) {
-      cubit.loadWorkspace(academyId: widget.academyId);
+      final (isAdmin, staffUserId) = _resolveRoleScope();
+      cubit.loadWorkspace(
+        academyId: widget.academyId,
+        isAdmin: isAdmin,
+        staffUserId: staffUserId,
+      );
     }
   }
 

@@ -15,9 +15,9 @@ import 'package:pickleball_platform/features/academy/presentation/pages/academy_
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_coaches_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_dashboard_page.dart';
 import 'package:pickleball_platform/features/academy/presentation/pages/academy_enrollments_page.dart';
-import 'package:pickleball_platform/features/academy/presentation/pages/academy_programs_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_staff_management_page.dart';
+import 'package:pickleball_platform/features/academy/presentation/pages/academy_students_page.dart';
 import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_attendance_page.dart';
-import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_dashboard_page.dart';
 import 'package:pickleball_platform/features/academy_staff/presentation/pages/academy_staff_operations_page.dart';
 import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_bookings_page.dart';
 import 'package:pickleball_platform/features/venue_partner/presentation/pages/venue_partner_calendar_page.dart';
@@ -249,7 +249,12 @@ GoRouter createAppRouter({
           ),
           GoRoute(
             path: AppRoutes.playerAcademies,
-            builder: (context, state) => const PlayerAcademyCoachPage(),
+            builder: (context, state) {
+              final tab = state.uri.queryParameters['tab'];
+              final initialTabIndex =
+                  tab == 'coaches' ? 1 : (tab == 'requests' ? 2 : 0);
+              return PlayerAcademyCoachPage(initialTabIndex: initialTabIndex);
+            },
           ),
           GoRoute(
             path: AppRoutes.playerAcademyDetails,
@@ -406,7 +411,7 @@ GoRouter createAppRouter({
             builder: (context, state) => const CoachProfilePage(),
           ),
 
-          // 3. Academy
+          // 3. Academy (Admin)
           GoRoute(
             path: AppRoutes.academyDashboard,
             builder: (context, state) => const AcademyDashboardPage(),
@@ -416,22 +421,42 @@ GoRouter createAppRouter({
             builder: (context, state) => const AcademyBranchesPage(),
           ),
           GoRoute(
-            path: AppRoutes.academyPrograms,
-            builder: (context, state) => const AcademyProgramsPage(),
-          ),
-          GoRoute(
             path: AppRoutes.academyCoaches,
             builder: (context, state) => const AcademyCoachesPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStudents,
+            builder: (context, state) => const AcademyStudentsPage(),
           ),
           GoRoute(
             path: AppRoutes.academyEnrollments,
             builder: (context, state) => const AcademyEnrollmentsPage(),
           ),
+          GoRoute(
+            path: AppRoutes.academyStaffManagement,
+            builder: (context, state) => const AcademyStaffManagementPage(),
+          ),
 
-          // 4. Academy Staff
+          // 4. Academy Staff (Shared Academy UI with delegated permissions & branch scope)
           GoRoute(
             path: AppRoutes.academyStaffDashboard,
-            builder: (context, state) => const AcademyStaffDashboardPage(),
+            builder: (context, state) => const AcademyDashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStaffBranches,
+            builder: (context, state) => const AcademyBranchesPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStaffCoaches,
+            builder: (context, state) => const AcademyCoachesPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStaffStudents,
+            builder: (context, state) => const AcademyStudentsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.academyStaffEnrollments,
+            builder: (context, state) => const AcademyEnrollmentsPage(),
           ),
           GoRoute(
             path: AppRoutes.academyStaffAttendance,

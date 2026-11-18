@@ -60,14 +60,23 @@ class AppNavigationShell extends StatelessWidget {
 
   int _calculateSelectedIndex(List<NavDestinationItem> items, String currentPath) {
     for (int i = 0; i < items.length; i++) {
-      if (currentPath == items[i].routePath ||
-          (items[i].routePath != AppRoutes.playerDashboard &&
-              currentPath.startsWith(items[i].routePath))) {
+      final routePath = items[i].routePath;
+      final isExactDashboard = routePath == AppRoutes.playerDashboard ||
+          routePath == AppRoutes.academyDashboard ||
+          routePath == AppRoutes.academyStaffDashboard;
+      if (currentPath == routePath ||
+          (!isExactDashboard && currentPath.startsWith(routePath))) {
         return i;
       }
     }
-    // Default to first item if matching base
-    return 0;
+    // Fall back to the centre Home/Dashboard tab for sub-routes, or first item otherwise.
+    final centerIndex = items.indexWhere(
+      (item) =>
+          item.routePath == AppRoutes.playerDashboard ||
+          item.routePath == AppRoutes.academyDashboard ||
+          item.routePath == AppRoutes.academyStaffDashboard,
+    );
+    return centerIndex >= 0 ? centerIndex : 0;
   }
 }
 
@@ -304,6 +313,91 @@ AppBar _buildAppBar(
   SessionContext session, {
   bool showLeading = true,
 }) {
+  if (role == UserRole.player) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final displayName = (session.displayName != null &&
+            session.displayName!.trim().isNotEmpty)
+        ? session.displayName!.trim()
+        : role.displayName;
+
+    return AppBar(
+      automaticallyImplyLeading: showLeading,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      titleSpacing: AppSpacing.md,
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: AppSpacing.borderRadiusSm,
+            ),
+            child: Icon(
+              Icons.sports_tennis,
+              size: 18,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Pickleball',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                Text(
+                  displayName,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Divider(
+          height: 1,
+          thickness: 1,
+          color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      actions: [
+        if (session.availableRoles.length > 1)
+          IconButton(
+            icon: const Icon(Icons.switch_account_outlined),
+            tooltip: 'Switch Role',
+            onPressed: () =>
+                context.go('${AppRoutes.roleSelection}?switchRole=true'),
+          ),
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          tooltip: 'Notifications',
+          onPressed: () => context.go(AppRoutes.notifications),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: AppSpacing.xs),
+          child: IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'My Profile',
+            onPressed: () => context.go(AppRoutes.profile),
+          ),
+        ),
+      ],
+    );
+  }
+
   return AppBar(
     automaticallyImplyLeading: showLeading,
     title: Column(
