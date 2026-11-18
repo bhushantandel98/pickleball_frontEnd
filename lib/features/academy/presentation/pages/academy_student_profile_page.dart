@@ -70,23 +70,31 @@ class _StudentProfileView extends StatefulWidget {
 }
 
 class _StudentProfileViewState extends State<_StudentProfileView> {
+  (bool, String?) _resolveRoleScope() {
+    try {
+      final session = context.read<SessionCubit>().state;
+      final isStaff = session.activeRole == UserRole.academyStaff;
+      return (!isStaff, session.userId);
+    } catch (_) {
+      return (true, null);
+    }
+  }
+
+  void _reloadWorkspace() {
+    final (isAdmin, staffUserId) = _resolveRoleScope();
+    context.read<AcademyCubit>().loadWorkspace(
+          academyId: widget.academyId,
+          isAdmin: isAdmin,
+          staffUserId: staffUserId,
+        );
+  }
+
   @override
   void initState() {
     super.initState();
     final cubit = context.read<AcademyCubit>();
     if (cubit.state is AcademyInitial) {
-      var isAdmin = true;
-      String? staffUserId;
-      try {
-        final session = context.read<SessionCubit>().state;
-        isAdmin = session.activeRole != UserRole.academyStaff;
-        staffUserId = session.userId;
-      } catch (_) {}
-      cubit.loadWorkspace(
-        academyId: widget.academyId,
-        isAdmin: isAdmin,
-        staffUserId: staffUserId,
-      );
+      _reloadWorkspace();
     }
   }
 
@@ -122,9 +130,7 @@ class _StudentProfileViewState extends State<_StudentProfileView> {
             body: ErrorStateView(
               title: 'Unable to load player profile',
               message: state.failure.message,
-              onRetry: () => context
-                  .read<AcademyCubit>()
-                  .loadWorkspace(academyId: widget.academyId),
+              onRetry: _reloadWorkspace,
             ),
           );
         }
@@ -243,15 +249,29 @@ class _StudentProfileViewState extends State<_StudentProfileView> {
       for (final aspect in aspects) aspect.id: 7,
     };
 
-    final approvedCoaches = state.data.coachAffiliations
-        .where((c) => c.status == CoachAffiliationStatus.accepted)
-        .toList();
-    var selectedCoachId = student.assignedCoachId ??
-        (approvedCoaches.isNotEmpty ? approvedCoaches.first.coachId : 'coach_001');
-    var selectedCoachName = student.assignedCoachName ??
-        (approvedCoaches.isNotEmpty
-            ? approvedCoaches.first.coachName
-            : 'Assigned Coach');
+    final studentBatch = state.data.batches
+        .where((b) => b.id == student.batchId)
+        .firstOrNull;
+    final approvedCoaches = state.data.coachAffiliations.where((c) {
+      if (c.status != CoachAffiliationStatus.accepted) return false;
+      if (!c.assignedBranchIds.contains(student.branchId)) return false;
+      return c.coachId == student.assignedCoachId ||
+          c.coachId == studentBatch?.assignedCoachId;
+    }).toList();
+    if (approvedCoaches.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No approved coach is assigned to this student\'s batch or branch.',
+            ),
+          ),
+        );
+      return;
+    }
+    var selectedCoachId = approvedCoaches.first.coachId;
+    var selectedCoachName = approvedCoaches.first.coachName;
 
     await showDialog<void>(
       context: context,
@@ -694,6 +714,23 @@ class _PerformanceTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(item.feedback, style: theme.textTheme.bodySmall),
+                    if (item.aspectRatings.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Wrap(
+                        spacing: AppSpacing.xs,
+                        runSpacing: AppSpacing.xxs,
+                        children: item.aspectRatings.entries.map((entry) {
+                          final aspectLabel = aspects
+                                  .where((a) => a.id == entry.key)
+                                  .firstOrNull
+                                  ?.label ??
+                              entry.key;
+                          return AppChip.neutral(
+                            label: '$aspectLabel: ${entry.value}/10',
+                          );
+                        }).toList(),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Text(
                       'Coach: ${item.coachName} • ${df.format(item.date)}',

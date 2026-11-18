@@ -152,9 +152,14 @@ class _AcademyScaffoldBodyState extends State<_AcademyScaffoldBody> {
               body: ErrorStateView(
                 title: 'Unable to load academy workspace',
                 message: failure.message,
-                onRetry: () => context
-                    .read<AcademyCubit>()
-                    .loadWorkspace(academyId: widget.academyId),
+                onRetry: () {
+                  final (isAdmin, staffUserId) = _resolveRoleScope();
+                  context.read<AcademyCubit>().loadWorkspace(
+                        academyId: widget.academyId,
+                        isAdmin: isAdmin,
+                        staffUserId: staffUserId,
+                      );
+                },
               ),
             );
 

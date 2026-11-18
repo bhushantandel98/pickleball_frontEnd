@@ -1495,10 +1495,65 @@ class MockAcademyRepository implements AcademyRepository {
       );
     }
 
+    final student = _data.students
+        .where((s) => s.id == studentId && s.academyId == academyId)
+        .firstOrNull;
+    if (student == null) {
+      return const FailureResult(
+        NotFoundFailure(message: 'Student not found for this academy.'),
+      );
+    }
+
+    final coach = _data.coachAffiliations
+        .where((c) =>
+            c.academyId == academyId &&
+            c.coachId == coachId &&
+            c.status == CoachAffiliationStatus.accepted)
+        .firstOrNull;
+    if (coach == null) {
+      return const FailureResult(
+        ForbiddenFailure(
+          message: 'Only approved academy coaches can record assessments.',
+        ),
+      );
+    }
+
+    final studentBatch = _data.batches
+        .where((b) => b.id == student.batchId && b.academyId == academyId)
+        .firstOrNull;
+    final isAssignedCoach = student.assignedCoachId == coachId ||
+        studentBatch?.assignedCoachId == coachId;
+    if (!isAssignedCoach ||
+        !coach.assignedBranchIds.contains(student.branchId)) {
+      return const FailureResult(
+        ForbiddenFailure(
+          message:
+              'Selected coach is not assigned to this student\'s batch or branch.',
+        ),
+      );
+    }
+
+    final validAspectIds =
+        _data.performanceAspects.map((a) => a.id).toSet();
     final validRatings = <String, int>{};
     for (final entry in aspectRatings.entries) {
-      validRatings[entry.key] = entry.value.clamp(1, 10);
+      if (!validAspectIds.contains(entry.key)) {
+        return FailureResult(
+          ValidationFailure(
+            message: 'Unknown performance aspect: ${entry.key}.',
+          ),
+        );
+      }
+      if (entry.value < 1 || entry.value > 10) {
+        return const FailureResult(
+          ValidationFailure(
+            message: 'Aspect ratings must be between 1 and 10.',
+          ),
+        );
+      }
+      validRatings[entry.key] = entry.value;
     }
+
     final avg = validRatings.values.fold<int>(0, (s, v) => s + v) /
         validRatings.length;
     final progressScore = (avg * 10).round().clamp(10, 100);
@@ -1506,8 +1561,8 @@ class MockAcademyRepository implements AcademyRepository {
     final assessment = CoachPerformanceAssessment(
       id: 'assess_${DateTime.now().microsecondsSinceEpoch}',
       date: DateTime.now(),
-      coachId: coachId,
-      coachName: coachName,
+      coachId: coach.coachId,
+      coachName: coach.coachName,
       focusArea: focusArea.trim(),
       progressScore: progressScore,
       aspectRatings: validRatings,

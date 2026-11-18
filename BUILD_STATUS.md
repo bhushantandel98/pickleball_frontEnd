@@ -25,10 +25,10 @@
 
 ## Active Task
 
-- **Task ID:** Phase 8 — Academy Admin & Staff Refinements (Student Profile, Compact Nav & Staff Tab)
-- **Description:** Applied follow-up Academy Admin & Staff refinements: (1) embedded Staff Management inside the Enrollment tab (`AcademyEnrollmentsPage` segmented switcher for Admin), (2) replaced the student popup with a dedicated `AcademyStudentProfilePage` (`/academy/students/:id` & `/academy-staff/students/:id`) featuring `Details` and `Performance & Progress` tabs with 12 configurable performance aspects (`PerformanceAspectConfig`, 1–10 scale), evaluation history comparison, and permission-gated assessment recording, (3) removed redundant module title/subtitle banners from `AcademyPageScaffold` and `AcademyDashboardPage` across all 5 tabs, and (4) upgraded `AcademyBranchFilterBar` to a compact single-row horizontal chip strip.
+- **Task ID:** Phase 8 — Academy Role-Scope Retry & Assessment Validation Fixes
+- **Description:** Fixed remaining Academy Admin & Staff issues: (1) preserved `isAdmin` and `staffUserId` role scope on retry in `AcademyStudentProfilePage` and `AcademyPageScaffold` so Academy Staff retries never fall back to Admin defaults, (2) enforced strict validation in `MockAcademyRepository.recordStudentAssessment` (student/academy membership, approved coach status, batch/branch coach eligibility, configured aspect ID checks, and explicit rejection of ratings outside 1–10), and (3) displayed aspect-wise ratings inside each assessment history entry in `AcademyStudentProfilePage`.
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 13.0s).
+  - `flutter analyze`: Passed — No issues found! (ran in 12.1s).
   - `flutter test`: 568 tests ran, 565 passed, 3 failed (**0 new test failures**).
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
   - **Known Limitation (Pre-existing UI layout):** `UpcomingActivitiesSection` in `PlayerDashboardPage` has a 39px horizontal `Row` overflow at narrow `800x600` test viewport width (passes cleanly at desktop `1440x1200`).
