@@ -703,4 +703,12 @@ class _TrackingResetAuthRepository implements AuthRepository {
       ),
     );
   }
+
+  @override
+  Future<Result<void>> changePassword({
+    required String userId,
+    required String currentPassword,
+    required String newPassword,
+  }) async =>
+      const Success<void>(null);
 }

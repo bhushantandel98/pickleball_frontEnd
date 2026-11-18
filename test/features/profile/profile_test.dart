@@ -10,6 +10,7 @@ import 'package:pickleball_platform/core/errors/failures.dart';
 import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_button.dart';
+import 'package:pickleball_platform/features/identity/data/repositories/mock_auth_repository.dart';
 import 'package:pickleball_platform/features/identity/domain/repositories/user_profile_repository.dart';
 import 'package:pickleball_platform/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:pickleball_platform/features/profile/presentation/cubit/profile_state.dart';
@@ -22,6 +23,7 @@ import 'package:pickleball_platform/shared/entities/user_profile.dart';
 class _FakeUserProfileRepository implements UserProfileRepository {
   Result<UserProfile> profileResult;
   UserProfile? lastUpdatedProfile;
+  Failure? updateFailure;
 
   _FakeUserProfileRepository(this.profileResult);
 
@@ -32,7 +34,11 @@ class _FakeUserProfileRepository implements UserProfileRepository {
 
   @override
   Future<Result<UserProfile>> updateUserProfile(UserProfile profile) async {
+    if (updateFailure != null) {
+      return FailureResult<UserProfile>(updateFailure!);
+    }
     lastUpdatedProfile = profile;
+    profileResult = Success(profile);
     return Success(profile);
   }
 
@@ -556,9 +562,10 @@ void main() {
       expect(find.text('Log Out'), findsOneWidget);
     });
 
-    testWidgets('tapping settings tiles opens functional security & privacy dialogs', (tester) async {
+    testWidgets('tapping settings tiles persists privacy preferences and validates change password', (tester) async {
       final repo = _FakeUserProfileRepository(Success(sampleProfile));
-      final cubit = ProfileCubit(repository: repo);
+      final authRepo = MockAuthRepository();
+      final cubit = ProfileCubit(repository: repo, authRepository: authRepo);
       await cubit.loadProfile(userId: 'user_player_001');
 
       await tester.pumpWidget(
@@ -570,21 +577,53 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Change Password tile opens interactive password form
+      // 1. Change Password: wrong current password shows error without closing
       await tester.tap(find.text('Change Password'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Current Password'), findsOneWidget);
-      expect(find.text('Update Password'), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
+      final passwordFields = find.byType(TextFormField);
+      await tester.enterText(passwordFields.at(0), 'wrongpass');
+      await tester.enterText(passwordFields.at(1), 'newpass123');
+      await tester.enterText(passwordFields.at(2), 'newpass123');
+      await tester.tap(find.text('Update Password'));
       await tester.pumpAndSettle();
 
-      // Privacy & Security tile opens interactive privacy toggles
+      expect(find.text('Current password is incorrect.'), findsOneWidget);
+      expect(find.text('Password updated successfully (mock mode).'), findsNothing);
+
+      // Valid current password succeeds and closes dialog
+      await tester.enterText(passwordFields.at(0), 'oldpass123');
+      await tester.tap(find.text('Update Password'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Password updated successfully (mock mode).'), findsOneWidget);
+
+      // 2. Privacy & Security: failure does not close or show success snackbar
+      repo.updateFailure = const ServerFailure(message: 'Failed to save privacy settings.');
       await tester.tap(find.text('Privacy & Security'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Public Player Profile'), findsOneWidget);
-      expect(find.text('Save Preferences'), findsOneWidget);
+      await tester.tap(find.text('Public Player Profile'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save Preferences'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Failed to save privacy settings.'), findsOneWidget);
+      expect(find.text('Privacy preferences saved.'), findsNothing);
+
+      // Clear failure and save successfully; reopening dialog reflects persisted values
+      repo.updateFailure = null;
+      await tester.tap(find.text('Save Preferences'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Privacy preferences saved.'), findsOneWidget);
+      expect(repo.lastUpdatedProfile?.publicPlayerProfile, isFalse);
+
+      await tester.tap(find.text('Privacy & Security'));
+      await tester.pumpAndSettle();
+      final switches = tester.widgetList<SwitchListTile>(find.byType(SwitchListTile)).toList();
+      expect(switches[0].value, isFalse);
+      expect(switches[1].value, isTrue);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
     });

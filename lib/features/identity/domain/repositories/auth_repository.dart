@@ -67,4 +67,11 @@ abstract class AuthRepository {
   Future<Result<PasswordResetSuccessEntity>> completePasswordReset(
     ResetPasswordRequestModel request,
   );
+
+  /// Updates the authenticated user's password after verifying [currentPassword].
+  Future<Result<void>> changePassword({
+    required String userId,
+    required String currentPassword,
+    required String newPassword,
+  });
 }

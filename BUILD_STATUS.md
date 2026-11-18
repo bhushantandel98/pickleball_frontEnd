@@ -25,11 +25,11 @@
 
 ## Active Task
 
-- **Task ID:** Phase 8 — Frontend UI Gap Resolution
-- **Description:** Resolved all remaining frontend UI gaps identified in `docs/FRONTEND_UI_COMPLETION_AUDIT.md`: (1) replaced `/coach/batches` placeholder with `CoachBatchesPage` connected to `CoachDashboardCubit` / `MockCoachDashboardRepository`, (2) replaced `/public/tournaments/:id` placeholder with `PublicTournamentDetailsPage`, (3) replaced `/public/rankings` placeholder with `PublicRankingsPage`, and (4) replaced `AccountSettingsPage` informational placeholder dialogs with interactive Change Password, Notification Preferences navigation, and Privacy & Security preferences dialogs. **All 12 platform roles and public routes are now UI-complete.**
+- **Task ID:** Phase 8 — Frontend UI Gap Resolution & Account Settings Persistence
+- **Description:** Resolved all remaining frontend UI gaps identified in `docs/FRONTEND_UI_COMPLETION_AUDIT.md` and completed repository-backed Account Settings persistence: (1) replaced `/coach/batches` placeholder with `CoachBatchesPage` connected to `CoachDashboardCubit` / `MockCoachDashboardRepository`, (2) replaced `/public/tournaments/:id` placeholder with `PublicTournamentDetailsPage`, (3) replaced `/public/rankings` placeholder with `PublicRankingsPage`, and (4) wired `AccountSettingsPage` Privacy & Security preferences (`publicPlayerProfile`, `showMatchHistory`) to `ProfileCubit` / `UserProfileRepository` (`MockUserProfileDataSource`) and Change Password to `AuthRepository.changePassword` (`MockAuthRepository`) with repository-confirmed feedback and error handling. **All 12 platform roles and public routes are now UI-complete.**
 - **Validation:**
-  - `flutter analyze`: Passed — No issues found! (ran in 3.6s).
-  - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**).
+  - `flutter analyze`: Passed — No issues found! (ran in 5.1s).
+  - `flutter test`: 566 tests ran, 563 passed, 3 failed (**0 new test failures**); `test/features/profile/profile_test.dart` passed all 22 tests.
   - Pre-existing failures in `test/core/router_test.dart`: (1) Desktop shell, (2) Mobile shell, (3) Unknown route 404.
 - **Assigned To:** Lead Frontend Architect (Antigravity)
 - **Status:** Frontend UI Complete — Ready for Backend Integration.

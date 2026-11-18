@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pickleball_platform/app/service_locator.dart';
+import 'package:pickleball_platform/core/errors/failures.dart';
 import 'package:pickleball_platform/core/network/result.dart';
+import 'package:pickleball_platform/features/identity/domain/repositories/auth_repository.dart';
 import 'package:pickleball_platform/features/identity/domain/repositories/user_profile_repository.dart';
 import 'package:pickleball_platform/features/profile/presentation/cubit/profile_state.dart';
 import 'package:pickleball_platform/shared/entities/user_profile.dart';
@@ -7,8 +10,12 @@ import 'package:pickleball_platform/shared/entities/user_profile.dart';
 /// Cubit managing presentation state for user profile view and editing workflows.
 class ProfileCubit extends Cubit<ProfileState> {
   final UserProfileRepository repository;
+  final AuthRepository? authRepository;
 
-  ProfileCubit({required this.repository}) : super(const ProfileInitial());
+  ProfileCubit({
+    required this.repository,
+    this.authRepository,
+  }) : super(const ProfileInitial());
 
   /// Loads profile information for [userId].
   ///
@@ -62,6 +69,60 @@ class ProfileCubit extends Cubit<ProfileState> {
       profile: updatedProfile,
       successMessage: successMessage ?? 'Profile updated successfully',
     ));
+  }
+
+  /// Persists privacy visibility preferences through [UserProfileRepository].
+  Future<Result<UserProfile>> updatePrivacyPreferences({
+    required bool publicPlayerProfile,
+    required bool showMatchHistory,
+  }) async {
+    final currentProfile = switch (state) {
+      ProfileLoaded(profile: final profile) => profile,
+      ProfileUpdating(currentProfile: final profile) => profile,
+      ProfileFailure(fallbackProfile: final profile) => profile,
+      _ => null,
+    };
+
+    if (currentProfile == null) {
+      return const FailureResult<UserProfile>(
+        UnknownFailure(message: 'User profile must be loaded before saving preferences.'),
+      );
+    }
+
+    final updated = currentProfile.copyWith(
+      publicPlayerProfile: publicPlayerProfile,
+      showMatchHistory: showMatchHistory,
+    );
+
+    final result = await repository.updateUserProfile(updated);
+    switch (result) {
+      case Success<UserProfile>(data: final saved):
+        emit(ProfileLoaded(profile: saved));
+        return Success<UserProfile>(saved);
+      case FailureResult<UserProfile>(failure: final failure):
+        emit(ProfileLoaded(profile: currentProfile));
+        return FailureResult<UserProfile>(failure);
+    }
+  }
+
+  /// Updates the user's password via [AuthRepository].
+  Future<Result<void>> changePassword({
+    required String userId,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final repo = authRepository ??
+        (sl.isRegistered<AuthRepository>() ? sl<AuthRepository>() : null);
+    if (repo == null) {
+      return const FailureResult<void>(
+        UnknownFailure(message: 'Password service is unavailable.'),
+      );
+    }
+    return repo.changePassword(
+      userId: userId,
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
   }
 
   /// Clears any transient feedback banner messages.

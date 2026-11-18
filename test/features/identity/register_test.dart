@@ -679,4 +679,12 @@ class _SessionSwitchingAuthRepository implements AuthRepository {
     ResetPasswordRequestModel request,
   ) =>
       throw UnimplementedError();
+
+  @override
+  Future<Result<void>> changePassword({
+    required String userId,
+    required String currentPassword,
+    required String newPassword,
+  }) =>
+      throw UnimplementedError();
 }

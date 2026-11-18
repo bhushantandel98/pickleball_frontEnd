@@ -113,4 +113,18 @@ class RemoteAuthRepository implements AuthRepository {
       ),
     );
   }
+
+  @override
+  Future<Result<void>> changePassword({
+    required String userId,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    return const FailureResult<void>(
+      ServerFailure(
+        message: 'Password change service is currently unavailable. Please try again later.',
+        statusCode: 503,
+      ),
+    );
+  }
 }

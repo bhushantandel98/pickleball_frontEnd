@@ -156,7 +156,10 @@ Future<void> initServiceLocator() async {
 
   // --- Profile Cubit ---
   sl.registerFactory<ProfileCubit>(
-    () => ProfileCubit(repository: sl<UserProfileRepository>()),
+    () => ProfileCubit(
+      repository: sl<UserProfileRepository>(),
+      authRepository: sl<AuthRepository>(),
+    ),
   );
 
   // --- Notification Preferences Cubit ---

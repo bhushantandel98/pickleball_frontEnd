@@ -13,6 +13,8 @@ class UserProfile extends Equatable {
   final bool isSuspended;
   final double? rating;
   final String? organizationId;
+  final bool publicPlayerProfile;
+  final bool showMatchHistory;
   final DateTime createdAt;
 
   const UserProfile({
@@ -26,6 +28,8 @@ class UserProfile extends Equatable {
     this.isSuspended = false,
     this.rating,
     this.organizationId,
+    this.publicPlayerProfile = true,
+    this.showMatchHistory = true,
     required this.createdAt,
   });
 
@@ -40,6 +44,8 @@ class UserProfile extends Equatable {
     bool? isSuspended,
     double? rating,
     String? organizationId,
+    bool? publicPlayerProfile,
+    bool? showMatchHistory,
     DateTime? createdAt,
   }) {
     return UserProfile(
@@ -53,6 +59,8 @@ class UserProfile extends Equatable {
       isSuspended: isSuspended ?? this.isSuspended,
       rating: rating ?? this.rating,
       organizationId: organizationId ?? this.organizationId,
+      publicPlayerProfile: publicPlayerProfile ?? this.publicPlayerProfile,
+      showMatchHistory: showMatchHistory ?? this.showMatchHistory,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -69,6 +77,8 @@ class UserProfile extends Equatable {
         isSuspended,
         rating,
         organizationId,
+        publicPlayerProfile,
+        showMatchHistory,
         createdAt,
       ];
 }

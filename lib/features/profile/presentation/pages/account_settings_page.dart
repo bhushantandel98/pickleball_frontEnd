@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pickleball_platform/app/service_locator.dart';
 import 'package:pickleball_platform/core/access/session_cubit.dart';
 import 'package:pickleball_platform/core/design_system/app_spacing.dart';
+import 'package:pickleball_platform/core/network/result.dart';
 import 'package:pickleball_platform/core/router/app_routes.dart';
 import 'package:pickleball_platform/core/widgets/app_button.dart';
 import 'package:pickleball_platform/core/widgets/app_card.dart';
@@ -128,83 +129,149 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
     _showChangePasswordDialog();
   }
 
+  String _resolveUserId(ProfileCubit cubit) {
+    final state = cubit.state;
+    if (state is ProfileLoaded) {
+      return state.profile.id;
+    }
+    try {
+      final session = context.read<SessionCubit>().state;
+      if (session.userId != null && session.userId!.isNotEmpty) {
+        return session.userId!;
+      }
+    } catch (_) {}
+    return 'user_multi_001';
+  }
+
   Future<void> _showChangePasswordDialog() async {
+    final cubit = context.read<ProfileCubit>();
     final formKey = GlobalKey<FormState>();
     final currentCtrl = TextEditingController();
     final nextCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
+    var isSubmitting = false;
+    String? errorMessage;
 
     final saved = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Change Password'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: currentCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Current Password',
-                  border: OutlineInputBorder(),
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Change Password'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: currentCtrl,
+                  obscureText: true,
+                  enabled: !isSubmitting,
+                  decoration: const InputDecoration(
+                    labelText: 'Current Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Enter your current password.'
+                      : null,
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Enter your current password.'
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: nextCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'New Password',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: nextCtrl,
+                  obscureText: true,
+                  enabled: !isSubmitting,
+                  decoration: const InputDecoration(
+                    labelText: 'New Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().length < 8) {
+                      return 'Password must be at least 8 characters.';
+                    }
+                    if (v == currentCtrl.text) {
+                      return 'New password must differ from current password.';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (v) => (v == null || v.trim().length < 8)
-                    ? 'Password must be at least 8 characters.'
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: confirmCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm New Password',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: confirmCtrl,
+                  obscureText: true,
+                  enabled: !isSubmitting,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm New Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) =>
+                      v != nextCtrl.text ? 'Passwords do not match.' : null,
                 ),
-                validator: (v) =>
-                    v != nextCtrl.text ? 'Passwords do not match.' : null,
-              ),
-            ],
+                if (errorMessage != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            AppButton.primary(
+              label: isSubmitting ? 'Updating...' : 'Update Password',
+              isLoading: isSubmitting,
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) {
+                        return;
+                      }
+                      setDialogState(() {
+                        isSubmitting = true;
+                        errorMessage = null;
+                      });
+                      final result = await cubit.changePassword(
+                        userId: _resolveUserId(cubit),
+                        currentPassword: currentCtrl.text,
+                        newPassword: nextCtrl.text,
+                      );
+                      if (!dialogContext.mounted) return;
+                      switch (result) {
+                        case Success<void>():
+                          Navigator.of(dialogContext).pop(true);
+                        case FailureResult<void>(failure: final failure):
+                          setDialogState(() {
+                            isSubmitting = false;
+                            errorMessage = failure.message;
+                          });
+                      }
+                    },
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          AppButton.primary(
-            label: 'Update Password',
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                Navigator.of(dialogContext).pop(true);
-              }
-            },
-          ),
-        ],
       ),
     );
 
     if (saved == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Password updated locally for this session (mock mode).',
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Password updated successfully (mock mode).',
+            ),
           ),
-        ),
-      );
+        );
     }
 
     currentCtrl.dispose();
@@ -238,8 +305,14 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
   }
 
   Future<void> _showPrivacySecurityDialog() async {
-    var publicProfile = true;
-    var showMatchHistory = true;
+    final cubit = context.read<ProfileCubit>();
+    final state = cubit.state;
+    var publicProfile =
+        state is ProfileLoaded ? state.profile.publicPlayerProfile : true;
+    var showMatchHistory =
+        state is ProfileLoaded ? state.profile.showMatchHistory : true;
+    var isSaving = false;
+    String? errorMessage;
     String activeEmail = 'Authenticated user';
     try {
       final session = context.read<SessionCubit>().state;
@@ -250,6 +323,7 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
 
     final saved = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('Privacy & Security'),
@@ -263,24 +337,62 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Public Player Profile'),
                 value: publicProfile,
-                onChanged: (v) => setDialogState(() => publicProfile = v),
+                onChanged: isSaving
+                    ? null
+                    : (v) => setDialogState(() => publicProfile = v),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Show Match & Ranking History'),
                 value: showMatchHistory,
-                onChanged: (v) => setDialogState(() => showMatchHistory = v),
+                onChanged: isSaving
+                    ? null
+                    : (v) => setDialogState(() => showMatchHistory = v),
               ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  errorMessage!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
+              onPressed: isSaving
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             AppButton.primary(
-              label: 'Save Preferences',
-              onPressed: () => Navigator.of(dialogContext).pop(true),
+              label: isSaving ? 'Saving...' : 'Save Preferences',
+              isLoading: isSaving,
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      setDialogState(() {
+                        isSaving = true;
+                        errorMessage = null;
+                      });
+                      final result = await cubit.updatePrivacyPreferences(
+                        publicPlayerProfile: publicProfile,
+                        showMatchHistory: showMatchHistory,
+                      );
+                      if (!dialogContext.mounted) return;
+                      switch (result) {
+                        case Success():
+                          Navigator.of(dialogContext).pop(true);
+                        case FailureResult(failure: final failure):
+                          setDialogState(() {
+                            isSaving = false;
+                            errorMessage = failure.message;
+                          });
+                      }
+                    },
             ),
           ],
         ),
@@ -288,11 +400,13 @@ class _AccountSettingsViewState extends State<_AccountSettingsView> {
     );
 
     if (saved == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Privacy preferences saved for this session.'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Privacy preferences saved.'),
+          ),
+        );
     }
   }
 

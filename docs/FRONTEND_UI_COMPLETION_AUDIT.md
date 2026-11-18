@@ -14,7 +14,7 @@
 - **All 12 platform roles** have complete UI screens, navigation destinations, Cubits/Blocs, mock repositories, loading/empty/error/success states, and role-scoped access guards.
 - **Coach Assigned Batches (`/coach/batches`):** Implemented `CoachBatchesPage` connected to `CoachDashboardCubit` / `MockCoachDashboardRepository` with search, academy filter, schedule/batch metrics, and loading/empty/error states.
 - **Public Unauthenticated Routes (`/public/tournaments/:id`, `/public/rankings`):** Replaced both `RoutePlaceholderView` entries with `PublicTournamentDetailsPage` (reusing `TournamentRepository` / `MockTournamentRepository`) and `PublicRankingsPage` (search, division & age-group filters, ranked leaderboard).
-- **Account Settings (`AccountSettingsPage`):** Replaced informational placeholder dialogs with interactive Change Password form dialog, Notification Preferences navigation (`AppRoutes.notificationPreferences`), and Privacy & Security preferences dialog.
+- **Account Settings (`AccountSettingsPage`):** Replaced informational placeholder dialogs with repository-backed Change Password (`AuthRepository.changePassword` / `MockAuthRepository`), Notification Preferences navigation (`AppRoutes.notificationPreferences`), and Privacy & Security preferences (`publicPlayerProfile`, `showMatchHistory` persisted on `UserProfile` via `ProfileCubit` / `UserProfileRepository`).
 - **Responsive Layout & Role Navigation:** `AppNavigationShell` (`lib/core/widgets/navigation/app_navigation_shell.dart`) and `ResponsiveLayout` cleanly adapt across Mobile (`<600dp`), Tablet (`600–1024dp`), and Desktop (`>1024dp`), and `CompositeRouteGuard` enforces role-namespace access and redirects unauthorized access to `/permission-denied`.
 
 ---

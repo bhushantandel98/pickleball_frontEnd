@@ -21,6 +21,7 @@ import 'package:pickleball_platform/features/identity/domain/repositories/auth_r
 /// Implements ADR-011 and ADR-015: Strictly isolated from production builds.
 class MockAuthRepository implements AuthRepository {
   final MockNetworkHarness _harness;
+  final Map<String, String> _mockPasswords = {};
 
   MockAuthRepository({MockNetworkHarness? harness})
       : _harness = harness ?? MockNetworkHarness() {
@@ -229,6 +230,46 @@ class MockAuthRepository implements AuthRepository {
         message: 'Password has been reset successfully. Please sign in with your new password.',
         timestamp: DateTime.now(),
       );
+    });
+  }
+
+  @override
+  Future<Result<void>> changePassword({
+    required String userId,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    return _harness.requestResult<void>(() async {
+      if (currentPassword.trim().isEmpty) {
+        throw const ValidationException(
+          message: 'Current password is required.',
+        );
+      }
+
+      final storedPassword = _mockPasswords[userId];
+      final isCurrentInvalid = storedPassword != null
+          ? storedPassword != currentPassword
+          : currentPassword == 'wrongpass';
+
+      if (isCurrentInvalid) {
+        throw const UnauthorizedException(
+          message: 'Current password is incorrect.',
+        );
+      }
+
+      if (newPassword.trim().length < 8) {
+        throw const ValidationException(
+          message: 'New password must be at least 8 characters.',
+        );
+      }
+
+      if (newPassword == currentPassword) {
+        throw const ValidationException(
+          message: 'New password must be different from your current password.',
+        );
+      }
+
+      _mockPasswords[userId] = newPassword;
     });
   }
 }
